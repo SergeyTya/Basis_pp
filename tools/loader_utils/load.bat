@@ -1,0 +1,1 @@
+.\loader_util.exe -w ..\build\EVM435334001_80k.hex com2,921600,1

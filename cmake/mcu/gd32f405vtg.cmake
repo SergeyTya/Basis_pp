@@ -1,0 +1,11 @@
+SET(MCU_TYPE Cortex-M4 )
+SET(MCU_NAME GD32F405VTGxx)
+SET(MCU_FLOAT_TYPE hard)
+SET(MCU_FPU_NAME fpv4-sp-d16)
+
+
+SET(MCU_DRV_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/drivers/GD32F4xx_Firmware_Library_V3.0.2/GD32F4xx_Library.cmake)
+
+ADD_DEFINITIONS(-DGD32F405)
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/mcu/stm32f405xx_mem.cmake) 

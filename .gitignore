@@ -1,0 +1,9 @@
+/build*/
+*autogen*
+*.data
+/drivers/dsp/
+/drivers/dsp_2/
+/Debug/
+*analizer*
+*analyzer*
+/tools/generated/*

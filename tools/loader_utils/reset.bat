@@ -1,0 +1,1 @@
+.\loader_util.exe -r com2,921600,1

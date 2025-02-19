@@ -1,0 +1,45 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "flash",
+            "type": "shell",
+            "problemMatcher": [],
+            "icon": {"id": "flame", "color": "terminal.ansiRed",},
+            "options": {"statusbar": {"color": "#fd5d00"}},
+            "windows":{
+                "command": "./tools/loader_utils/loader_write.py",
+                "args": [
+                    ""
+                ]
+            },
+            "linux":{"command": "python3 ./tools/loader_utils/loader_write.py",
+                    "args": [
+                    ],
+            },
+        },
+        
+        {
+            "label": "reboot",
+            "type": "shell",
+            "problemMatcher": [],
+            "icon": {"id": "sync", "color": "terminal.ansiRed",},
+            "options": {"statusbar": {"color": "#d7fd00"}},
+            "windows":{
+                "command": "./tools/loader_utils/check.bat",
+                "args": [
+                    ""
+                ]
+            },
+            
+            "linux":{"command": "./tools/loader_utils/check.sh",
+                    "args": [
+                    ],
+            },
+            
+        },
+        
+
+    ],
+    
+}

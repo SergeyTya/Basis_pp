@@ -1,0 +1,10 @@
+
+SET(MCU_TYPE Cortex-M4 )
+SET(MCU_NAME STM32F405xx)
+SET(MCU_FLOAT_TYPE hard)
+SET(MCU_FPU_NAME fpv4-sp-d16)
+
+
+SET(MCU_DRV_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/drivers/stm32f4xx_hal_driver/stm32f4xx_hal_driver.cmake)
+
+ADD_DEFINITIONS(-DSTM32F405xx)
