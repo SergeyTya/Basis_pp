@@ -110,10 +110,11 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
 
     target_link_options(${TARGET_NAME}
             PUBLIC ${CPU_FLAGS}
-            PUBLIC -T $<TARGET_PROPERTY:LINKER_FILE>
-            PUBLIC -specs=nano.specs -specs=nosys.specs -lgcc -lc
-            PUBLIC -Wl,-Map=${TARGET_NAME}.map,--cref,--print-memory-usage
-            PUBLIC -Wl,-gc-sections
+            -T $<TARGET_PROPERTY:LINKER_FILE>
+            #-specs=nano.specs 
+            -specs=nosys.specs -lgcc -lc
+            -Wl,-Map=${TARGET_NAME}.map,--cref,--print-memory-usage
+            -Wl,-gc-sections
             )
 
     # https://www.opennet.ru/docs/RUS/gcc/gcc1-2.html

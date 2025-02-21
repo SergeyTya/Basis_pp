@@ -104,7 +104,9 @@
         "gd25q32_os.h": "c",
         "hourscounter.h": "c",
         "task_mhcounter.h": "c",
-        "inverter_faults.h": "c"
+        "inverter_faults.h": "c",
+        "ecat_def.h": "c",
+        "mcihw.h": "c"
     }, 
      "cmake.configureArgs": [
                "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-gcc-toolchain.cmake"

@@ -7,7 +7,7 @@
 #endif
 
 #ifndef HW_REBOOT
-    #error Hardware reboot function not defined 
+  //  #error Hardware reboot function not defined 
 #endif
 
 

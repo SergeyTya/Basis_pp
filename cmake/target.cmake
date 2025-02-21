@@ -18,7 +18,7 @@ function(create_device target_name )
 
     message("-- add target sources")
     FILE(GLOB APP_SRC
-            ${APP_PATH}/*.c
+            ${APP_PATH}/main.c
             ${APP_PATH}/devices/${TARGET_NAME}/*.c
             )
  
@@ -31,12 +31,18 @@ function(create_device target_name )
     # message("-- include ARM-DSP")
     add_definitions(-DARM_MATH_CM4)
     add_definitions(-D__FPU_PRESENT)
+
+    #message("-- include rtos ${RTOS}")
+    include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/STM32_USB_DRV/config.cmake)
    
     #message("-- include modbus")
-    include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/config.cmake) 
+    # include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/config.cmake) 
 
     #message("-- include rtos ${RTOS}")
     include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/RTOS/config.cmake)
+
+    #message("-- include rtos ${RTOS}")
+    include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/Ethercat/config.cmake)
     
     target_compile_definitions(${TARGET_NAME} PUBLIC BUILD_NAME_${TARGET_NAME})
 

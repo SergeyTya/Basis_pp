@@ -10,3 +10,15 @@ void _read(void)
 void _write(void)
 {
 }
+void _fstat(void)
+{
+}
+void _getpid(void)
+{
+}
+void _isatty(void)
+{
+}
+void _kill(void)
+{
+}

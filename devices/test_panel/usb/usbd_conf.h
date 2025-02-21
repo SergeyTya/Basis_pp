@@ -1,173 +1,101 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file           : usbd_conf.h
-  * @version        : v1.0_Cube
-  * @brief          : Header for usbd_conf.c file.
+  * @file    usbd_conf.h
+  * @author  MCD Application Team
+  * @version V1.2.1
+  * @date    17-March-2018
+  * @brief   USB Device configuration file
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2023 STMicroelectronics.
-  * All rights reserved.
+  * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                      <http://www.st.com/SLA0044>
   *
   ******************************************************************************
   */
-/* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __USBD_CONF__H__
 #define __USBD_CONF__H__
 
-#ifdef __cplusplus
- extern "C" {
-#endif
-
 /* Includes ------------------------------------------------------------------*/
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-//#include "main.h"
-#include "stm32f4xx.h"
-#include "stm32f4xx_hal.h"
+#include "usb_conf.h"
 
-/* USER CODE BEGIN INCLUDE */
-
-/* USER CODE END INCLUDE */
-
-/** @addtogroup USBD_OTG_DRIVER
-  * @brief Driver for Usb device.
+/** @defgroup USB_CONF_Exported_Defines
   * @{
-  */
+  */ 
+#define USBD_CFG_MAX_NUM                1
+#define USBD_ITF_MAX_NUM                1
 
-/** @defgroup USBD_CONF USBD_CONF
-  * @brief Configuration file for Usb otg low level driver.
+#define USBD_SELF_POWERED               
+
+#define USB_MAX_STR_DESC_SIZ            255 
+
+/** @defgroup USB_VCP_Class_Layer_Parameter
   * @{
-  */
+  */ 
+#define CDC_IN_EP                       0x81  /* EP1 for data IN */
+#define CDC_OUT_EP                      0x01  /* EP1 for data OUT */
+#define CDC_CMD_EP                      0x82  /* EP2 for CDC commands */
 
-/** @defgroup USBD_CONF_Exported_Variables USBD_CONF_Exported_Variables
-  * @brief Public variables.
-  * @{
-  */
+/* CDC Endpoints parameters: you can fine tune these values depending on the needed baudrates and performance. */
+#ifdef USE_USB_OTG_HS
+ #define CDC_DATA_MAX_PACKET_SIZE       512  /* Endpoint IN & OUT Packet size */
+ #define CDC_CMD_PACKET_SZE             8    /* Control Endpoint Packet size */
 
-/**
-  * @}
-  */
-
-/** @defgroup USBD_CONF_Exported_Defines USBD_CONF_Exported_Defines
-  * @brief Defines for configuration of the Usb device.
-  * @{
-  */
-
-/*---------- -----------*/
-#define USBD_MAX_NUM_INTERFACES     1U
-/*---------- -----------*/
-#define USBD_MAX_NUM_CONFIGURATION     1U
-/*---------- -----------*/
-#define USBD_MAX_STR_DESC_SIZ     512U
-/*---------- -----------*/
-#define USBD_DEBUG_LEVEL     0U
-/*---------- -----------*/
-#define USBD_LPM_ENABLED     0U
-/*---------- -----------*/
-#define USBD_SELF_POWERED     1U
-
-/****************************************/
-/* #define for FS and HS identification */
-#define DEVICE_FS 		0
-#define DEVICE_HS 		1
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_CONF_Exported_Macros USBD_CONF_Exported_Macros
-  * @brief Aliases.
-  * @{
-  */
-/* Memory management macros make sure to use static memory allocation */
-/** Alias for memory allocation. */
-
-#define USBD_malloc         (void *)USBD_static_malloc
-
-/** Alias for memory release. */
-#define USBD_free           USBD_static_free
-
-/** Alias for memory set. */
-#define USBD_memset         memset
-
-/** Alias for memory copy. */
-#define USBD_memcpy         memcpy
-
-/** Alias for delay. */
-#define USBD_Delay          HAL_Delay
-
-/* DEBUG macros */
-
-#if (USBD_DEBUG_LEVEL > 0)
-#define USBD_UsrLog(...)    printf(__VA_ARGS__);\
-                            printf("\n");
+ #define CDC_IN_FRAME_INTERVAL          40   /* Number of micro-frames between IN transfers */
+ #define APP_RX_DATA_SIZE               2048 /* Total size of IN buffer: 
+                                                APP_RX_DATA_SIZE*8/MAX_BAUDARATE*1000 should be > CDC_IN_FRAME_INTERVAL*8 */
 #else
-#define USBD_UsrLog(...)
-#endif /* (USBD_DEBUG_LEVEL > 0U) */
+ #define CDC_DATA_MAX_PACKET_SIZE       64   /* Endpoint IN & OUT Packet size */
+ #define CDC_CMD_PACKET_SZE             8    /* Control Endpoint Packet size */
 
-#if (USBD_DEBUG_LEVEL > 1)
+ #define CDC_IN_FRAME_INTERVAL          5    /* Number of frames between IN transfers */
+ #define APP_RX_DATA_SIZE               2048 /* Total size of IN buffer: 
+                                                APP_RX_DATA_SIZE*8/MAX_BAUDARATE*1000 should be > CDC_IN_FRAME_INTERVAL */
+#endif /* USE_USB_OTG_HS */
 
-#define USBD_ErrLog(...)    printf("ERROR: ");\
-                            printf(__VA_ARGS__);\
-                            printf("\n");
-#else
-#define USBD_ErrLog(...)
-#endif /* (USBD_DEBUG_LEVEL > 1U) */
-
-#if (USBD_DEBUG_LEVEL > 2)
-#define USBD_DbgLog(...)    printf("DEBUG : ");\
-                            printf(__VA_ARGS__);\
-                            printf("\n");
-#else
-#define USBD_DbgLog(...)
-#endif /* (USBD_DEBUG_LEVEL > 2U) */
-
+#define APP_FOPS                        VCP_fops
 /**
   * @}
-  */
+  */ 
 
-/** @defgroup USBD_CONF_Exported_Types USBD_CONF_Exported_Types
-  * @brief Types.
+/** @defgroup USB_CONF_Exported_Types
   * @{
-  */
-
+  */ 
 /**
   * @}
-  */
+  */ 
 
-/** @defgroup USBD_CONF_Exported_FunctionsPrototype USBD_CONF_Exported_FunctionsPrototype
-  * @brief Declaration of public functions for Usb device.
+
+/** @defgroup USB_CONF_Exported_Macros
   * @{
-  */
-
-/* Exported functions -------------------------------------------------------*/
-void *USBD_static_malloc(uint32_t size);
-void USBD_static_free(void *p);
-
+  */ 
 /**
   * @}
-  */
+  */ 
 
+/** @defgroup USB_CONF_Exported_Variables
+  * @{
+  */ 
 /**
   * @}
-  */
+  */ 
 
+/** @defgroup USB_CONF_Exported_FunctionsPrototype
+  * @{
+  */ 
 /**
   * @}
-  */
+  */ 
 
-#ifdef __cplusplus
-}
-#endif
 
-#endif /* __USBD_CONF__H__ */
+#endif //__USBD_CONF__H__
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 

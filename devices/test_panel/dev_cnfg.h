@@ -12,14 +12,12 @@
 
 #include "stdint.h"
 #include "stdlib.h"
-#include "stm32f4xx_hal.h"
-#include "mcu_control.h"
 
 
-#define DEVICE_INFO        "FSEC6_7_mini"
+#define DEVICE_INFO        "basis_pp"
 
 #define MCU_CLOCK           SystemCoreClock
-#define RT_FREQ            20000U
+#define RT_FREQ             20000U
 
 #define PWM_MAX             (TIM1->ARR)
 

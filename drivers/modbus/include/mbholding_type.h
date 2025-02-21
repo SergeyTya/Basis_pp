@@ -1,6 +1,8 @@
 #ifndef MBHOLDING_TYPE_H_
 #define MBHOLDING_TYPE_H_
 
+#include "stddef.h"
+#include "stdint.h"
 #include "stdbool.h"
 
 typedef struct TypeDef_MB_Holding{
