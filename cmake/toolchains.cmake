@@ -102,7 +102,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
             PUBLIC -ffreestanding
             PUBLIC -nostartfiles
             PUBLIC -nostdlib
-            PUBLIC -Og
+            PUBLIC -O0
             PUBLIC -std=gnu17
             PUBLIC -Wextra
             PUBLIC -Wall

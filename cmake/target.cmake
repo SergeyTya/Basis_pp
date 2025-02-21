@@ -33,16 +33,16 @@ function(create_device target_name )
     add_definitions(-D__FPU_PRESENT)
 
     #message("-- include rtos ${RTOS}")
-    include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/STM32_USB_DRV/config.cmake)
+    #include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/STM32_USB_DRV/config.cmake)
    
     #message("-- include modbus")
-    # include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/config.cmake) 
+    #include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/config.cmake) 
 
     #message("-- include rtos ${RTOS}")
     include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/RTOS/config.cmake)
 
     #message("-- include rtos ${RTOS}")
-    include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/Ethercat/config.cmake)
+    #include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/Ethercat/config.cmake)
     
     target_compile_definitions(${TARGET_NAME} PUBLIC BUILD_NAME_${TARGET_NAME})
 

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 
-project("EVM_VICHLE_INVERTER")
+project("BASIS AERO CONTROL PANEL")
 
 include(cmake/utils.cmake)
 include(cmake/target.cmake)
@@ -22,14 +22,13 @@ include_directories(
         ${DEVICE_INC_PATH}
 ) 
 
-SET(IQmath ${CMAKE_CURRENT_SOURCE_DIR}/drivers/IQmath/)   
-SET(lib_control ${CMAKE_CURRENT_SOURCE_DIR}/mc_lib/)
+
 SET(RTOS ${CMAKE_CURRENT_SOURCE_DIR}/drivers/RTOS/)
 
 include(bootloader_embd/loader.cmake)
 
-create_device("test_panel") 
- 
+#create_device("test_panel") 
+create_device("bptest")
  
 
 
