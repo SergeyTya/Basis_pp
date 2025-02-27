@@ -31,9 +31,9 @@
 
 #elif defined(USE_STM324xG_EVAL)
  #include "stm32f4xx.h"
-// #include "stm324xg_eval.h" 
-// #include "stm324xg_eval_lcd.h"
-// #include "stm324xg_eval_ioe.h"
+//  #include "stm324xg_eval.h" 
+//  #include "stm324xg_eval_lcd.h"
+//  #include "stm324xg_eval_ioe.h"
 
 #elif defined(USE_STM324x9I_EVAL)
  #include "stm32f4xx.h"
@@ -108,11 +108,11 @@
 #endif /* USE_USB_OTG_HS */
 
 #ifndef USE_ULPI_PHY
-/* #define USE_ULPI_PHY */
+ #define USE_ULPI_PHY 
 #endif /* USE_ULPI_PHY */
 
 #ifndef USE_EMBEDDED_PHY
-/* #define USE_EMBEDDED_PHY */
+/ #define USE_EMBEDDED_PHY */
 #endif /* USE_EMBEDDED_PHY */
 
 #ifdef USE_USB_OTG_HS 
@@ -191,7 +191,7 @@
 #endif
 
 /****************** USB OTG MISC CONFIGURATION ********************************/
-#define VBUS_SENSING_ENABLED
+//#define VBUS_SENSING_ENABLED  // blakpill doesnot hav vbus sens pin
 
 /****************** USB OTG MODE CONFIGURATION ********************************/
 /* #define USE_HOST_MODE */

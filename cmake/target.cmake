@@ -19,6 +19,7 @@ function(create_device target_name )
     message("-- add target sources")
     FILE(GLOB APP_SRC
             ${APP_PATH}/main.c
+            ${APP_PATH}/task_panel.c
             ${APP_PATH}/devices/${TARGET_NAME}/*.c
             )
  
@@ -33,7 +34,7 @@ function(create_device target_name )
     add_definitions(-D__FPU_PRESENT)
 
     #message("-- include rtos ${RTOS}")
-    #include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/STM32_USB_DRV/config.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/STM32_USB_DRV/config.cmake)
    
     #message("-- include modbus")
     #include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/config.cmake) 

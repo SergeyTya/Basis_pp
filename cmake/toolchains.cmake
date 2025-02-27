@@ -111,8 +111,8 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
     target_link_options(${TARGET_NAME}
             PUBLIC ${CPU_FLAGS}
             -T $<TARGET_PROPERTY:LINKER_FILE>
-            #-specs=nano.specs 
             -specs=nosys.specs -lgcc -lc
+            -specs=nano.specs 
             -Wl,-Map=${TARGET_NAME}.map,--cref,--print-memory-usage
             -Wl,-gc-sections
             )

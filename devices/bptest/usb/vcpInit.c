@@ -29,8 +29,7 @@ void vcpInit(){
 
     USBD_Init(
         &USB_OTG_dev, 
-         USB_OTG_FS_CORE_ID, 
-       //USB_OTG_HS_CORE_ID,
+        USB_OTG_FS_CORE_ID, 
         &USR_desc, 
         &USBD_CDC_cb, 
         &USR_cb
@@ -38,17 +37,25 @@ void vcpInit(){
 
 }
 
+volatile int cntr = 0;
 void  USBD_USR_Init(){
-   
+   cntr++;
 }
 void  USBD_USR_DeviceReset(uint8_t speed){
-    
+    cntr++;
 }
-
-void  USBD_USR_DeviceConfigured(){}
-void  USBD_USR_DeviceSuspended(){}
-void  USBD_USR_DeviceResumed(){}
+void  USBD_USR_DeviceConfigured(){
+  cntr++;
+}
+void  USBD_USR_DeviceSuspended(){
+  cntr++;
+}
+void  USBD_USR_DeviceResumed(){
+  cntr++;
+}
 void  USBD_USR_DeviceConnected(){
-    
+    cntr++;
 }
-void  USBD_USR_DeviceDisconnected(){}
+void  USBD_USR_DeviceDisconnected(){
+  cntr++;
+}

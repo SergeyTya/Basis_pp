@@ -11,6 +11,7 @@ PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/stm32f4xx_spl_driver/src/stm32f4xx_rt
 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/stm32f4xx_spl_driver/src/stm32f4xx_exti.c
 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/stm32f4xx_spl_driver/src/stm32f4xx_pwr.c
 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/stm32f4xx_spl_driver/src/stm32f4xx_dma.c
+PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/stm32f4xx_spl_driver/src/stm32f4xx_spi.c
 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/stm32f4xx_spl_driver/src/stm32f4xx_syscfg.c
 )
 

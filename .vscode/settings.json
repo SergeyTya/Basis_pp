@@ -106,7 +106,16 @@
         "task_mhcounter.h": "c",
         "inverter_faults.h": "c",
         "ecat_def.h": "c",
-        "mcihw.h": "c"
+        "mcihw.h": "c",
+        "system_stm32f4xx.h": "c",
+        "main.h": "c",
+        "m204d08aa.h": "c",
+        "m204d08aa_rtos.h": "c",
+        "usbd_cdc_vcp.h": "c",
+        "m204d08aa_port.h": "c",
+        "task_panel.h": "c",
+        "cstring": "c",
+        "format": "c"
     }, 
      "cmake.configureArgs": [
                "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-gcc-toolchain.cmake"
