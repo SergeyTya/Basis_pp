@@ -15,6 +15,6 @@
 #define FALSE 0
 #endif
 
-void usb_modbus_callback(const uint8_t* Buf, const uint32_t *Len);
+void usb_modbus_callback();
 
 #endif

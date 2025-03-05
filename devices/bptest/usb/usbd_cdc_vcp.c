@@ -25,6 +25,7 @@
 
 /* Includes ------------------------------------------------------------------ */
 #include "usbd_cdc_vcp.h"
+#include "modbus_portserial.h"
 
 /* Private typedef ----------------------------------------------------------- */
 /* Private define ------------------------------------------------------------ */
@@ -74,7 +75,13 @@ static uint16_t VCP_DataTx(void)
   */
 static uint16_t VCP_DataRx(uint32_t Len)
 {
-  receive_count = Len;
+  if(Len==0) return USBD_OK;
+
+  if(receive_count != Len){
+    receive_count = Len;
+  }else{
+    usb_modbus_callback();
+  } 
 
   return USBD_OK;
 }

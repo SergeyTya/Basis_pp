@@ -37,7 +37,7 @@ function(create_device target_name )
     include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/STM32_USB_DRV/config.cmake)
    
     #message("-- include modbus")
-    #include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/config.cmake) 
+    include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/config.cmake) 
 
     #message("-- include rtos ${RTOS}")
     include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/RTOS/config.cmake)

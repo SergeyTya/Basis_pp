@@ -21,40 +21,39 @@ int main() {
 
     vMCU_init();
     
-    xTaskCreate(vTask_VCP     , "VCP"     , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+    //xTaskCreate(vTask_VCP     , "VCP"     , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
     xTaskCreate(vTask_Panel   , "Panel"   , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
 
     vTaskStartScheduler();
     return 0;
 }
 
-extern __IO uint32_t receive_count;
-extern __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
-uint8_t Rxbuffer[64];
-uint8_t Txbuffer[64] = "hello my friend \n";
 
-void vTask_VCP(__attribute__((unused)) void *argument){
+// uint8_t Rxbuffer[64];
+// uint8_t Txbuffer[64] = "hello my friend \n";
+
+// void vTask_VCP(__attribute__((unused)) void *argument){
   
-  while(VCP_CheckDataReceived() == 0){
-    vTaskDelay(1);
-  }
+//   while(VCP_CheckDataReceived() == 0){
+//     vTaskDelay(1);
+//   }
   
-  while (1)
-  {
+//   while (1)
+//   {
     
-    GPIO_SetBits(GPIOC, GPIO_Pin_13);
+//     GPIO_SetBits(GPIOC, GPIO_Pin_13);
 
-    if( VCP_CheckDataReceived() != 0){
-      VCP_ReceiveData(&USB_OTG_dev, Rxbuffer, receive_count);
-    }
+//     if( VCP_CheckDataReceived() != 0){
+//       VCP_ReceiveData(&USB_OTG_dev, Rxbuffer, receive_count);
+//     }
 
-    while (VCP_CheckDataSent() == 1) vTaskDelay(1);
+//     while (VCP_CheckDataSent() == 1) vTaskDelay(1);
 
-    VCP_SendData(&USB_OTG_dev, Txbuffer, 20);
-    vTaskDelay(5000);   
-    GPIO_ResetBits(GPIOC, GPIO_Pin_13); 
-    vTaskDelay(5000);
-  }
-}
+//     VCP_SendData(&USB_OTG_dev, Txbuffer, 20);
+//     vTaskDelay(5000);   
+//     GPIO_ResetBits(GPIOC, GPIO_Pin_13); 
+//     vTaskDelay(5000);
+//   }
+// }
 
 

@@ -4,12 +4,14 @@
 #include "port.h"
 #include "mbport.h"
 
-#include "usbd_cdc_if.h"
-#include "usb_device.h"
+#include "usbd_cdc_vcp.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
 #include "cmsis_os.h"
+
+extern __IO uint32_t receive_count;
+extern __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
 
 #define MB_EVENT_BIT_RESET ( 0      )
 #define MB_EVENT_BIT_0	   ( 1 << 0 )
@@ -37,7 +39,6 @@ _Noreturn static TaskHandle_t svTask_modbus_writer(void *pvParametrs){
 
 BOOL xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity eParity )
 {
-    MX_USB_DEVICE_Init();
     return TRUE;
 }
 
@@ -63,7 +64,7 @@ void vMBPortSerialEnable( BOOL xRxEnable, BOOL xTxEnable )
   {
     sblModbusTxEnable = FALSE;
     osSignalSet( sTaskHandle_modbus_writer, MB_EVENT_BIT_RESET );
-    CDC_Transmit_FS((uint8_t * ) ucRTUBuf, usMBPcnt );
+    VCP_SendData(&USB_OTG_dev, (uint8_t * ) ucRTUBuf, usMBPcnt);
     usMBPcnt = 0;
   }
 }
@@ -80,13 +81,17 @@ BOOL xMBPortSerialGetByte( CHAR * pucByte )
     return TRUE;
 }
 
+uint8_t Rxbuffer[256];
 /*
  *  Call back from usb IRQ
  */
-void usb_modbus_callback(const uint8_t *Buf, const uint32_t *Len) {
+void usb_modbus_callback() {
   uint16_t cnt = 0;
-  while (cnt < *Len) {
-    vcMBPrxBuff = (CHAR) Buf[cnt];
+
+  VCP_ReceiveData(&USB_OTG_dev, Rxbuffer, receive_count);
+
+  while (cnt < receive_count) {
+    vcMBPrxBuff = (CHAR) Rxbuffer[cnt];
     pxMBFrameCBByteReceived();
     cnt++;
   }
