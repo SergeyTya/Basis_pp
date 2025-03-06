@@ -75,14 +75,15 @@ static uint16_t VCP_DataTx(void)
   */
 static uint16_t VCP_DataRx(uint32_t Len)
 {
-  if(Len==0) return USBD_OK;
+  // if(Len==0) return USBD_OK;
 
-  if(receive_count != Len){
-    receive_count = Len;
-  }else{
-    usb_modbus_callback();
-  } 
+  // if(receive_count != Len){
+  //   receive_count = Len;
+  // }else{
+  //   usb_modbus_callback();
+  // } 
 
+  receive_count = Len;
   return USBD_OK;
 }
 

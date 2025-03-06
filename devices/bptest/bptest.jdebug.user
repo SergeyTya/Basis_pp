@@ -1,29 +1,30 @@
 
-OpenDocument="main.c", FilePath="/home/sergey/repo/basis_cp/app/main.c", Line=9
-OpenDocument="mcu_init.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/mcu/mcu_init.c", Line=0
-OpenDocument="stm32fxxx_it.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/stm32fxxx_it.c", Line=48
-OpenDocument="tasks.c", FilePath="/home/sergey/repo/basis_cp/drivers/RTOS/tasks.c", Line=3398
-OpenDocument="task_panel.c", FilePath="/home/sergey/repo/basis_cp/app/task_panel.c", Line=58
-OpenDocument="vcpInit.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/usb/vcpInit.c", Line=18
+OpenDocument="modbus_portserial.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/mb/modbus_portserial.c", Line=58
+OpenDocument="stm32fxxx_it.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/stm32fxxx_it.c", Line=47
+OpenDocument="main.c", FilePath="/home/sergey/repo/basis_cp/app/main.c", Line=21
+OpenDocument="usbd_cdc_vcp.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/usb/usbd_cdc_vcp.c", Line=74
 OpenToolbar="File", Floating=0, x=2, y=0
 OpenToolbar="View", Floating=0, x=1, y=0
 OpenToolbar="Debug", Floating=0, x=0, y=0
-OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=0, w=180, h=802, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
-OpenWindow="Disassembly", DockArea=LEFT, x=0, y=1, w=199, h=221, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Memory 1", DockArea=BOTTOM, x=2, y=0, w=242, h=165, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x7AE1518
-OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=102, h=575, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Functions", DockArea=LEFT, x=1, y=0, w=91, h=575, FilterBarShown=1, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Terminal", DockArea=BOTTOM, x=0, y=0, w=228, h=165, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Console", DockArea=BOTTOM, x=1, y=0, w=478, h=165, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-TableHeader="Functions", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[1236;100;100;100;231]
+OpenWindow="Call Stack", DockArea=RIGHT, x=0, y=0, w=417, h=292, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=417, h=335, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Disassembly", DockArea=LEFT, x=0, y=1, w=295, h=224, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Memory 1", DockArea=BOTTOM, x=2, y=0, w=365, h=165, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x7AE1518
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=295, h=386, TabPos=0, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=295, h=386, TabPos=1, TopOfStack=0, FilterBarShown=1, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Terminal", DockArea=BOTTOM, x=0, y=0, w=329, h=165, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Console", DockArea=BOTTOM, x=1, y=0, w=720, h=165, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+TableHeader="Functions", SortCol="Name", SortOrder="DESCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[1236;100;100;100;189]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[161;366;100;100]
 TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
 TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[208;112;259]
-TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[161;366;100;100]
 TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
 TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;359]
+TableHeader="Call Stack", SortCol="Function", SortOrder="ASCENDING", VisibleCols=["Function";"Stack Frame";"Source";"PC";"Return Address";"Stack Used"], ColWidths=[231;119;128;100;168;100]
 WatchedExpression="displayMemory", Window=Watched Data 1
 WatchedExpression="first_line_pos", Window=Watched Data 1
 WatchedExpression="Page1List", Window=Watched Data 1
 WatchedExpression="2000012C", Window=Watched Data 1
 WatchedExpression="current_position", Window=Watched Data 1
-WatchedExpression="cntr", RefreshRate=1, Window=Watched Data 1
+WatchedExpression="receive_count", Window=Watched Data 1
+WatchedExpression="Rxbuffer", RefreshRate=1, Window=Watched Data 1

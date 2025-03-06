@@ -88,12 +88,16 @@ uint8_t Rxbuffer[256];
 void usb_modbus_callback() {
   uint16_t cnt = 0;
 
-  VCP_ReceiveData(&USB_OTG_dev, Rxbuffer, receive_count);
+  //VCP_ReceiveData(&USB_OTG_dev, Rxbuffer, receive_count);
 
   while (cnt < receive_count) {
     vcMBPrxBuff = (CHAR) Rxbuffer[cnt];
     pxMBFrameCBByteReceived();
     cnt++;
   }
+
   pxMBPortCBTimerExpired();
 }
+
+
+void events_dummy(){}
