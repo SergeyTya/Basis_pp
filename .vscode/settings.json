@@ -120,6 +120,9 @@
      "cmake.configureArgs": [
                "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-gcc-toolchain.cmake"
     ],
+    "cSpell.words": [
+        "pntr"
+    ],
 
     
 }

@@ -8,6 +8,8 @@
 #include "semphr.h"
 #include "task.h"
 
+#define LG_NAME "12345 1234"
+
 void vTask_Panel(__attribute__((unused)) void *argument);
 
 
@@ -19,5 +21,6 @@ typedef struct {
     char * const items [18];
     
 }TypeDef_ListWithCursor;
+
 
 #endif

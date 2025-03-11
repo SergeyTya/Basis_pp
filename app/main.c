@@ -13,7 +13,7 @@
 #include "mb.h"
 #include "mbport.h"
 
-uint16_t holdings[10];
+uint16_t holdings[256];
 
 
 void vTask_ethercat(__attribute__((unused)) void *argument);
@@ -48,9 +48,7 @@ void vTask_VCP(__attribute__((unused)) void *argument){
 
   while (1)
   {
-    eMBPoll();
-
-    uint16_t ToCounter = eMBGetTimeoutCounter();
+    eMBPoll(); 
 
     if( VCP_CheckDataReceived() != 0){
       VCP_ReceiveData(&USB_OTG_dev, Rxbuffer, receive_count);
@@ -58,7 +56,7 @@ void vTask_VCP(__attribute__((unused)) void *argument){
       receive_count = 0;
     }
 
-    vTaskDelay(1);
+    vTaskDelay(2);
   }
 }
 

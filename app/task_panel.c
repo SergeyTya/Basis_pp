@@ -1,31 +1,52 @@
-
+#include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include "M204D08AA.h"
 #include "task_panel.h"
+#include "mbsupport.h"
 
-static void Page1(void * arg);
-static void Page2(void * arg);
-static void Page3(void * arg);
-static void Page4(void * arg);
+
+static void Page_Logo(void * arg);
+static void Page_Ac1Indi(void * arg);
+static void Page_Ac2Indi(void * arg);
+static void PageDc1Indi(void * arg);
+static void PageDc2Indi(void * arg);
+static void Page_Setup(void * arg);
+static void Page_Ac1Setup(void * arg);
+static void Page_Dc1Setup(void * arg);
+static void Page_Ac2Setup(void * arg);
+static void Page_Dc2Setup(void * arg);
 static void EndPoint(void * arg);
+static void flash_cursor(char * pntr, size_t pos);
 
 static char displayMemory[80] = {0};
+static char shadowDisplayMemory[80]={0};
+static bool displayUpdateHarBit = false;
+
 static void DisplayUpdater();
 static void CounterUpdater(__attribute__((unused)) void *argument);
-static void ListWithCursor_Draw(TypeDef_ListWithCursor * list);
-static uint16_t dcnt = 0;
-static void(*pages[])(void * arg) = {Page1, Page2, Page3, Page4, EndPoint};
+static void(*pages[])(void * arg) = {
+    Page_Logo, 
+    Page_Ac1Indi, 
+    PageDc1Indi, 
+    PageDc2Indi,  
+    Page_Ac1Setup,
+    Page_Dc1Setup,
+    Page_Setup, 
+    EndPoint};
 
 enum postion{
     PAGE1,
     PAGE2,
     PAGE3,
     PAGE4,
+    PAGE5,
+    PAGE6,
+    PAGE7,
     ENDPOINT
 };
 
-volatile enum postion current_position = PAGE1;
+enum postion current_position = PAGE1;
 
 xSemaphoreHandle xDisplayUpdaterSemaphore;
 
@@ -45,21 +66,19 @@ void vTask_Panel(__attribute__((unused)) void *argument){
     
     while (1)
     {
-        char tmp[80]={0};
-        dcnt++;
-        pages[current_position](tmp);
-        LOAD_DISPLAY_DATA_ASYNC(tmp);        
+        pages[current_position](shadowDisplayMemory);
+        LOAD_DISPLAY_DATA_ASYNC(shadowDisplayMemory);        
         vTaskDelay(10);
     }
 }
 
-void CounterUpdater(__attribute__((unused)) void *argument){
-    while (1)
-    {
-        current_position ++ ;
-        vTaskDelay(2000);
-    }
-}
+// void CounterUpdater(__attribute__((unused)) void *argument){
+//     while (1)
+//     {
+//         current_position ++ ;
+//         vTaskDelay(2000);
+//     }
+// }
 
 void DisplayUpdater(__attribute__((unused)) void *argument)
 {
@@ -68,41 +87,148 @@ void DisplayUpdater(__attribute__((unused)) void *argument)
     while (1)
     {
         xSemaphoreTake( xDisplayUpdaterSemaphore, portMAX_DELAY );
+        displayUpdateHarBit = !displayUpdateHarBit;
         M204D08AA_UpdateDisplayFromBuffer(displayMemory);
         xSemaphoreGive( xDisplayUpdaterSemaphore);
-        vTaskDelay(300);
+        vTaskDelay(150);
     }
 }
 
-TypeDef_ListWithCursor Page1List = {
-    .items =  {"ÏÀÐÀÌÅÒÐ #1","ÏÀÐÀÌÅÒÐ #2","ÏÀÐÀÌÅÒÐ #3","New line 1","New line 2","New line 3","New line 4","New line 5" },
-    .items_size = 8
-};
 
-static void Page1(void * arg){
+static void Page_Logo(void * arg){
+    // clear
+    char * pntr = (char *) arg;
+    memset(pntr, 0, 80);
+    // set static
+    snprintf(&pntr[0], 20, LG_NAME);
+}
+
+void flash_cursor(char * pntr, size_t pos){
+    
+    if(displayUpdateHarBit) {
+        pntr[pos] = 0;
+    }else{
+       if( pntr[pos] == 0x20 ) 
+       pntr[pos] = '_';
+    }
+}
+
+
+
+volatile size_t menu_cur_pos = 0;
+static void Page_Ac1Indi(void * arg){
+
+    char * pntr = (char *) arg;
+    
+    memset(pntr, 0, 80);
+    snprintf(
+        pntr, 
+        60, 
+        "U,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC1(240),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC1(241),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC1(242),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC1(243),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC1(244),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC1(245),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC1(101),
+        90
+    );
+}
+
+static void Page_Ac2Indi(void * arg){
+
+    char * pntr = (char *) arg;
+    
+    memset(pntr, 0, 80);
+    snprintf(
+        pntr, 
+        60, 
+        "U,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC2(240),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC2(241),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC2(242),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC2(243),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC2(244),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC2(245),
+        GET_HOLDING_VALUE_BY_ADR_FROM_AC2(101),
+        90
+    );
+}
+
+
+static void PageDc1Indi(void * arg){
+   
+    char * pntr = (char *) arg;
+    memset(pntr, 0, 80);
+    uint16_t volt = GET_HOLDING_VALUE_BY_ADR_FROM_DC1(211);
+    uint16_t volt_d = volt/10;
+    uint16_t volt_p = volt - volt_d * 10;
+
+    snprintf(pntr, 80, 
+        "          %s DC1                 U,B  %2d,%1d  P,kBT 90 I,A  %4d",
+        LG_NAME,
+        volt_d, volt_p,
+        GET_HOLDING_VALUE_BY_ADR_FROM_DC1(210)
+    ); 
+}
+
+static void PageDc2Indi(void * arg){
+   
+    char * pntr = (char *) arg;
+    memset(pntr, 0, 80);
+    uint16_t volt = GET_HOLDING_VALUE_BY_ADR_FROM_DC2(211);
+    uint16_t volt_d = volt/10;
+    uint16_t volt_p = volt - volt_d * 10;
+
+    snprintf(pntr, 80, 
+        "          %s DC2                 U,B  %2d,%1d  P,kBT 90 I,A  %4d",
+        LG_NAME,
+        volt_d, volt_p,
+        GET_HOLDING_VALUE_BY_ADR_FROM_DC2(210)
+    ); 
+}
+
+static void Page_Ac1Setup(void * arg){
+    uint8_t cursor_pos[] = {35,33,32,31, 55,53,52,51, 75,73,72,71,};
 
     char * pntr = (char *) arg;
     memset(pntr, 0, 80);
-    Page1List.disp = arg;
-    ListWithCursor_Draw(&Page1List);
-    
+
+    uint16_t Uref = GET_HOLDING_VALUE_BY_ADR_FROM_AC1(102);
+    uint16_t Fref = GET_HOLDING_VALUE_BY_ADR_FROM_AC1(101);
+    uint16_t Iref = GET_HOLDING_VALUE_BY_ADR_FROM_AC1(121);
+
+    snprintf(pntr, 80, 
+        " AC1      %sS  U,B     %3d,%1d    E  F,Hz    %3d,%1d    T  LimI,A  %3d,%1d   ", LG_NAME,
+        Uref/10,Uref-(Uref/10)*10, 
+        Fref/10,Fref-(Fref/10)*10, 
+        Iref/10,Iref-(Iref/10)*10
+    );
+
+    if(menu_cur_pos >= sizeof(cursor_pos)) menu_cur_pos = 0;
+    flash_cursor(pntr, cursor_pos[menu_cur_pos]);
 }
 
-static void Page2(void * arg){
-    memset(arg, 0, 80);
-    snprintf(&((char *)arg)[20], 19, "P2 cnrt=%d", dcnt);
-}
-
-static void Page3(void * arg){
-    memset(arg, 0, 80);
-    snprintf(&((char *)arg)[40], 19, "P3 cnrt=%d", dcnt);
-}
-
-static void Page4(void * arg){
+static void Page_Dc1Setup(void * arg){
     char * pntr = (char *) arg;
-    memset(arg, 0, 80);
+    memset(pntr, 0, 80);
+    snprintf(pntr, 80, 
+        " DC1      XXXXX XXXXS                   E   U,B     %3d,%2d  T   LimI,A  %3d,%2d  ",
+        123,33, 123,33
+    );
+}
 
-    snprintf(&(pntr)[60], 19, "4 cnrt=%d", dcnt);
+static void Page_Setup(void * arg){
+    uint8_t cursor_pos[] = {26,27,28, 31,32,33, 36,37,38, 46,47,48, 56,57,58};
+    char * pntr = (char *) arg;
+    memset(pntr, 0, 80);
+    snprintf(pntr, 80, 
+        "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  %1d %5d,%3dï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ %1d ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½               ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½",
+        0, 12345, 333, 1
+    );
+    if(menu_cur_pos >= sizeof(cursor_pos)) menu_cur_pos = 0;
+    flash_cursor(pntr, cursor_pos[menu_cur_pos]);
 }
 
 static void EndPoint(void * arg){
@@ -110,31 +236,5 @@ static void EndPoint(void * arg){
 }
 
 
-
-void ListWithCursor_Draw(TypeDef_ListWithCursor * list){
-    if(list->cursor_pos>3){
-        list->cursor_pos=3; list->first_line_pos++;
-        if(list->first_line_pos>list->items_size) list->first_line_pos = list->items_size;
-    };
-    if(list->cursor_pos<0){
-        list->cursor_pos=0; list->first_line_pos--;
-        if(list->first_line_pos<0) list->first_line_pos = 0;
-    }
-    
-    for (int i = 0; i < 4; i++)
-    {
-        int item = i + list->first_line_pos;
-        if(item >= list->items_size-(4-i)) item = list->items_size-(4-i);
-        if(item < 0+i) item = i;
-    
-        size_t len = strlen(list->items[item]);
-        if(len>18) len = 18;
-        memcpy(&list->disp[i*20+1], list->items[item], len);
-    
-        if(i==list->cursor_pos){
-            list->disp[i*20]= '[';  list->disp[i*20+19]= ']';
-        }
-    }
-}
 
 //https://radioaktiv.ru/custom_character_generator_for_hd44780.html

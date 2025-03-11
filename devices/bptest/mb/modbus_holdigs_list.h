@@ -23,7 +23,7 @@ extern uint16_t holdings[];
     {MB_SLAVE_DC_HOLDING(MB_SLAVE_DC2_HOLDING_SHIFT, MB_SLAVE_DC2_PNTR_SHIFT), MB_SLAVE_DC_HOLDING_NREGS, MB_SLAVE_DC2_HOLDING_SHIFT}  \
 }                                                                 \
 
-#define MB_EXTERNAL_HOLDINGS_NREGS 8
+#define MB_EXTERNAL_HOLDINGS_NREGS 9
 #define MB_EXTERNAL_HOLDINGS {                                                                                           \
                                                                                                                     \
 HR_CREATE_UINT16_PARAM  (/*ADR=*/103, holdings[0],        "Control word"        ,/*min=*/      0,/*max=*/      4, /*def=*/     1,  /*on_change=*/events_dummy),                \
