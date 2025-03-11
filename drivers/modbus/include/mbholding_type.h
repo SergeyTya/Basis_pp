@@ -27,7 +27,7 @@ typedef struct TypeDef_MB_Holding{
 
 typedef struct TypeDef_MB_Table {
 
-  TypeDef_MB_Holding holdings[256];
+  TypeDef_MB_Holding holdings[MB_TABLE_ENTRYS_MAX];
   size_t len;
   uint16_t adr;
 
@@ -91,7 +91,7 @@ HR_CREATE_RO(adr+1,(((uint16_t *) &var)[1]), (((uint16_t *) &var)[0]), info, (ui
 HR_CREATE_RO(adr, (((uint16_t *) &var)[0]), (((uint16_t *) &var)[0]), info, (uint8_t) HTYPE_FLOAT, MB_INDEX_0),\
 HR_CREATE_RO(adr+1, (((uint16_t *) &var)[1]), (((uint16_t *) &var)[0]), info, (uint8_t) HTYPE_FLOAT, MB_INDEX_1)
 
-/*RW uint16_t register*/
+/*RW int16_t register*/
 #define HR_CREATE_UINT16_RW(adr,var, info) \
 HR_CREATE_RW(adr, var, info, (uint8_t) HTYPE_UINT16, MB_INDEX_0)
 
@@ -133,8 +133,12 @@ HR_CREATE_RW(adr+1,(((uint16_t *) &var)[1]), (((uint16_t *) &var)[0]), info, (ui
 #define HR_CREATE_UINT16_PARAM(adr, var, info, min_val, max_val, def_val, change_even_handler) \
 {.reg_adr = adr, .pntr = (uint16_t *) &var, .pntr_base = (uint16_t *) &var, .desc = info, .type = (uint8_t) HTYPE_UINT16, .lim_enbl=1, .min=min_val, .max=max_val, .def=def_val, .on_change=change_even_handler}
 
-#define HR_CREATE_INT16_PARAM_NL(adr, var, info, min_val, max_val, def_val, change_even_handler) \
-{.reg_adr = adr, .pntr = (uint16_t *) &var, .pntr_base = (uint16_t *) &var, .desc = info, .type = (uint8_t) HTYPE_INT16, .lim_enbl=0, .min=min_val, .max=max_val, .def=def_val, .on_change=change_even_handler}
+#define HR_CREATE_INT16_PARAM_NL(adr, var, info, def_val, change_even_handler) \
+{.reg_adr = adr, .pntr = (uint16_t *) &var, .pntr_base = (uint16_t *) &var, .desc = info, .type = (uint8_t) HTYPE_INT16, .lim_enbl=0, .min=0, .max=0, .def=def_val, .on_change=change_even_handler}
+
+#define HR_CREATE_UINT16_PARAM_NL(adr, var, info, def_val, change_even_handler) \
+{.reg_adr = adr, .pntr = (uint16_t *) &var, .pntr_base = (uint16_t *) &var, .desc = info, .type = (uint8_t) HTYPE_UINT16, .lim_enbl=0, .min=0, .max=0, .def=def_val, .on_change=change_even_handler}
+
 
 
 /*RW bool parameter*/

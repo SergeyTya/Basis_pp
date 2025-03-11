@@ -269,10 +269,10 @@ eMBException
 eMBFunGetRegistersCount(UCHAR *pucFrame, USHORT *usLen)
 {
      // holding address
-    uint16_t holding_cnt = REG_HOLDING_NREGS_x00;
-    pucFrame[MB_PDU_DATA_OFF    ] = ( (uint8_t *) &holding_cnt)[1];
-    pucFrame[MB_PDU_DATA_OFF + 1] = ( (uint8_t *) &holding_cnt)[0];
-    *usLen =  3;
+    // uint16_t holding_cnt = REG_HOLDING_NREGS_x00;
+    // pucFrame[MB_PDU_DATA_OFF    ] = ( (uint8_t *) &holding_cnt)[1];
+    // pucFrame[MB_PDU_DATA_OFF + 1] = ( (uint8_t *) &holding_cnt)[0];
+    // *usLen =  3;
 
     return MB_EX_NONE;
 }
