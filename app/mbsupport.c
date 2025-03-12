@@ -19,3 +19,19 @@ uint16_t * GetHoldingPntrByAdrFromTable(uint8_t adr, TypeDef_MB_Table * table ){
 
     return ret_val;
 }
+
+uint16_t * GetHoldingPntrByAdrFromAC1(uint8_t adr ){
+    return GetHoldingPntrByAdrFromTable(adr,  &AC1_TABLE);
+}
+
+uint16_t * GetHoldingPntrByAdrFromAC2(uint8_t adr ){
+    return GetHoldingPntrByAdrFromTable(adr,  &AC2_TABLE);
+}
+
+uint16_t * GetHoldingPntrByAdrFromDC1(uint8_t adr ){
+    return GetHoldingPntrByAdrFromTable(adr,  &DC1_TABLE);
+}
+
+uint16_t * GetHoldingPntrByAdrFromDC2(uint8_t adr ){
+    return GetHoldingPntrByAdrFromTable(adr,  &DC2_TABLE);
+}

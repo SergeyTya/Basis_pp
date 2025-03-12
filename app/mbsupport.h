@@ -12,7 +12,7 @@ extern TypeDef_MB_Table holdings_table[];
 #define DC1_TABLE holdings_table[3]
 #define DC2_TABLE holdings_table[4]
 
-#define GET_HOLDING_PNTR_BY_ADR_FROM_AC1(adr) (GetHoldingPntrByAdrFromTable(adr, &AC1_TABLE))
+#define GET_HOLDING_PNTR_BY_ADR_FROM_AC1(adr) (GetHoldingPntrByAdrFromAC1(adr))
 #define GET_HOLDING_VALUE_BY_ADR_FROM_AC1(adr) (*GET_HOLDING_PNTR_BY_ADR_FROM_AC1(adr))
 
 #define GET_HOLDING_PNTR_BY_ADR_FROM_AC2(adr) (GetHoldingPntrByAdrFromTable(adr, &AC2_TABLE))
@@ -25,6 +25,9 @@ extern TypeDef_MB_Table holdings_table[];
 #define GET_HOLDING_VALUE_BY_ADR_FROM_DC2(adr) (*GET_HOLDING_PNTR_BY_ADR_FROM_DC2(adr))
 
 uint16_t * GetHoldingPntrByAdrFromTable(uint8_t adr, TypeDef_MB_Table * table );
-
+uint16_t * GetHoldingPntrByAdrFromAC1(uint8_t adr );
+uint16_t * GetHoldingPntrByAdrFromAC2(uint8_t adr );
+uint16_t * GetHoldingPntrByAdrFromDC1(uint8_t adr );
+uint16_t * GetHoldingPntrByAdrFromDC2(uint8_t adr );
 
 #endif
