@@ -1,33 +1,38 @@
 
+OpenDocument="main.c", FilePath="/home/sergey/repo/basis_cp/app/main.c", Line=12
+OpenDocument="mcu_init.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/mcu/mcu_init.c", Line=0
 OpenDocument="list.c", FilePath="/home/sergey/repo/basis_cp/drivers/RTOS/list.c", Line=62
-OpenDocument="task_panel.c", FilePath="/home/sergey/repo/basis_cp/app/task_panel.c", Line=69
-OpenDocument="tasks.c", FilePath="/home/sergey/repo/basis_cp/drivers/RTOS/tasks.c", Line=2779
-OpenDocument="stm32fxxx_it.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/stm32fxxx_it.c", Line=51
-OpenDocument="main.c", FilePath="/home/sergey/repo/basis_cp/app/main.c", Line=15
+OpenDocument="stm32fxxx_it.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/stm32fxxx_it.c", Line=48
+OpenDocument="tasks.c", FilePath="/home/sergey/repo/basis_cp/drivers/RTOS/tasks.c", Line=3030
+OpenDocument="task_panel.c", FilePath="/home/sergey/repo/basis_cp/app/task_panel.c", Line=66
+OpenDocument="vcpInit.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/usb/vcpInit.c", Line=20
 OpenToolbar="File", Floating=0, x=2, y=0
 OpenToolbar="View", Floating=0, x=1, y=0
 OpenToolbar="Debug", Floating=0, x=0, y=0
-OpenWindow="Call Stack", DockArea=RIGHT, x=0, y=0, w=528, h=232, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=528, h=263, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
-OpenWindow="Disassembly", DockArea=LEFT, x=0, y=1, w=313, h=184, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Memory 1", DockArea=BOTTOM, x=2, y=0, w=397, h=402, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x7AE1518
-OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=313, h=294, TabPos=0, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=313, h=294, TabPos=1, TopOfStack=0, FilterBarShown=1, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Terminal", DockArea=BOTTOM, x=0, y=0, w=357, h=402, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Console", DockArea=BOTTOM, x=1, y=0, w=782, h=402, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Call Stack", DockArea=RIGHT, x=0, y=0, w=355, h=322, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=355, h=359, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Disassembly", DockArea=LEFT, x=0, y=1, w=574, h=264, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Memory 1", DockArea=BOTTOM, x=2, y=0, w=428, h=216, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x7AE1518
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=574, h=400, TabPos=0, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=574, h=400, TabPos=1, TopOfStack=0, FilterBarShown=1, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Terminal", DockArea=BOTTOM, x=0, y=0, w=385, h=216, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Console", DockArea=BOTTOM, x=1, y=0, w=842, h=216, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 TableHeader="Functions", SortCol="Name", SortOrder="DESCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[1236;100;100;100;100]
+TableHeader="Call Stack", SortCol="Function", SortOrder="ASCENDING", VisibleCols=["Function";"Stack Frame";"Source";"PC";"Return Address";"Stack Used"], ColWidths=[231;119;128;100;168;100]
 TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
 TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[208;112;259]
 TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
 TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[161;366;100;100]
 TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;359]
-TableHeader="Call Stack", SortCol="Function", SortOrder="ASCENDING", VisibleCols=["Function";"Stack Frame";"Source";"PC";"Return Address";"Stack Used"], ColWidths=[231;119;128;100;168;100]
-WatchedExpression="displayMemory", Window=Watched Data 1
-WatchedExpression="first_line_pos", Window=Watched Data 1
-WatchedExpression="Page1List", Window=Watched Data 1
-WatchedExpression="2000012C", Window=Watched Data 1
-WatchedExpression="current_position", DisplayFormat=DISPLAY_FORMAT_CHAR, Window=Watched Data 1
-WatchedExpression="receive_count", Window=Watched Data 1
-WatchedExpression="Rxbuffer", RefreshRate=1, Window=Watched Data 1
-WatchedExpression="menu_cur_mem", RefreshRate=1, Window=Watched Data 1
-WatchedExpression="menu_cur_pos", Window=Watched Data 1
+WatchedExpression="displayMemory", RefreshRate=1, DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="first_line_pos", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="Page1List", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="current_position", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="receive_count", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="menu_cur_mem", RefreshRate=1, DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="menu_cur_pos", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="cntr", RefreshRate=1, DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="holdings_table[1]", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="shadowDisplayMemory", RefreshRate=1, DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1
+WatchedExpression="upkey", Window=Watched Data 1
+WatchedExpression="dwnkey", DisplayFormat=DISPLAY_FORMAT_DEC, Window=Watched Data 1

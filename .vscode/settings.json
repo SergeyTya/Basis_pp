@@ -115,7 +115,9 @@
         "m204d08aa_port.h": "c",
         "task_panel.h": "c",
         "cstring": "c",
-        "format": "c"
+        "format": "c",
+        "mbsupport.h": "c",
+        "task_master.h": "c"
     }, 
      "cmake.configureArgs": [
                "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-gcc-toolchain.cmake"

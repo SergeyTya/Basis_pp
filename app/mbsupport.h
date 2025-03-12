@@ -6,6 +6,7 @@
 #include "modbus_holdigs_list.h"
 
 extern TypeDef_MB_Table holdings_table[];
+extern TypeDef_MB_Holding mbsupportNullHolding;
 
 #define AC1_TABLE holdings_table[1]
 #define AC2_TABLE holdings_table[2]
@@ -29,5 +30,12 @@ uint16_t * GetHoldingPntrByAdrFromAC1(uint8_t adr );
 uint16_t * GetHoldingPntrByAdrFromAC2(uint8_t adr );
 uint16_t * GetHoldingPntrByAdrFromDC1(uint8_t adr );
 uint16_t * GetHoldingPntrByAdrFromDC2(uint8_t adr );
+
+TypeDef_MB_Holding * GetHoldingByAdrFromAC1(uint8_t adr );
+TypeDef_MB_Holding * GetHoldingByAdrFromAC2(uint8_t adr );
+TypeDef_MB_Holding * GetHoldingByAdrFromDC1(uint8_t adr );
+TypeDef_MB_Holding * GetHoldingByAdrFromDC2(uint8_t adr );
+
+#define IS_HOLDING_NULL_POINTER( adr )  (adr == &mbsupportNullHolding)||(adr==0)?true:false
 
 #endif

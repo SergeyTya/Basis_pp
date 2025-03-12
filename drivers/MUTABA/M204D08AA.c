@@ -12,7 +12,12 @@ void M204D08AA_WriteCmdAsync(uint8_t cmd, uint8_t data)
     uint16_t tmp = cmd*256 + data;
     M204D08AA_STB_SetState(true);
     M204D08AA_STB_WriteWord(tmp);
-    M204D08AA_STB_SetState(false);   
+    for (size_t i = 0; i < 100; i++) // need some delay?
+    {
+        M204D08AA_STB_SetState(false);  
+    }
+    
+    
 }
 
 //win1251 only!!!!!!!!!!
@@ -28,15 +33,11 @@ const char Decode2Rus[] = {
     
 static void PrintString(char *string,size_t len )
 {
-    char c; 
     for (size_t i = 0; i < len; i++)
     {
-        c=*string++;
-        
+        char c=string[i];
         if(c >= -64 && c< -32) {
-            size_t res = 64+c;
-            char out = Decode2Rus[res];
-            M204D08AA_WriteCmdAsync(250, out);
+            M204D08AA_WriteCmdAsync(250, Decode2Rus[64+c]);
         }
         else {
             M204D08AA_WriteCmdAsync(250,c);
@@ -62,10 +63,12 @@ void M204D08AA_UpdateDisplayFromBuffer(char buff[80]){
 } 
 
 void M204D08AA_DisplayInit(){
-    M204D08AA_HardInit();
-    vTaskDelay(300);
+    M204D08AA_HardInit(); 
+    vTaskDelay(1000);
     M204D08AA_WriteCmdAsync(248,12);   //Display enable
-    vTaskDelay(300);                  // Dispaly clean
+    vTaskDelay(1000);                  // Dispaly clean
+    M204D08AA_WriteCmdAsync(248,1);   //Display clean
+    vTaskDelay(300);
     M204D08AA_WriteCmdAsync(248,63);  // Brightness 25%
     vTaskDelay(300);
 }

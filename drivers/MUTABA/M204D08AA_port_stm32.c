@@ -71,6 +71,7 @@ static void SPI_Config(void)
    GPIO_DeInit(M204D08AA_SPIx_SCK_GPIO_PORT);
    GPIO_DeInit(M204D08AA_SPIx_MISO_GPIO_PORT);
    GPIO_DeInit(M204D08AA_SPIx_MOSI_GPIO_PORT);
+   SPI_I2S_DeInit(M204D08AA_SPIx);
 
     /* Connect SPI pins to AF5 */
     GPIO_PinAFConfig(M204D08AA_SPIx_SCK_GPIO_PORT , M204D08AA_SPIx_SCK_SOURCE , M204D08AA_SPIx_SCK_AF);
@@ -105,13 +106,12 @@ static void SPI_Config(void)
 
     /* SPI configuration -------------------------------------------------------*/
 
-    SPI_I2S_DeInit(M204D08AA_SPIx);
     SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
     SPI_InitStructure.SPI_DataSize = SPI_DataSize_16b;
     SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
     SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
     SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_128;
+    SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_64;
     SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
     SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
     SPI_Init(M204D08AA_SPIx, &SPI_InitStructure);

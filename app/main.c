@@ -13,6 +13,8 @@
 #include "mb.h"
 #include "mbport.h"
 
+#include "task_master.h"
+
 uint16_t holdings[256];
 
 
@@ -23,9 +25,11 @@ void vTask_blinkBlakpill(__attribute__((unused)) void *argument);
 int main() {
 
     vMCU_init();
+
     
-    xTaskCreate(vTask_VCP     , "VCP"     , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
-    xTaskCreate(vTask_Panel   , "Panel"   , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+    xTaskCreate(vTask_Master   , "Master"  , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
+    xTaskCreate(vTask_VCP     , "VCP"     , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
+    xTaskCreate(vTask_Panel   , "Panel"   , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
 
     vTaskStartScheduler();
     return 0;
@@ -37,10 +41,11 @@ eMBErrorCode eStatus;
 extern __IO uint32_t receive_count;
 extern __ALIGN_BEGIN USB_OTG_CORE_HANDLE USB_OTG_dev __ALIGN_END;
 extern uint8_t Rxbuffer[64];
-// uint8_t Txbuffer[64] = "hello my friend \n";
 
 void vTask_VCP(__attribute__((unused)) void *argument){
-  
+
+    vTaskDelay(3000);
+    vcpInit();
     eStatus = eMBInit(MB_RTU, 1, 0, 115200, MB_PAR_NONE);
     eStatus = eMBEnable();
 

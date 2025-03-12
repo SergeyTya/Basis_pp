@@ -21,6 +21,9 @@ typedef struct TypeDef_MB_Holding{
 
   bool        lim_enbl;
 
+  bool lock;
+  bool change_req;
+
   void (*on_change)(void *);
   
 } TypeDef_MB_Holding;
