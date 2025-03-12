@@ -10,6 +10,8 @@
 
 #define LG_NAME "12345 1234"
 
+//#define LG_NAME "ÏĞÈÂÅÒ ËÈËß"
+
 void vTask_Panel(__attribute__((unused)) void *argument);
 
 
