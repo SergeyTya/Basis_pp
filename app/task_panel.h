@@ -27,40 +27,27 @@ typedef struct {
 }TypeDef_ListWithCursor;
 
 typedef enum {
-    PAGE1,
-    PAGE2,
-    PAGE3,
-    PAGE4,
-    PAGE5,
-    PAGE6,
-    PAGE7,
-    PAGE8,
-    PAGE9,
-    ENDPOINT
-}TypedefEnum_Position;
-
-typedef enum {
-    KEY_NO,
-    KEY_UP,
-    KEY_DOWN,
-    KEY_RIGHT,
-    KEY_LEFT,
-    KEY_ENTER,
-    KEY_LONGENTER,
-    KEY_AC1,
-    KEY_AC2,
-    KEY_DC1,
-    KEY_DC2
+    KEY_NO    = 0,
+    KEY_UP    = 8,
+    KEY_DOWN  = 2,
+    KEY_RIGHT = 6,
+    KEY_LEFT  = 4,
+    KEY_ENTER = 5,
+    KEY_LONGENTER = 7,
+    KEY_AC1 = 10,
+    KEY_AC2 = 11,
+    KEY_DC1 = 12,
+    KEY_DC2 = 13
 }TypedefEnum_ButtonStates;
 
 
 typedef struct 
 {
 
-    uint16_t adr;
-    bool isPartly;
-    uint8_t bitNumber;
-    uint8_t bitsCount;
+    uint16_t adr; // modbus addres
+    bool isBitfieldBit; // only one bit need to be displayed in this item
+    uint8_t bitNumber;  // bit number
+    uint8_t bitsCount;  // bit count (not used)
 
 }TypeDef_AdvancedMenuItem;
 
