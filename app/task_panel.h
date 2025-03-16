@@ -8,6 +8,8 @@
 #include "semphr.h"
 #include "task.h"
 
+#include "panelConfig.h"
+
 #define LG_NAME "12345 1234"
 
 //#define LG_NAME "������ ����"
@@ -51,9 +53,31 @@ typedef struct
 
 }TypeDef_AdvancedMenuItem;
 
+
+typedef struct 
+{
+
+    const char label[10];
+    uint32_t * val;
+    uint32_t limHi;
+    uint32_t limLo;
+    int temVl;
+    bool enable;
+    bool enableLim;
+    bool modified;
+
+    const uint32_t * options;
+    const size_t options_len;
+     
+}TypeDef_ConfigMenuItem;
+
 extern const uint8_t acAdvancedMenuSize;
 extern const TypeDef_AdvancedMenuItem acAdvancedMenu[ 4][15];
 extern const TypeDef_AdvancedMenuItem dcAdvancedMenu[14][15];
+extern Typedef_PanelConfig panelConfig;
+extern size_t configMenuSize;
+extern TypeDef_ConfigMenuItem configMenu[];
+extern const TypeDef_ConfigMenuItem nullMenuItem;
 
 
 #endif

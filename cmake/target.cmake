@@ -20,6 +20,8 @@ function(create_device target_name )
     FILE(GLOB APP_SRC
             ${APP_PATH}/main.c
             ${APP_PATH}/task_panel.c
+            ${APP_PATH}/configMenu.c
+            ${APP_PATH}/panelConfig.c
             ${APP_PATH}/advancedMenu.c
             ${APP_PATH}/task_master.c
             ${APP_PATH}/mbsupport.c

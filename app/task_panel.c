@@ -1,12 +1,15 @@
 /*
-* Refer to manuals/blok-cxema.doc
-*/
+ * Refer to manuals/blok-cxema.doc
+ */
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
 #include "M204D08AA.h"
 #include "task_panel.h"
 #include "mbsupport.h"
+#include "panelConfig.h"
+
+Typedef_PanelConfig panelConfig;
 
 static void Page_Logo(void *arg);
 static void Page_Ac1Indi(void *arg);
@@ -23,6 +26,8 @@ static void Page_Dc1AdvancedSetup(void *arg);
 static void Page_Dc2AdvancedSetup(void *arg);
 static void Page_Confirm(void *arg);
 static void Page_SaveWarning(void *arg);
+static void Page_Config(void *pntr);
+static void page_MenuItemEdit(void *arg);
 static void flash_cursor(char *pntr, size_t pos);
 static void DisplayUpdater();
 
@@ -31,30 +36,30 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
 static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr), int acnum, void *arg);
 static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr), int dcnum, void *arg);
 static inline void Page_AdvancedSetupTemplate(
-    TypeDef_MB_Holding *(*foo)(uint8_t adr),                    // function for searching holding by addr
-    void *arg,                                                  // display buffer pointer
+    TypeDef_MB_Holding *(*foo)(uint8_t adr),                     // function for searching holding by addr
+    void *arg,                                                   // display buffer pointer
     TypeDef_AdvancedMenuItem const (*menuStructureTemplate)[15], // menu item structure
     const char label[3],
-    void (*backPointer)(void*),
-    void (*indiPointer)(void*)
-);
+    void (*backPointer)(void *),
+    void (*indiPointer)(void *));
 
 static inline void onError(void *pntr);
 
 // pointer to current page to be displayed
-static void (*current_page)(void *arg) = Page_Logo;
+static void (*current_page)(void *arg) = page_MenuItemEdit; // Page_Config; // Page_Logo;
 
-static char displayMemory[80] = {0}; // use it for load data to display
+static char displayMemory[80] = {0};       // use it for load data to display
 static char shadowDisplayMemory[80] = {0}; // use it like buffer
-static bool displayUpdateHarBit = false; // this is for symbol blinking
+static bool displayUpdateHarBit = false;   // this is for symbol blinking
 
 volatile TypedefEnum_ButtonStates buttonState = KEY_NO; // put here button state
-xSemaphoreHandle xDisplayUpdaterSemaphore; // display update semaphore. Lock display buffer while transfer it to display 
-static size_t menu_cur_pos = 0; // Position of blinking cursor
+xSemaphoreHandle xDisplayUpdaterSemaphore;              // display update semaphore. Lock display buffer while transfer it to display
+static size_t menu_cur_pos = 0;                         // Position of blinking cursor
 
 void vTask_Panel(__attribute__((unused)) void *argument)
 {
 
+    StructureInit_PanelConfig(&panelConfig);
     vTaskDelay(1000);
     M204D08AA_DisplayInit();
     memset(displayMemory, 80, 0);
@@ -102,10 +107,10 @@ void vTask_Panel(__attribute__((unused)) void *argument)
     }
 }
 
-#include "stm32f4xx.h"  // TODO just for debug. Remove it
+#include "stm32f4xx.h" // TODO just for debug. Remove it
 
 /**
- *  @brief This RTOS task drives display 
+ *  @brief This RTOS task drives display
  */
 void DisplayUpdater(__attribute__((unused)) void *argument)
 {
@@ -117,9 +122,9 @@ void DisplayUpdater(__attribute__((unused)) void *argument)
         displayUpdateHarBit = !displayUpdateHarBit;
         M204D08AA_UpdateDisplayFromBuffer(displayMemory);
         xSemaphoreGive(xDisplayUpdaterSemaphore);
-        GPIO_ResetBits(GPIOC, GPIO_Pin_13);  // Remove it
-        vTaskDelay(5);  // Remove it
-        GPIO_SetBits(GPIOC, GPIO_Pin_13); // Remove it
+        GPIO_ResetBits(GPIOC, GPIO_Pin_13); // Remove it
+        vTaskDelay(5);                      // Remove it
+        GPIO_SetBits(GPIOC, GPIO_Pin_13);   // Remove it
         vTaskDelay(100);
     }
 }
@@ -211,9 +216,9 @@ void flash_cursor(char *pntr, size_t pos)
 
 // Confirm message box
 static void (*pageConfirmedRetPoint)(void *arg) = NULL; // point we will return after confirm finished
-static bool pageConfirmedRetVal = false; // trye if OK button selected
+static bool pageConfirmedRetVal = false;                // trye if OK button selected
 /**
- *  @brief Confirm message box function 
+ *  @brief Confirm message box function
  */
 static void Page_Confirm(void *arg)
 {
@@ -233,17 +238,17 @@ static void Page_Confirm(void *arg)
     pageConfirmedRetVal = false; // reset return value every time
     switch (buttonState)
     {
-    case KEY_LEFT:// navigate
-        menu_cur_pos = 0; 
+    case KEY_LEFT: // navigate
+        menu_cur_pos = 0;
         buttonState = KEY_NO;
         break;
-    case KEY_RIGHT:// navigate
+    case KEY_RIGHT: // navigate
         menu_cur_pos = 1;
         buttonState = KEY_NO;
         break;
-    case KEY_ENTER: 
+    case KEY_ENTER:
         pageConfirmedRetVal = menu_cur_pos == 0; // 0 - if OK
-        current_page = pageConfirmedRetPoint; // SET NEW POINTER
+        current_page = pageConfirmedRetPoint;    // SET NEW POINTER
         buttonState = KEY_NO;
         break;
     default:
@@ -253,7 +258,7 @@ static void Page_Confirm(void *arg)
 
 static void (*pageSaveWarningRetPoint)(void *arg) = NULL; // point we will return when exit
 /**
- *  @brief Warning message box 
+ *  @brief Warning message box
  */
 static void Page_SaveWarning(void *arg)
 {
@@ -277,13 +282,13 @@ static void Page_SaveWarning(void *arg)
 }
 
 /**
- *  @brief Tmaplate for AC channel indicator (monitoring page) 
- * 
- *  @param  foo uint16_t *(*)(uint8_t) - Pointer to function which get holding pointer by modbus addres 
+ *  @brief Tmaplate for AC channel indicator (monitoring page)
+ *
+ *  @param  foo uint16_t *(*)(uint8_t) - Pointer to function which get holding pointer by modbus addres
  *  @param  acnum {int} - AC Channel number  (1 or 2)
  *  @param  arg {void*} - Display buffer pointer (char *)
  */
-static inline void Page_AcIndiTemplate( uint16_t *(*foo)(uint8_t adr), int acnum, void *arg )
+static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum, void *arg)
 {
     char *pntr = (char *)arg;
 
@@ -292,7 +297,7 @@ static inline void Page_AcIndiTemplate( uint16_t *(*foo)(uint8_t adr), int acnum
         pntr,
         80,
         " AC%1d      %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d", acnum, LG_NAME,
-        *foo(240), 
+        *foo(240),
         *foo(241),
         *foo(242),
         *foo(243),
@@ -322,9 +327,9 @@ static inline void Page_AcIndiTemplate( uint16_t *(*foo)(uint8_t adr), int acnum
 }
 
 /**
- *  @brief Tmaplate for DC channel indicator (monitoring page) 
- * 
- *  @param  foo uint16_t *(*)(uint8_t) - Pointer to function which get holding pointer by modbus addres 
+ *  @brief Tmaplate for DC channel indicator (monitoring page)
+ *
+ *  @param  foo uint16_t *(*)(uint8_t) - Pointer to function which get holding pointer by modbus addres
  *  @param  dcnum {int} - DC Channel number (1 or 2)
  *  @param  arg {void*} - Display buffer pointer (char *)
  */
@@ -362,9 +367,9 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
 }
 
 /**
- *  @brief Template for AC channel setup page 
- * 
- *  @param  foo uint16_t *(*)(uint8_t) - Pointer to function which get holding pointer by modbus addres 
+ *  @brief Template for AC channel setup page
+ *
+ *  @param  foo uint16_t *(*)(uint8_t) - Pointer to function which get holding pointer by modbus addres
  *  @param  dcnum {int} - AC Channel number (1 or 2)
  *  @param  arg {void*} - Display buffer pointer (char *)
  */
@@ -723,21 +728,20 @@ DC_PARAM_EXIT:
  *  @param foo  {TypeDef_MB_Holding * (*)(uint8_t)} pointer to function for searching holding by addr
  *  @param arg  {char *} Display buffer pointer
  *  @param label {char[3]} Label to display in upper left corner
- *  @param backPointer {void (*)()} Pointer to setup function 
- *  @param indiPointer {void (*)()} Pointer to monitoring function 
+ *  @param backPointer {void (*)()} Pointer to setup function
+ *  @param indiPointer {void (*)()} Pointer to monitoring function
  */
 static inline void Page_AdvancedSetupTemplate(
-    TypeDef_MB_Holding *(*foo)(uint8_t),                    
-    void *arg,                                                  // 
-    TypeDef_AdvancedMenuItem const (*menuStructureTemplate)[15] , // menu item structure
+    TypeDef_MB_Holding *(*foo)(uint8_t),
+    void *arg,                                                   //
+    TypeDef_AdvancedMenuItem const (*menuStructureTemplate)[15], // menu item structure
     const char label[3],
     void (*backPointer)(),
-    void (*indiPointer)()
-)
+    void (*indiPointer)())
 {
     static const uint8_t pageAdvancedSetupTemplateCursorPos[] = {9, 29, 51, 44, 69, 37, 36, 35, 34, 33}; // active display positions
     // this is corresponding deltas we need to use to increment or decrement smthg
-    static const uint16_t pageAdvancedSetupTemplateDlt[] = {1, 1, 0, 0, 0, 1, 10, 100, 1000, 10000}; 
+    static const uint16_t pageAdvancedSetupTemplateDlt[] = {1, 1, 0, 0, 0, 1, 10, 100, 1000, 10000};
 
     char *pntr = (char *)arg; // display buffer pointer
 
@@ -771,17 +775,17 @@ static inline void Page_AdvancedSetupTemplate(
     uint16_t displayedValue = *holdingSelected->pntr;
 
     if (menuItemSelected->isBitfieldBit)
-    {   // item is bit field, so display only bit value 
+    { // item is bit field, so display only bit value
         uint8_t bit = menuItemSelected->bitNumber;
         displayedValue = (displayedValue & (1U << bit)) >> bit;
     }
 
     memset(pntr, 0, 80);
-   
-         snprintf(pntr, 80,
-              "KATALOG  %1d|      %sPARAMETR %1d|  %5d  HAZAD     |COXPAHiTbMONITORING|          ",
 
-            pageAdvancedSetupTemplateCat, label, pageAdvancedSetupTemplateParam, displayedValue);
+    snprintf(pntr, 80,
+             "KATALOG  %1d|      %sPARAMETR %1d|  %5d  HAZAD     |COXPAHiTbMONITORING|          ",
+
+             pageAdvancedSetupTemplateCat, label, pageAdvancedSetupTemplateParam, displayedValue);
 
     if (menu_cur_pos >= sizeof(pageAdvancedSetupTemplateCursorPos))
         menu_cur_pos = 0;
@@ -790,13 +794,14 @@ static inline void Page_AdvancedSetupTemplate(
     switch (buttonState)
     {
     case KEY_RIGHT:
-        if(menu_cur_pos != 0) menu_cur_pos--;
-    break;
+        if (menu_cur_pos != 0)
+            menu_cur_pos--;
+        break;
 
     case KEY_LEFT:
         menu_cur_pos++;
-    break;
-    
+        break;
+
     case KEY_NO:
         break;
 
@@ -808,14 +813,16 @@ static inline void Page_AdvancedSetupTemplate(
         }
         if (crntCursorPos == 44)
         { // goto setup button position
-            if (!holdingSelected->change_req){
+            if (!holdingSelected->change_req)
+            {
                 holdingSelected->lock = false;
             }
             current_page = backPointer;
         }
         if (crntCursorPos == 69)
         { // goto indicators button position
-            if (!holdingSelected->change_req){
+            if (!holdingSelected->change_req)
+            {
                 holdingSelected->lock = false;
             }
             current_page = indiPointer;
@@ -880,6 +887,147 @@ static inline void onError(void *pntr)
     memset(pntr, 0, 80);
     snprintf(pntr, 80,
              "NULL POINTER ERROR");
+}
+
+static inline void menu2dCheckLimit(int *cursorHPos, int *cursorVPos, int *firstLinePos, size_t menuSize)
+{
+    if (*cursorHPos < 0)
+        *cursorHPos = 2;
+    if (cursorHPos > 2)
+        *cursorHPos = 0;
+
+    if (*cursorVPos < 0)
+    {
+        *cursorVPos = 0;
+        *firstLinePos--;
+        if (*firstLinePos < 0)
+            *firstLinePos = 0;
+    }
+
+    if (*cursorVPos > 2)
+    {
+        *cursorVPos = 2;
+        *firstLinePos++;
+        if (*firstLinePos > (int)menuSize - 3)
+            *firstLinePos = (int)menuSize - 3;
+    }
+}
+
+static TypeDef_ConfigMenuItem *pageMenuItemEditItem = &nullMenuItem;
+static void Page_Config(void *arg)
+{
+    char *pntr = (char *)arg;
+
+    static int pageConfigCursorVer = 0;
+    static int pageConfigCursorHor = 0;
+    static int pageConfigFirstLine = 0;
+    static TypeDef_ConfigMenuItem *pageConfigMenuItemSelected;
+
+    for (size_t i = 0; i < configMenuSize; i++)
+    {
+        if (!configMenu[i].modified)
+        {
+            configMenu[i].temVl = *configMenu[i].val;
+        }
+    }
+
+    menu2dCheckLimit(&pageConfigCursorHor, &pageConfigCursorVer, &pageConfigFirstLine, configMenuSize);
+
+    snprintf(pntr, 80,
+             " %10s   %5d  %10s   %5d  %10s   %5d  Apply         Exit  ",
+             configMenu[pageConfigFirstLine + 0].label, configMenu[pageConfigFirstLine + 0].temVl,
+             configMenu[pageConfigFirstLine + 1].label, configMenu[pageConfigFirstLine + 1].temVl,
+             configMenu[pageConfigFirstLine + 2].label, configMenu[pageConfigFirstLine + 2].temVl);
+
+    if (pageConfigCursorHor == 0)
+    {
+        pntr[0 + 20 * pageConfigCursorVer] = '[';
+        pntr[19 + 20 * pageConfigCursorVer] = ']';
+    }
+
+    if (pageConfigCursorHor == 1)
+    {
+        pntr[73] = '[';
+        pntr[79] = ']';
+    }
+
+    if (pageConfigCursorHor == 2)
+    {
+        pntr[60] = '[';
+        pntr[66] = ']';
+    }
+    menu_cur_pos = 0;
+
+    pageConfigMenuItemSelected = &configMenu[pageConfigFirstLine + pageConfigCursorVer];
+
+    switch (buttonState)
+    {
+    case KEY_UP:
+        pageConfigCursorVer--;
+        break;
+
+    case KEY_DOWN:
+        pageConfigCursorVer++;
+        break;
+    case KEY_LEFT:
+        pageConfigCursorHor++;
+        break;
+    case KEY_RIGHT:
+        pageConfigCursorHor--;
+        break;
+    case KEY_ENTER:
+        if (pageConfigCursorHor == 0)
+        { // goto edit menu
+            pageMenuItemEditItem = pageConfigMenuItemSelected;
+            current_page = page_MenuItemEdit;
+        }
+        else if (pageConfigCursorHor == 1)
+        { // save
+        }
+        else if (pageConfigCursorHor == 2)
+        { // exit
+            pageConfigCursorHor = 0;
+            pageConfigCursorVer = 0;
+            pageConfigFirstLine = 0;
+            for (size_t i = 0; i < configMenuSize; i++)
+            {
+                configMenu[i].modified = false;
+            }
+        }
+        break;
+    }
+}
+
+static void page_MenuItemEdit(void *arg)
+{
+    char *pntr = (char *)arg;
+    TypeDef_ConfigMenuItem *itemSelected = &configMenu[2]; // pageMenuItemEditItem;
+    static int pageMenuItemEditFirstLine = 0;
+    static int pageMenuItemEditCursorPos = 0;
+    itemSelected->modified = true;
+
+    snprintf(pntr, 20,
+             "    *%10s *    ", itemSelected->label);
+
+    snprintf(&pntr[60], 20,
+             " Ok         Chancel  ");
+
+    if (itemSelected->options_len != 0)
+    {
+
+        for (size_t i = 0; i < 2; i++)
+        {
+            if (i >= itemSelected->options_len)
+                break;
+            snprintf(&pntr[20], 20,
+                     "             %5d ", (int)itemSelected->options[i]);
+        }
+    }
+    else
+    {
+        snprintf(pntr, 20,
+                 "    *%5d*    ", itemSelected->temVl);
+    }
 }
 
 // https://radioaktiv.ru/custom_character_generator_for_hd44780.html
