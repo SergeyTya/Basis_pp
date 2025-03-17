@@ -34,10 +34,10 @@ typedef struct
 
     uint32_t brightness;
 
-    bool enableAC1;
-    bool enableAC2;
-    bool enableDC1;
-    bool enableDC2;
+    uint32_t enableAC1;
+    uint32_t enableAC2;
+    uint32_t enableDC1;
+    uint32_t enableDC2;
 
     void (*hw_reboot)();
     void (*hw_save)();

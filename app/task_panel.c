@@ -46,7 +46,7 @@ static inline void Page_AdvancedSetupTemplate(
 static inline void onError(void *pntr);
 
 // pointer to current page to be displayed
-static void (*current_page)(void *arg) = page_MenuItemEdit; // Page_Config; // Page_Logo;
+static void (*current_page)(void *arg) = Page_Config; // Page_Logo;//page_MenuItemEdit; // Page_Config; // Page_Logo;
 
 static char displayMemory[80] = {0};       // use it for load data to display
 static char shadowDisplayMemory[80] = {0}; // use it like buffer
@@ -197,13 +197,18 @@ static void Page_Logo(void *arg)
     vTaskDelay(1);
     // set static
     snprintf(&pntr[0], sizeof(LG_NAME), LG_NAME);
+
+    if (buttonState == KEY_LONGENTER)
+    {
+        current_page = Page_Config;
+    }
 }
 
 void flash_cursor(char *pntr, size_t pos)
 {
     if (displayUpdateHarBit)
     {
-        if (pntr[pos] == 0x20)
+        if (pntr[pos] == 0x20 || pntr[pos] == 0)
         {
             pntr[pos] = '_';
         }
@@ -893,13 +898,13 @@ static inline void menu2dCheckLimit(int *cursorHPos, int *cursorVPos, int *first
 {
     if (*cursorHPos < 0)
         *cursorHPos = 2;
-    if (cursorHPos > 2)
+    if (*cursorHPos > 2)
         *cursorHPos = 0;
 
     if (*cursorVPos < 0)
     {
         *cursorVPos = 0;
-        *firstLinePos--;
+        *firstLinePos = *firstLinePos - 1;
         if (*firstLinePos < 0)
             *firstLinePos = 0;
     }
@@ -907,9 +912,30 @@ static inline void menu2dCheckLimit(int *cursorHPos, int *cursorVPos, int *first
     if (*cursorVPos > 2)
     {
         *cursorVPos = 2;
-        *firstLinePos++;
+        *firstLinePos = *firstLinePos + 1;
         if (*firstLinePos > (int)menuSize - 3)
             *firstLinePos = (int)menuSize - 3;
+    }
+}
+
+static inline void menu2DrawCursor(int *cursorHPos, int *cursorVPos, char *p)
+{
+    if (*cursorHPos == 0)
+    {
+        p[0 + 20 * *cursorVPos] = '[';
+        p[19 + 20 * *cursorVPos] = ']';
+    }
+
+    if (*cursorHPos == 1)
+    {
+        p[73] = '[';
+        p[79] = ']';
+    }
+
+    if (*cursorHPos == 2)
+    {
+        p[60] = '[';
+        p[66] = ']';
     }
 }
 
@@ -933,29 +959,22 @@ static void Page_Config(void *arg)
 
     menu2dCheckLimit(&pageConfigCursorHor, &pageConfigCursorVer, &pageConfigFirstLine, configMenuSize);
 
+    memset(pntr, 0, 80);
     snprintf(pntr, 80,
-             " %10s   %5d  %10s   %5d  %10s   %5d  Apply         Exit  ",
-             configMenu[pageConfigFirstLine + 0].label, configMenu[pageConfigFirstLine + 0].temVl,
-             configMenu[pageConfigFirstLine + 1].label, configMenu[pageConfigFirstLine + 1].temVl,
-             configMenu[pageConfigFirstLine + 2].label, configMenu[pageConfigFirstLine + 2].temVl);
+             " %10s%s  %5d  %10s%s  %5d  %10s%s %6d  Apply         Exit  ",
+             configMenu[pageConfigFirstLine + 0].label, 
+             configMenu[pageConfigFirstLine + 0].modified? "*":" " ,
+             configMenu[pageConfigFirstLine + 0].temVl,
+             configMenu[pageConfigFirstLine + 1].label, 
+             configMenu[pageConfigFirstLine + 1].modified? "*":" ",
+             configMenu[pageConfigFirstLine + 1].temVl,
+             configMenu[pageConfigFirstLine + 2].label, 
+             configMenu[pageConfigFirstLine + 2].modified? "*":" ",
+             configMenu[pageConfigFirstLine + 2].temVl
+    );
 
-    if (pageConfigCursorHor == 0)
-    {
-        pntr[0 + 20 * pageConfigCursorVer] = '[';
-        pntr[19 + 20 * pageConfigCursorVer] = ']';
-    }
+    menu2DrawCursor(&pageConfigCursorHor, &pageConfigCursorVer, pntr);
 
-    if (pageConfigCursorHor == 1)
-    {
-        pntr[73] = '[';
-        pntr[79] = ']';
-    }
-
-    if (pageConfigCursorHor == 2)
-    {
-        pntr[60] = '[';
-        pntr[66] = ']';
-    }
     menu_cur_pos = 0;
 
     pageConfigMenuItemSelected = &configMenu[pageConfigFirstLine + pageConfigCursorVer];
@@ -981,36 +1000,74 @@ static void Page_Config(void *arg)
             pageMenuItemEditItem = pageConfigMenuItemSelected;
             current_page = page_MenuItemEdit;
         }
-        else if (pageConfigCursorHor == 1)
-        { // save
-        }
         else if (pageConfigCursorHor == 2)
+        { // save
+            for (size_t i = 0; i < configMenuSize; i++)
+            {
+                // change value
+                if (configMenu[i].modified)
+                {
+                    configMenu[i].modified = false;
+                    *configMenu[i].val = configMenu[i].temVl;
+                    goto EXIT;
+                }
+            }
+        }
+        else if (pageConfigCursorHor == 1)
         { // exit
-            pageConfigCursorHor = 0;
-            pageConfigCursorVer = 0;
-            pageConfigFirstLine = 0;
+
             for (size_t i = 0; i < configMenuSize; i++)
             {
                 configMenu[i].modified = false;
+                configMenu[i].temVl = *configMenu[i].val;
             }
+            goto EXIT;
         }
         break;
+        default:
+        break;
     }
+    return;
+    EXIT:
+    current_page = Page_Logo;
+    pageConfigCursorHor = 0;
+    pageConfigCursorVer = 0;
+    pageConfigFirstLine = 0;
 }
 
 static void page_MenuItemEdit(void *arg)
 {
     char *pntr = (char *)arg;
-    TypeDef_ConfigMenuItem *itemSelected = &configMenu[2]; // pageMenuItemEditItem;
+    TypeDef_ConfigMenuItem *itemSelected = pageMenuItemEditItem;
     static int pageMenuItemEditFirstLine = 0;
-    static int pageMenuItemEditCursorPos = 0;
-    itemSelected->modified = true;
+    static int pageMenuItemEditCursorHor = 0;
+    static int pageMenuItemEditCursorVer = 0;
+    static const uint8_t pageMenuItemEditCursorPos[] = {36, 35, 34, 33, 32,0}; // active display positions
+    static const int pageMenuItemEditDelta[] = {1, 10, 100, 1000, 10000,0};    // active display positions
+    static uint8_t pageMenuItemEditCursorPosEdit = 0;
 
+    menu2dCheckLimit(&pageMenuItemEditCursorHor, &pageMenuItemEditCursorVer, &pageMenuItemEditFirstLine, itemSelected->options_len);
+    if (pageMenuItemEditCursorVer == 0)
+        pageMenuItemEditCursorVer = 1;
+    if (pageMenuItemEditCursorHor == 1)
+        pageMenuItemEditCursorHor = 2;
+
+    pageMenuItemEditCursorPosEdit = menu_cur_pos;
+    if (menu_cur_pos >= 5)
+    {
+        pageMenuItemEditCursorPosEdit = 5;
+        pageMenuItemEditCursorHor = 2;
+    }else{
+        pageMenuItemEditCursorHor = 0;
+    }
+    if(menu_cur_pos > 6) menu_cur_pos = 0;
+
+    memset(pntr, 0, 80);
     snprintf(pntr, 20,
              "    *%10s *    ", itemSelected->label);
 
     snprintf(&pntr[60], 20,
-             " Ok         Chancel  ");
+             " Exit  ");
 
     if (itemSelected->options_len != 0)
     {
@@ -1019,15 +1076,109 @@ static void page_MenuItemEdit(void *arg)
         {
             if (i >= itemSelected->options_len)
                 break;
-            snprintf(&pntr[20], 20,
-                     "             %5d ", (int)itemSelected->options[i]);
+            snprintf(&pntr[20 + 20 * i], 20,
+                     "             %6d ", (int)itemSelected->options[i + pageMenuItemEditFirstLine]);
         }
+
+        itemSelected->temVl = itemSelected->options[pageMenuItemEditFirstLine + pageMenuItemEditCursorVer - 1];
     }
     else
     {
-        snprintf(pntr, 20,
-                 "    *%5d*    ", itemSelected->temVl);
+        snprintf(&pntr[20], 20,
+                 "            %5d", itemSelected->temVl);
+
+        if (pageMenuItemEditCursorHor == 0)
+            flash_cursor(pntr, pageMenuItemEditCursorPos[pageMenuItemEditCursorPosEdit]);
+
+        if (pageMenuItemEditItem->enableLim)
+        {
+            if (pageMenuItemEditItem->temVl > pageMenuItemEditItem->limHi)
+            {
+                pageMenuItemEditItem->temVl = pageMenuItemEditItem->limHi;
+            }
+            if (pageMenuItemEditItem->temVl < pageMenuItemEditItem->limLo)
+            {
+                pageMenuItemEditItem->temVl = pageMenuItemEditItem->limLo;
+            }
+        }
     }
+
+    menu2DrawCursor(&pageMenuItemEditCursorHor, &pageMenuItemEditCursorVer, pntr);
+
+    switch (buttonState)
+    {
+    case KEY_UP:
+        if (itemSelected->options_len == 0)
+        {
+            itemSelected->temVl += pageMenuItemEditDelta[pageMenuItemEditCursorPosEdit];
+        }
+        else
+        {
+            pageMenuItemEditCursorVer--;
+        }
+        break;
+
+    case KEY_DOWN:
+        if (itemSelected->options_len == 0)
+        {
+            itemSelected->temVl -= pageMenuItemEditDelta[pageMenuItemEditCursorPosEdit];
+        }
+        else
+        {
+            pageMenuItemEditCursorVer++;
+        }
+        break;
+    case KEY_LEFT:
+        if (itemSelected->options_len == 0)
+        {
+            menu_cur_pos++;
+        }
+        else
+        {
+            pageMenuItemEditCursorHor++;
+        }
+        break;
+    case KEY_RIGHT:
+        if (itemSelected->options_len == 0)
+        {
+            if(menu_cur_pos == 0){
+                menu_cur_pos = 6;
+            }else{
+                menu_cur_pos--;
+            }
+        }
+        else
+        {
+            pageMenuItemEditCursorHor--;
+        }
+        break;
+    case KEY_ENTER:
+        if (pageMenuItemEditCursorHor == 0)
+        {                                          // goto edit menu
+            pageMenuItemEditItem->modified = true; // confirm
+            goto EXIT;
+        }
+        else if (pageMenuItemEditCursorHor == 2)
+        { // exit
+            itemSelected->temVl = *itemSelected->val;
+            itemSelected->modified = false;
+            goto EXIT;
+        }
+
+        break;
+    default:
+        break;
+    }
+
+    return;
+
+EXIT:
+    current_page = Page_Config;
+    pageMenuItemEditCursorHor = 0;
+    pageMenuItemEditCursorVer = 0;
+    pageMenuItemEditFirstLine = 0;
+    menu_cur_pos = 0;
+    return;
 }
 
 // https://radioaktiv.ru/custom_character_generator_for_hd44780.html

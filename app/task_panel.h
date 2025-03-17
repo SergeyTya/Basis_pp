@@ -59,8 +59,8 @@ typedef struct
 
     const char label[10];
     uint32_t * val;
-    uint32_t limHi;
-    uint32_t limLo;
+    int limHi;
+    int limLo;
     int temVl;
     bool enable;
     bool enableLim;
