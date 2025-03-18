@@ -46,7 +46,7 @@ static inline void Page_AdvancedSetupTemplate(
 static inline void onError(void *pntr);
 
 // pointer to current page to be displayed
-static void (*current_page)(void *arg) = Page_Config; // Page_Logo;//page_MenuItemEdit; // Page_Config; // Page_Logo;
+static void (*current_page)(void *arg) = Page_Logo;//Page_Config; // Page_Logo;//page_MenuItemEdit; // Page_Config; // Page_Logo;
 
 static char displayMemory[80] = {0};       // use it for load data to display
 static char shadowDisplayMemory[80] = {0}; // use it like buffer
@@ -252,7 +252,7 @@ static void Page_Confirm(void *arg)
         buttonState = KEY_NO;
         break;
     case KEY_ENTER:
-        pageConfirmedRetVal = menu_cur_pos == 0; // 0 - if OK
+        pageConfirmedRetVal = menu_cur_pos == 1; // 0 - if OK
         current_page = pageConfirmedRetPoint;    // SET NEW POINTER
         buttonState = KEY_NO;
         break;
@@ -297,18 +297,29 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
 {
     char *pntr = (char *)arg;
 
+    uint16_t U[3] = {*foo(240)/10, *foo(241)/10U, *foo(242)/10}; // 0.1V
+    for (size_t i = 0; i < 3; i++)
+    {
+        if(U[i]>999U)  U[i] = 999U;
+    }
+
+    uint16_t I[3] = {*foo(243), *foo(244), *foo(245)}; // 0.1V
+    for (size_t i = 0; i < 3; i++)
+    {
+        if(I[i]>999U)  I[i] = 999U;
+    }
+
+    uint16_t F = *foo(101);
+    if(F>999)F = 999U;
+    
     memset(pntr, 0, 80);
     snprintf(
         pntr,
         80,
         " AC%1d      %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d", acnum, LG_NAME,
-        *foo(240),
-        *foo(241),
-        *foo(242),
-        *foo(243),
-        *foo(244),
-        *foo(245),
-        *foo(101),
+        U[0],U[1],U[2],
+        I[0],I[1],I[2],
+        F,
         90);
 
     menu_cur_pos = 0;
@@ -344,14 +355,18 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
     memset(pntr, 0, 80);
     uint16_t volt = *foo(211);
     uint16_t volt_d = volt / 10;
+    if(volt_d>99U)volt_d=99U;
     uint16_t volt_p = volt - volt_d * 10;
+    if(volt_p>9)volt_p=9;
+
+    uint16_t I = *foo(210);
+    if(I>9000U) I = 9000U;
 
     menu_cur_pos = 0;
 
     snprintf(pntr, 80,
              " DC%1d      %s                    U,B  %2d,%1d  P,kBT 90 I,A  %4d", dcnum, LG_NAME,
-             volt_d, volt_p,
-             *foo(210));
+             volt_d, volt_p, I);
 
     switch (buttonState)
     {
@@ -431,11 +446,25 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
         pageAcTemplateIsOnConfirmWait = false; // acknowledge wait
     }
 
+    uint16_t U[2] = {(*Uref->pntr / 10), *Uref->pntr - (*Uref->pntr / 10) * 10};
+    uint16_t F[2] = {(*Fref->pntr / 10), *Fref->pntr - (*Fref->pntr / 10) * 10};
+    uint16_t I[2] = {(*Iref->pntr / 10), *Iref->pntr - (*Iref->pntr / 10) * 10};
+
+    if(U[0]>999U) U[0]=999U;
+    if(I[0]>999U) I[0]=999U;
+    if(F[0]>999U) F[0]=999U;
+
+    if(U[1]>9U) U[1]=9U;
+    if(I[1]>9U) I[1]=9U;
+    if(F[1]>9U) F[1]=9U;
+    
+
     snprintf(pntr, 80,
              " AC%1d      %sS  U,B     %3d,%1d    E  F,Hz    %3d,%1d    T  LimI,A  %3d,%1d   ", acnum, LG_NAME,
-             *Uref->pntr / 10, *Uref->pntr - (*Uref->pntr / 10) * 10,
-             *Fref->pntr / 10, *Fref->pntr - (*Fref->pntr / 10) * 10,
-             *Iref->pntr / 10, *Iref->pntr - (*Iref->pntr / 10) * 10);
+             U[0], U[1],
+             F[0], F[1],
+             I[0], I[1]
+    );
 
     if (menu_cur_pos >= sizeof(pageAcTemplateCursorPos))
         menu_cur_pos = 0;
@@ -451,7 +480,7 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
     case KEY_UP:
         if (!pageAcSetupUnlocked)
             break;
-        if (*selected->pntr < 9999 - pageAcTemplateDlt[menu_cur_pos])
+        if (*selected->pntr < (9999 - pageAcTemplateDlt[menu_cur_pos]))
         {
             selected->lock = true; // lock parameter for changing
             *selected->pntr += pageAcTemplateDlt[menu_cur_pos];
@@ -460,7 +489,7 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
     case KEY_DOWN:
         if (!pageAcSetupUnlocked)
             break;
-        if (*selected->pntr >= 0 + pageAcTemplateDlt[menu_cur_pos])
+        if (*selected->pntr >= (0 + pageAcTemplateDlt[menu_cur_pos]))
         {
             selected->lock = true; // lock parameter for changing
             *selected->pntr -= pageAcTemplateDlt[menu_cur_pos];
@@ -502,7 +531,7 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
     case KEY_NO:
         break;
 
-    case KEY_LEFT:
+    case KEY_RIGHT:
         if (!pageAcSetupUnlocked)
             break;
         // move cursor
@@ -510,7 +539,7 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
             menu_cur_pos--;
         break;
 
-    case KEY_RIGHT:
+    case KEY_LEFT:
         // move cursor
         if (!pageAcSetupUnlocked)
         {
@@ -623,7 +652,7 @@ static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
     case KEY_UP:
         if (!pageDcSetupUnlocked)
             break;
-        if (*selected->pntr < 9999 - pageDcTemplateDlt[menu_cur_pos])
+        if (*selected->pntr < (9999 - pageDcTemplateDlt[menu_cur_pos]))
         {
             selected->lock = true; // lock parameter for changing
             *selected->pntr += pageDcTemplateDlt[menu_cur_pos];
@@ -632,7 +661,7 @@ static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
     case KEY_DOWN:
         if (!pageDcSetupUnlocked)
             break;
-        if (*selected->pntr >= 0 + pageDcTemplateDlt[menu_cur_pos])
+        if (*selected->pntr >= (0 + pageDcTemplateDlt[menu_cur_pos]))
         {
             selected->lock = true; // lock parameter for changing
             *selected->pntr -= pageDcTemplateDlt[menu_cur_pos];
@@ -674,7 +703,7 @@ static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
     case KEY_NO:
         break;
 
-    case KEY_RIGHT:
+    case KEY_LEFT:
         if (!pageDcSetupUnlocked)
             break;
         // move cursor
@@ -682,7 +711,7 @@ static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
             menu_cur_pos--;
         break;
 
-    case KEY_LEFT:
+    case KEY_RIGHT:
         // move cursor
         if (!pageDcSetupUnlocked)
         {

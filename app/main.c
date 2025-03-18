@@ -26,9 +26,11 @@ int main() {
 
     vMCU_init();
 
+    vcpInit();  
+
     
-    xTaskCreate(vTask_Master   , "Master"  , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
-    xTaskCreate(vTask_VCP     , "VCP"     , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
+    xTaskCreate(vTask_Master  , "Master"  , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
+  //  xTaskCreate(vTask_VCP     , "VCP"     , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
     xTaskCreate(vTask_Panel   , "Panel"   , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
 
     vTaskStartScheduler();
@@ -44,8 +46,7 @@ extern uint8_t Rxbuffer[64];
 
 void vTask_VCP(__attribute__((unused)) void *argument){
 
-    vTaskDelay(3000);
-    vcpInit();
+    vcpInit();    
     eStatus = eMBInit(MB_RTU, 1, 0, 115200, MB_PAR_NONE);
     eStatus = eMBEnable();
 

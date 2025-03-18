@@ -14,6 +14,7 @@ void vMCU_init()
  // GPIO_Config();
   
 
+
   GPIO_InitTypeDef GPIO_InitStructure;
 	
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB|RCC_AHB1Periph_GPIOC|RCC_AHB1Periph_GPIOD|RCC_AHB1Periph_GPIOG , ENABLE);

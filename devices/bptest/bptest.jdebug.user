@@ -1,12 +1,14 @@
 
 
-Breakpoint=/home/sergey/repo/basis_cp/app/task_panel.c:356:26, State=BP_STATE_DISABLED
-Breakpoint=/home/sergey/repo/basis_cp/app/task_panel.c:495:9, State=BP_STATE_DISABLED
-OpenDocument="stm32fxxx_it.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/stm32fxxx_it.c", Line=54
-OpenDocument="task_panel.c", FilePath="/home/sergey/repo/basis_cp/app/task_panel.c", Line=199
-OpenDocument="main.c", FilePath="/home/sergey/repo/basis_cp/app/main.c", Line=20
-OpenDocument="tasks.c", FilePath="/home/sergey/repo/basis_cp/drivers/RTOS/tasks.c", Line=3660
-OpenDocument="task_master.c", FilePath="/home/sergey/repo/basis_cp/app/task_master.c", Line=5
+Breakpoint=/home/sergey/repo/basis_cp/app/task_panel.c:431, State=BP_STATE_ON
+Breakpoint=/home/sergey/repo/basis_cp/app/task_master.c:156:28, State=BP_STATE_DISABLED
+Breakpoint=/home/sergey/repo/basis_cp/app/task_master.c:159, State=BP_STATE_DISABLED
+OpenDocument="panelConfig.h", FilePath="/home/sergey/repo/basis_cp/app/panelConfig.h", Line=25
+OpenDocument="task_panel.c", FilePath="/home/sergey/repo/basis_cp/app/task_panel.c", Line=466
+OpenDocument="tasks.c", FilePath="/home/sergey/repo/basis_cp/drivers/RTOS/tasks.c", Line=2186
+OpenDocument="master_port.c", FilePath="/home/sergey/repo/basis_cp/devices/bptest/mb/master_port.c", Line=0
+OpenDocument="main.c", FilePath="/home/sergey/repo/basis_cp/app/main.c", Line=18
+OpenDocument="task_master.c", FilePath="/home/sergey/repo/basis_cp/app/task_master.c", Line=145
 OpenDocument="list.c", FilePath="/home/sergey/repo/basis_cp/drivers/RTOS/list.c", Line=67
 OpenToolbar="File", Floating=0, x=2, y=0
 OpenToolbar="View", Floating=0, x=1, y=0
@@ -15,18 +17,19 @@ OpenWindow="Call Stack", DockArea=RIGHT, x=0, y=0, w=264, h=439, TabPos=1, TopOf
 OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=0, w=264, h=439, TabPos=2, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
 OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=264, h=439, TabPos=0, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
 OpenWindow="Memory 1", DockArea=RIGHT, x=0, y=0, w=264, h=439, TabPos=3, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x2000367C
-OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=773, h=439, TabPos=0, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=773, h=439, TabPos=1, TopOfStack=0, FilterBarShown=1, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Terminal", DockArea=BOTTOM, x=0, y=0, w=664, h=273, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Console", DockArea=BOTTOM, x=1, y=0, w=877, h=273, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=492, h=439, TabPos=1, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=492, h=439, TabPos=2, TopOfStack=0, FilterBarShown=1, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Terminal", DockArea=BOTTOM, x=0, y=0, w=663, h=273, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Console", DockArea=BOTTOM, x=1, y=0, w=874, h=273, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Watched Data 2", DockArea=LEFT, x=0, y=0, w=492, h=439, TabPos=0, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+TableHeader="Watched Data 2", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[240;129;100;100]
+TableHeader="Functions", SortCol="Name", SortOrder="DESCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[1236;100;100;100;147]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[217;366;100;100]
 TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[208;112;259]
 TableHeader="Call Stack", SortCol="Function", SortOrder="ASCENDING", VisibleCols=["Function";"Stack Frame";"Source";"PC";"Return Address";"Stack Used"], ColWidths=[231;119;128;100;168;100]
-TableHeader="Functions", SortCol="Name", SortOrder="DESCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[1236;100;100;100;100]
 TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
 TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
-TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[217;366;100;100]
 TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;359]
-WatchedExpression="displayMemory", RefreshRate=1, DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
 WatchedExpression="first_line_pos", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
 WatchedExpression="Page1List", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
 WatchedExpression="current_position", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
@@ -35,11 +38,12 @@ WatchedExpression="menu_cur_pos", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watch
 WatchedExpression="cntr", RefreshRate=1, DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
 WatchedExpression="holdings_table[1]", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
 WatchedExpression="acAdvancedMenu", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
-WatchedExpression="pageAdvancedSetupTemplateParam", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
-WatchedExpression="pageAcSetupUnlocked", Window=Watched Data 1
-WatchedExpression="pageAcTemplateIsOnConfirmWait", Window=Watched Data 1
-WatchedExpression="pageConfirmedRetPoint", Window=Watched Data 1
-WatchedExpression="current_page", Window=Watched Data 1
-WatchedExpression="pageSaveWarningRetPoint", Window=Watched Data 1
-WatchedExpression="crntCursorPos", Window=Watched Data 1
-WatchedExpression="buttonState", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
+WatchedExpression="pageConfirmedRetPoint", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
+WatchedExpression="current_page", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
+WatchedExpression="crntCursorPos", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
+WatchedExpression="pageMenuItemEditCursorHor", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
+WatchedExpression="menu_cur_pos", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
+WatchedExpression="pageConfigCursorHor", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
+WatchedExpression="panelConfig", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1
+WatchedExpression="holdings_table[1].holdings[1]", RefreshRate=1, Window=Watched Data 2
+WatchedExpression="buttonState", Window=Watched Data 2
