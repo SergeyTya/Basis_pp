@@ -8,10 +8,16 @@
 extern TypeDef_MB_Table holdings_table[];
 extern TypeDef_MB_Holding mbsupportNullHolding;
 
-#define AC1_TABLE holdings_table[1]
-#define AC2_TABLE holdings_table[2]
-#define DC1_TABLE holdings_table[3]
-#define DC2_TABLE holdings_table[4]
+#define CONFIG_SLAVE_NONE 0
+#define CONFIG_SLAVE_AC1  1
+#define CONFIG_SLAVE_AC2  2
+#define CONFIG_SLAVE_DC1  3
+#define CONFIG_SLAVE_DC2  4
+
+#define AC1_TABLE holdings_table[CONFIG_SLAVE_AC1]
+#define AC2_TABLE holdings_table[CONFIG_SLAVE_AC2]
+#define DC1_TABLE holdings_table[CONFIG_SLAVE_DC1]
+#define DC2_TABLE holdings_table[CONFIG_SLAVE_DC2]
 
 #define GET_HOLDING_PNTR_BY_ADR_FROM_AC1(adr) (GetHoldingPntrByAdrFromAC1(adr))
 #define GET_HOLDING_VALUE_BY_ADR_FROM_AC1(adr) (*GET_HOLDING_PNTR_BY_ADR_FROM_AC1(adr))
@@ -31,6 +37,7 @@ uint16_t * GetHoldingPntrByAdrFromAC2(uint8_t adr );
 uint16_t * GetHoldingPntrByAdrFromDC1(uint8_t adr );
 uint16_t * GetHoldingPntrByAdrFromDC2(uint8_t adr );
 
+TypeDef_MB_Holding * GetHoldingByAdrFromTable(uint8_t adr, TypeDef_MB_Table * table );
 TypeDef_MB_Holding * GetHoldingByAdrFromAC1(uint8_t adr );
 TypeDef_MB_Holding * GetHoldingByAdrFromAC2(uint8_t adr );
 TypeDef_MB_Holding * GetHoldingByAdrFromDC1(uint8_t adr );

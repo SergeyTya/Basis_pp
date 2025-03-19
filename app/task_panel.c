@@ -27,7 +27,8 @@ static void Page_Dc2AdvancedSetup(void *arg);
 static void Page_Confirm(void *arg);
 static void Page_SaveWarning(void *arg);
 static void Page_Config(void *pntr);
-static void page_MenuItemEdit(void *arg);
+static void Page_MenuItemEdit(void *arg);
+static void Page_SlaveFault(char *pntr, const char *label, int code);
 static void flash_cursor(char *pntr, size_t pos);
 static void DisplayUpdater();
 
@@ -46,7 +47,7 @@ static inline void Page_AdvancedSetupTemplate(
 static inline void onError(void *pntr);
 
 // pointer to current page to be displayed
-static void (*current_page)(void *arg) = Page_Logo;//Page_Config; // Page_Logo;//page_MenuItemEdit; // Page_Config; // Page_Logo;
+static void (*current_page)(void *arg) = Page_Logo; // Page_Config; // Page_Logo;//Page_MenuItemEdit; // Page_Config; // Page_Logo;
 
 static char displayMemory[80] = {0};       // use it for load data to display
 static char shadowDisplayMemory[80] = {0}; // use it like buffer
@@ -66,7 +67,7 @@ void vTask_Panel(__attribute__((unused)) void *argument)
     vSemaphoreCreateBinary(xDisplayUpdaterSemaphore);
 
     xTaskCreate(DisplayUpdater, "DisplayUpdater", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
-
+    bool faultTrigger[5] = {false};
     while (1)
     {
         // display page
@@ -77,7 +78,6 @@ void vTask_Panel(__attribute__((unused)) void *argument)
         {
             switch (buttonState)
             {
-
             case KEY_AC1:
                 current_page = Page_Ac1Indi;
                 break;
@@ -98,6 +98,26 @@ void vTask_Panel(__attribute__((unused)) void *argument)
 
         // reset buttons
         buttonState = KEY_NO;
+
+        // fault triger
+
+        static void(*pages[])(void * arg) = {NULL,Page_Ac1Indi, Page_Ac2Indi, Page_Dc1Indi, Page_Dc2Indi}; 
+        for (size_t i = 1; i < 5; i++)
+        {
+            if (panelConfig.fault_source[i] == true)
+            {
+                if (faultTrigger[i]==false)
+                {
+                    faultTrigger[i] = true;
+                    current_page = pages[i];
+                    break;
+                }
+            }
+            else
+            {
+                faultTrigger[i] = false;
+            }
+        }
 
         // copy display data
         xSemaphoreTake(xDisplayUpdaterSemaphore, portMAX_DELAY);
@@ -132,61 +152,73 @@ void DisplayUpdater(__attribute__((unused)) void *argument)
 static void Page_Ac1Indi(void *arg)
 {
     Page_AcIndiTemplate(GetHoldingPntrByAdrFromAC1, 1, arg);
+    panelConfig.active_slave = CONFIG_SLAVE_AC1;
 }
 
 static void Page_Ac2Indi(void *arg)
 {
     Page_AcIndiTemplate(GetHoldingPntrByAdrFromAC2, 2, arg);
+    panelConfig.active_slave = CONFIG_SLAVE_AC2;
 }
 
 static void Page_Dc1Indi(void *arg)
 {
     Page_DcIndiTemplate(GetHoldingPntrByAdrFromDC1, 1, arg);
+    panelConfig.active_slave = CONFIG_SLAVE_DC1;
 }
 
 static void Page_Dc2Indi(void *arg)
 {
     Page_DcIndiTemplate(GetHoldingPntrByAdrFromDC2, 2, arg);
+    panelConfig.active_slave = CONFIG_SLAVE_DC2;
 }
 
 static void Page_Ac1Setup(void *arg)
 {
     Page_AcSetupTemplate(GetHoldingByAdrFromAC1, 1, arg);
+    panelConfig.active_slave = CONFIG_SLAVE_AC1;
 }
 
 static void Page_Ac2Setup(void *arg)
 {
     Page_AcSetupTemplate(GetHoldingByAdrFromAC2, 2, arg);
+    panelConfig.active_slave = CONFIG_SLAVE_AC2;
 }
 
 static void Page_Dc1Setup(void *arg)
 {
     Page_DcSetupTemplate(GetHoldingByAdrFromDC1, 1, arg);
+    panelConfig.active_slave = CONFIG_SLAVE_DC1;
 }
 
 static void Page_Dc2Setup(void *arg)
 {
     Page_DcSetupTemplate(GetHoldingByAdrFromDC2, 2, arg);
+    panelConfig.active_slave = CONFIG_SLAVE_DC2;
 }
 
 static void Page_Ac1AdvancedSetup(void *arg)
 {
-    Page_AdvancedSetupTemplate(GetHoldingByAdrFromAC1, arg, acAdvancedMenu, "AC1", Page_Ac1Setup, Page_Ac1Indi);
+    Page_AdvancedSetupTemplate(GetHoldingByAdrFromAC1, arg, acAdvancedMenu, LABEL_AC1, Page_Ac1Setup, Page_Ac1Indi);
+    panelConfig.active_slave = CONFIG_SLAVE_AC1;
 }
 
 static void Page_Ac2AdvancedSetup(void *arg)
 {
-    Page_AdvancedSetupTemplate(GetHoldingByAdrFromAC2, arg, acAdvancedMenu, "AC2", Page_Ac2Setup, Page_Ac2Indi);
+    Page_AdvancedSetupTemplate(GetHoldingByAdrFromAC2, arg, acAdvancedMenu, LABEL_AC2, Page_Ac2Setup, Page_Ac2Indi);
+    panelConfig.active_slave = CONFIG_SLAVE_AC2;
 }
 
 static void Page_Dc1AdvancedSetup(void *arg)
 {
-    Page_AdvancedSetupTemplate(GetHoldingByAdrFromDC1, arg, dcAdvancedMenu, "DC1", Page_Dc1Setup, Page_Dc1Indi);
+    Page_AdvancedSetupTemplate(GetHoldingByAdrFromDC1, arg, dcAdvancedMenu, LABEL_DC1, Page_Dc1Setup, Page_Dc1Indi);
+    panelConfig.active_slave = CONFIG_SLAVE_DC1;
 }
 
 static void Page_Dc2AdvancedSetup(void *arg)
 {
-    Page_AdvancedSetupTemplate(GetHoldingByAdrFromDC2, arg, dcAdvancedMenu, "DC2", Page_Dc2Setup, Page_Dc2Indi);
+    Page_AdvancedSetupTemplate(GetHoldingByAdrFromDC2, arg, dcAdvancedMenu, LABEL_DC2, Page_Dc2Setup, Page_Dc2Indi);
+    panelConfig.active_slave = CONFIG_SLAVE_DC2;
 }
 
 static void Page_Logo(void *arg)
@@ -202,6 +234,7 @@ static void Page_Logo(void *arg)
     {
         current_page = Page_Config;
     }
+    panelConfig.active_slave = CONFIG_SLAVE_NONE;
 }
 
 void flash_cursor(char *pntr, size_t pos)
@@ -297,30 +330,44 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
 {
     char *pntr = (char *)arg;
 
-    uint16_t U[3] = {*foo(240)/10, *foo(241)/10U, *foo(242)/10}; // 0.1V
+    uint16_t U[3] = {*foo(240) / 10, *foo(241) / 10U, *foo(242) / 10}; // 0.1V
     for (size_t i = 0; i < 3; i++)
     {
-        if(U[i]>999U)  U[i] = 999U;
+        if (U[i] > 999U)
+            U[i] = 999U;
     }
 
     uint16_t I[3] = {*foo(243), *foo(244), *foo(245)}; // 0.1V
     for (size_t i = 0; i < 3; i++)
     {
-        if(I[i]>999U)  I[i] = 999U;
+        if (I[i] > 999U)
+            I[i] = 999U;
     }
 
     uint16_t F = *foo(101);
-    if(F>999)F = 999U;
-    
-    memset(pntr, 0, 80);
-    snprintf(
-        pntr,
-        80,
-        " AC%1d      %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d", acnum, LG_NAME,
-        U[0],U[1],U[2],
-        I[0],I[1],I[2],
-        F,
-        90);
+    if (F > 999)
+        F = 999U;
+
+    // process slave error code
+    if (acnum == 1 && panelConfig.fault_source[1] == true)
+    {
+        Page_SlaveFault(pntr, LABEL_AC1, panelConfig.fault_code[1]);
+    }
+    else if (acnum == 2 && panelConfig.fault_source[2] == true)
+    {
+        Page_SlaveFault(pntr, LABEL_AC2, panelConfig.fault_code[2]);
+    }
+    else
+    {
+        memset(pntr, 0, 80);
+        snprintf(
+            pntr, 80,
+            " AC%1d      %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d", acnum, LG_NAME,
+            U[0], U[1], U[2],
+            I[0], I[1], I[2],
+            F,
+            90);
+    }
 
     menu_cur_pos = 0;
 
@@ -355,18 +402,32 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
     memset(pntr, 0, 80);
     uint16_t volt = *foo(211);
     uint16_t volt_d = volt / 10;
-    if(volt_d>99U)volt_d=99U;
+    if (volt_d > 99U)
+        volt_d = 99U;
     uint16_t volt_p = volt - volt_d * 10;
-    if(volt_p>9)volt_p=9;
+    if (volt_p > 9)
+        volt_p = 9;
 
     uint16_t I = *foo(210);
-    if(I>9000U) I = 9000U;
+    if (I > 9000U)
+        I = 9000U;
 
     menu_cur_pos = 0;
 
-    snprintf(pntr, 80,
-             " DC%1d      %s                    U,B  %2d,%1d  P,kBT 90 I,A  %4d", dcnum, LG_NAME,
-             volt_d, volt_p, I);
+    if (dcnum == 1 && panelConfig.fault_source[3] == true)
+    {
+        Page_SlaveFault(pntr, LABEL_DC1, panelConfig.fault_code[3]);
+    }
+    else if (dcnum == 2 && panelConfig.fault_source[4] == true)
+    {
+        Page_SlaveFault(pntr, LABEL_DC2, panelConfig.fault_code[4]);
+    }
+    else
+    {
+        snprintf(pntr, 80,
+                 " DC%1d      %s                    U,B  %2d,%1d  P,kBT 90 I,A  %4d", dcnum, LG_NAME,
+                 volt_d, volt_p, I);
+    }
 
     switch (buttonState)
     {
@@ -450,21 +511,25 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
     uint16_t F[2] = {(*Fref->pntr / 10), *Fref->pntr - (*Fref->pntr / 10) * 10};
     uint16_t I[2] = {(*Iref->pntr / 10), *Iref->pntr - (*Iref->pntr / 10) * 10};
 
-    if(U[0]>999U) U[0]=999U;
-    if(I[0]>999U) I[0]=999U;
-    if(F[0]>999U) F[0]=999U;
+    if (U[0] > 999U)
+        U[0] = 999U;
+    if (I[0] > 999U)
+        I[0] = 999U;
+    if (F[0] > 999U)
+        F[0] = 999U;
 
-    if(U[1]>9U) U[1]=9U;
-    if(I[1]>9U) I[1]=9U;
-    if(F[1]>9U) F[1]=9U;
-    
+    if (U[1] > 9U)
+        U[1] = 9U;
+    if (I[1] > 9U)
+        I[1] = 9U;
+    if (F[1] > 9U)
+        F[1] = 9U;
 
     snprintf(pntr, 80,
              " AC%1d      %sS  U,B     %3d,%1d    E  F,Hz    %3d,%1d    T  LimI,A  %3d,%1d   ", acnum, LG_NAME,
              U[0], U[1],
              F[0], F[1],
-             I[0], I[1]
-    );
+             I[0], I[1]);
 
     if (menu_cur_pos >= sizeof(pageAcTemplateCursorPos))
         menu_cur_pos = 0;
@@ -991,16 +1056,15 @@ static void Page_Config(void *arg)
     memset(pntr, 0, 80);
     snprintf(pntr, 80,
              " %10s%s  %5d  %10s%s  %5d  %10s%s %6d  Apply         Exit  ",
-             configMenu[pageConfigFirstLine + 0].label, 
-             configMenu[pageConfigFirstLine + 0].modified? "*":" " ,
+             configMenu[pageConfigFirstLine + 0].label,
+             configMenu[pageConfigFirstLine + 0].modified ? "*" : " ",
              configMenu[pageConfigFirstLine + 0].temVl,
-             configMenu[pageConfigFirstLine + 1].label, 
-             configMenu[pageConfigFirstLine + 1].modified? "*":" ",
+             configMenu[pageConfigFirstLine + 1].label,
+             configMenu[pageConfigFirstLine + 1].modified ? "*" : " ",
              configMenu[pageConfigFirstLine + 1].temVl,
-             configMenu[pageConfigFirstLine + 2].label, 
-             configMenu[pageConfigFirstLine + 2].modified? "*":" ",
-             configMenu[pageConfigFirstLine + 2].temVl
-    );
+             configMenu[pageConfigFirstLine + 2].label,
+             configMenu[pageConfigFirstLine + 2].modified ? "*" : " ",
+             configMenu[pageConfigFirstLine + 2].temVl);
 
     menu2DrawCursor(&pageConfigCursorHor, &pageConfigCursorVer, pntr);
 
@@ -1027,7 +1091,7 @@ static void Page_Config(void *arg)
         if (pageConfigCursorHor == 0)
         { // goto edit menu
             pageMenuItemEditItem = pageConfigMenuItemSelected;
-            current_page = page_MenuItemEdit;
+            current_page = Page_MenuItemEdit;
         }
         else if (pageConfigCursorHor == 2)
         { // save
@@ -1053,26 +1117,26 @@ static void Page_Config(void *arg)
             goto EXIT;
         }
         break;
-        default:
+    default:
         break;
     }
     return;
-    EXIT:
+EXIT:
     current_page = Page_Logo;
     pageConfigCursorHor = 0;
     pageConfigCursorVer = 0;
     pageConfigFirstLine = 0;
 }
 
-static void page_MenuItemEdit(void *arg)
+static void Page_MenuItemEdit(void *arg)
 {
     char *pntr = (char *)arg;
     TypeDef_ConfigMenuItem *itemSelected = pageMenuItemEditItem;
     static int pageMenuItemEditFirstLine = 0;
     static int pageMenuItemEditCursorHor = 0;
     static int pageMenuItemEditCursorVer = 0;
-    static const uint8_t pageMenuItemEditCursorPos[] = {36, 35, 34, 33, 32,0}; // active display positions
-    static const int pageMenuItemEditDelta[] = {1, 10, 100, 1000, 10000,0};    // active display positions
+    static const uint8_t pageMenuItemEditCursorPos[] = {36, 35, 34, 33, 32, 0}; // active display positions
+    static const int pageMenuItemEditDelta[] = {1, 10, 100, 1000, 10000, 0};    // active display positions
     static uint8_t pageMenuItemEditCursorPosEdit = 0;
 
     menu2dCheckLimit(&pageMenuItemEditCursorHor, &pageMenuItemEditCursorVer, &pageMenuItemEditFirstLine, itemSelected->options_len);
@@ -1086,10 +1150,13 @@ static void page_MenuItemEdit(void *arg)
     {
         pageMenuItemEditCursorPosEdit = 5;
         pageMenuItemEditCursorHor = 2;
-    }else{
+    }
+    else
+    {
         pageMenuItemEditCursorHor = 0;
     }
-    if(menu_cur_pos > 6) menu_cur_pos = 0;
+    if (menu_cur_pos > 6)
+        menu_cur_pos = 0;
 
     memset(pntr, 0, 80);
     snprintf(pntr, 20,
@@ -1170,9 +1237,12 @@ static void page_MenuItemEdit(void *arg)
     case KEY_RIGHT:
         if (itemSelected->options_len == 0)
         {
-            if(menu_cur_pos == 0){
+            if (menu_cur_pos == 0)
+            {
                 menu_cur_pos = 6;
-            }else{
+            }
+            else
+            {
                 menu_cur_pos--;
             }
         }
@@ -1208,6 +1278,17 @@ EXIT:
     pageMenuItemEditFirstLine = 0;
     menu_cur_pos = 0;
     return;
+}
+
+static void Page_SlaveFault(char *pntr, const char *label, int code)
+{
+
+    memset(pntr, 0, 80);
+    snprintf(
+        pntr,
+        80,
+        " AVARIA %s %3d",
+        label, code);
 }
 
 // https://radioaktiv.ru/custom_character_generator_for_hd44780.html

@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 typedef struct 
 {
     
@@ -38,6 +37,12 @@ typedef struct
     uint32_t enableAC2;
     uint32_t enableDC1;
     uint32_t enableDC2;
+
+    // PANEL_CONFIG_ACTIVESLAVE
+    uint32_t active_slave;
+
+    bool fault_source[5];
+    uint32_t fault_code[5];
 
     void (*hw_reboot)();
     void (*hw_save)();

@@ -79,5 +79,10 @@ extern size_t configMenuSize;
 extern TypeDef_ConfigMenuItem configMenu[];
 extern const TypeDef_ConfigMenuItem nullMenuItem;
 
+// label size 3
+#define LABEL_AC1 "AC1"
+#define LABEL_AC2 "AC2"
+#define LABEL_DC1 "DC1"
+#define LABEL_DC2 "DC2"
 
 #endif
