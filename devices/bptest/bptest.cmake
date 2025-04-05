@@ -31,4 +31,8 @@ SET(RTOS_CONFIGH
         ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}
 )
 
+
+#message("-- include rtos ${RTOS}")
+include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/STM32_USB_DRV/config.cmake)
+
 ADD_DEFINITIONS(-DUSE_STM324xG_EVAL)

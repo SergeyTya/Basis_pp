@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file      startup_GD32F405VTGxx.s
+  * @file      startup_GD32F470ZGTxx.s
   * @author    by Elvis
   * @brief     Devices vector table for GCC based toolchains. 
   *            This module performs:
@@ -181,7 +181,7 @@ g_pfnVectors:
   .word     TIMER7_TRG_CMT_TIMER13_IRQHandler     /* TIM8 Trigger and Commutation and TIM14 */
   .word     TIMER7_Channel_IRQHandler                /* TIM8 Capture Compare         */                          
   .word     DMA0_Channel7_IRQHandler           /* DMA1 Stream7                 */                          
-  .word     0                                 /* FSMC                         */                   
+  .word     EXMC_IRQHandler                                 /* FSMC                         */                   
   .word     SDIO_IRQHandler                   /* SDIO                         */                   
   .word     TIMER4_IRQHandler                   /* TIM5                         */                   
   .word     SPI2_IRQHandler                   /* SPI3                         */                   
@@ -194,8 +194,8 @@ g_pfnVectors:
   .word     DMA1_Channel2_IRQHandler           /* DMA2 Stream 2                */                   
   .word     DMA1_Channel3_IRQHandler           /* DMA2 Stream 3                */                   
   .word     DMA1_Channel4_IRQHandler           /* DMA2 Stream 4                */                   
-  .word     0                                 /* Reserved                     */                   
-  .word     0                                 /* Reserved                     */                     
+  .word     ENET_IRQHandler                                 /* Reserved                     */                   
+  .word     ENET_WKUP_IRQHandler                                 /* Reserved                     */                     
   .word     CAN1_TX_IRQHandler                /* CAN2 TX                      */                          
   .word     CAN1_RX0_IRQHandler               /* CAN2 RX0                     */                          
   .word     CAN1_RX1_IRQHandler               /* CAN2 RX1                     */                          
@@ -213,10 +213,17 @@ g_pfnVectors:
   .word     USBHS_IRQHandler                 /* USB OTG HS                   */                   
   .word     DCI_IRQHandler                    /* Reserved                         */                   
   .word     0                                 /* Reserved                  */                   
-  .word     TRNG_IRQHandler               /* Hash and Rng                 */
+  .word     TRNG_IRQHandler                   /* Hash and Rng                 */
   .word     FPU_IRQHandler                    /* FPU                          */
-
-                      
+  .word     UART6_IRQHandler   
+  .word     UART7_IRQHandler       
+  .word     SPI3_IRQHandler 
+  .word     SPI4_IRQHandler 
+  .word     SPI5_IRQHandler 
+  .word     0
+  .word     TLI_IRQHandler  
+  .word     TLI_ER_IRQHandler
+  .word     IPA_IRQHandler
 /*******************************************************************************
 *
 * Provide weak aliases for each Exception handler to the Default_Handler. 
@@ -395,8 +402,8 @@ g_pfnVectors:
    .weak      DMA0_Channel7_IRQHandler               
    .thumb_set DMA0_Channel7_IRQHandler,Default_Handler
                      
-   .weak      FSMC_IRQHandler            
-   .thumb_set FSMC_IRQHandler,Default_Handler
+   .weak      EXMC_IRQHandler            
+   .thumb_set EXMC_IRQHandler,Default_Handler
                      
    .weak      SDIO_IRQHandler            
    .thumb_set SDIO_IRQHandler,Default_Handler
@@ -433,6 +440,12 @@ g_pfnVectors:
             
    .weak      DMA1_Channel4_IRQHandler               
    .thumb_set DMA1_Channel4_IRQHandler,Default_Handler
+
+   .weak      ENET_IRQHandler               
+   .thumb_set ENET_IRQHandler,Default_Handler
+
+   .weak      ENET_WKUP_IRQHandler               
+   .thumb_set ENET_WKUP_IRQHandler,Default_Handler
             
    .weak      CAN1_TX_IRQHandler   
    .thumb_set CAN1_TX_IRQHandler,Default_Handler
@@ -478,15 +491,48 @@ g_pfnVectors:
             
    .weak      USBHS_IRQHandler      
    .thumb_set USBHS_IRQHandler,Default_Handler
-                                                     
+
+   .weak      DCI_IRQHandler                  
+   .thumb_set DCI_IRQHandler,Default_Handler 
+
    .weak      TRNG_IRQHandler                  
    .thumb_set TRNG_IRQHandler,Default_Handler   
 
    .weak      FPU_IRQHandler                  
    .thumb_set FPU_IRQHandler,Default_Handler  
 
-   .weak      DCI_IRQHandler                  
-   .thumb_set DCI_IRQHandler,Default_Handler  
+   .weak      UART6_IRQHandler                  
+   .thumb_set UART6_IRQHandler,Default_Handler 
+
+   .weak      UART7_IRQHandler                  
+   .thumb_set UART7_IRQHandler,Default_Handler
+
+   .weak      SPI3_IRQHandler                  
+   .thumb_set SPI3_IRQHandler,Default_Handler 
+
+   .weak      SPI4_IRQHandler                  
+   .thumb_set SPI4_IRQHandler,Default_Handler
+
+   .weak      SPI5_IRQHandler                  
+   .thumb_set SPI5_IRQHandler,Default_Handler  
+
+   .weak      TLI_IRQHandler                  
+   .thumb_set TLI_IRQHandler,Default_Handler  
+
+   .weak      TLI_ER_IRQHandler                  
+   .thumb_set TLI_ER_IRQHandler,Default_Handler  
+
+   .weak      IPA_IRQHandler                 
+   .thumb_set IPA_IRQHandler,Default_Handler  
+
+
+
+  
+ 
+
+ 
+
+   
 
 /****************************END OF FILE****/
   

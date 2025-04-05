@@ -1,11 +1,12 @@
-
+#include <stdint.h>
+#include <stdbool.h>
 
 #include "dev_cnfg.h"
 
 #include "port.h"
 #include "mbport.h"
 
-#include "gd32f4xx.h"
+// include "gd32f4xx.h"
 #include "gd32f4xx_libopt.h"
 
 
@@ -22,6 +23,16 @@ CHAR                vcMBPrxBuff                      ;
 
 int32_t rtx_cnt = 0;
 volatile char rtx_buffer[MB_BUF_SIZE_MAX];
+
+void setRDEstate(bool state){
+  if(state==true){
+    gpio_bit_set(GPIOD, GPIO_PIN_15);
+    gpio_bit_set(RS_GPIO_CTL_PORT, RS_CTL_PIN);
+  }else{
+    gpio_bit_reset(RS_GPIO_CTL_PORT, RS_CTL_PIN);
+    gpio_bit_reset(GPIOD, GPIO_PIN_15);
+  }
+}
 
 static inline void txDMA_set_state(BOOL state, int32_t cnt){
   if(state == ENABLE){
@@ -115,16 +126,20 @@ BOOL xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBPar
     gpio_mode_set(RS_GPIO_CTL_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, RS_CTL_PIN);
     gpio_output_options_set(RS_GPIO_CTL_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, RS_CTL_PIN);
 
-    nvic_irq_enable(RS_USART_IRQn, 5, 1);
+    // tx alive pin
+    gpio_mode_set(GPIOD, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_15);
+    gpio_output_options_set(GPIOD, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_15);
+
+    nvic_irq_enable(RS_USART_IRQn, 10, 0);
     
     usart_receiver_timeout_enable(RS_USART);
-    // usart_receiver_timeout_threshold_config(RS_USART, 1);
+    usart_receiver_timeout_threshold_config(RS_USART, 1);
 
     /* configure USART DMA */
     usart_dma_config();
     usart_dma_receive_config(RS_USART, USART_DENR_DISABLE); // enable uart receiver DMA
 
-    gpio_bit_reset(RS_GPIO_CTL_PORT, RS_CTL_PIN);
+    setRDEstate(false);
 
     return TRUE;
 }
@@ -149,7 +164,7 @@ void vMBPortSerialEnable( BOOL xRxEnable, BOOL xTxEnable )
     while(sblStopTx == 1) {
       pxMBFrameCBTransmitterEmpty();
     }
-    gpio_bit_set(RS_GPIO_CTL_PORT, RS_CTL_PIN);// switch to receive
+    setRDEstate(true);
     usart_interrupt_enable(RS_USART, USART_INT_TC ); // enable transition complete IRq
     txDMA_set_state(ENABLE, rtx_cnt);
     rtx_cnt = 0;
@@ -196,11 +211,14 @@ void RS_USART_IRQHandler(){
 
   // Transition complete
   if(usart_flag_get(RS_USART, USART_FLAG_TC) == SET){
-    gpio_bit_reset(RS_GPIO_CTL_PORT, RS_CTL_PIN);// switch to receive
+    setRDEstate(false);
     usart_interrupt_disable(RS_USART, USART_INT_TC ); // disable interrupt
     usart_flag_clear(RS_USART, USART_FLAG_TC); // clear flag
     txDMA_set_state(DISABLE, 0);
   }
 
-  NVIC_ClearPendingIRQ(RS_USART_IRQn);
+  NVIC_ClearPendingIRQ(RS_USART_IRQn); 
 }
+
+
+

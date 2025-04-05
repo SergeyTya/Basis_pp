@@ -127,7 +127,6 @@ void vTask_Panel(__attribute__((unused)) void *argument)
     }
 }
 
-#include "stm32f4xx.h" // TODO just for debug. Remove it
 
 /**
  *  @brief This RTOS task drives display
@@ -142,9 +141,9 @@ void DisplayUpdater(__attribute__((unused)) void *argument)
         displayUpdateHarBit = !displayUpdateHarBit;
         M204D08AA_UpdateDisplayFromBuffer(displayMemory);
         xSemaphoreGive(xDisplayUpdaterSemaphore);
-        GPIO_ResetBits(GPIOC, GPIO_Pin_13); // Remove it
-        vTaskDelay(5);                      // Remove it
-        GPIO_SetBits(GPIOC, GPIO_Pin_13);   // Remove it
+       // GPIO_ResetBits(GPIOC, GPIO_Pin_13); // Remove it
+       // vTaskDelay(5);                      // Remove it
+       // GPIO_SetBits(GPIOC, GPIO_Pin_13);   // Remove it
         vTaskDelay(100);
     }
 }

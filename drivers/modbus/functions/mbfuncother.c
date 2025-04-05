@@ -240,7 +240,7 @@ eMBFunGetDeviceInfo(UCHAR *pucFrame, USHORT *usLen)
     size_t build_info_len = strlen(build_info);   // git hash
 
     char crc_str_info[8] = {0};                   // fw crc
-    sprintf((char *) crc_str_info, "%X", *((unsigned *) (UUB_INF2_ADR+0x10)));
+    sprintf((char *) crc_str_info, "%X", *((unsigned *) (0x10)));
 
     memcpy(pucFrame, device_info, device_info_len);
     memcpy(&pucFrame[device_info_len], build_info, build_info_len);
@@ -373,3 +373,5 @@ eMBFunPutHoldingsToScope(UCHAR *pucFrame, USHORT *usLen)
 
     return MB_EX_NONE;
 }
+
+void events_dummy(void * arg){}

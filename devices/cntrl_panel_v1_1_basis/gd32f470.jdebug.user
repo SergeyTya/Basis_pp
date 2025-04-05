@@ -1,0 +1,18 @@
+
+
+Breakpoint=system_gd32f4xx.c:131, State=BP_STATE_ON
+OpenDocument="task_master.c", FilePath="D:/Projects/Basis_pp/app/task_master.c", Line=0
+OpenDocument="system_gd32f4xx.c", FilePath="D:/Projects/Basis_pp/drivers/GD32F4xx_Firmware_Library_V3.0.2/CMSIS/GD/GD32F4xx/Source/system_gd32f4xx.c", Line=102
+OpenDocument="tasks.c", FilePath="D:/Projects/Basis_pp/drivers/RTOS/tasks.c", Line=1973
+OpenDocument="main.c", FilePath="D:/Projects/Basis_pp/app/main.c", Line=0
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=2, w=91, h=170, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=1, w=91, h=92, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Memory 1", DockArea=BOTTOM, x=1, y=0, w=550, h=230, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=510, h=324, FilterBarShown=1, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Find Results", DockArea=RIGHT, x=0, y=0, w=91, h=60, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=567, h=230, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+TableHeader="Functions", SortCol="Name", SortOrder="DESCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[1104;100;100;100;100]
+TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[282;105;224]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]

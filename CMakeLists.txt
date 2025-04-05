@@ -25,10 +25,10 @@ include_directories(
 
 SET(RTOS ${CMAKE_CURRENT_SOURCE_DIR}/drivers/RTOS/)
 
-include(bootloader_embd/loader.cmake)
 
 #create_device("test_panel") 
-create_device("bptest")
+#create_device("bptest")
+create_device("cntrl_panel_v1_1_basis")
  
 
 

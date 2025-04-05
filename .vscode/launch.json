@@ -10,20 +10,33 @@
             "request": "launch",
             "name": "Cortex Debug",
             "cwd": "${workspaceFolder}",
-            "executable": "${workspaceFolder}/build/bptest.elf",
-            "serverpath": "/opt/SEGGER/JLink/JLinkGDBServerCLExe",
+          
             "serverArgs": [],
             "servertype": "jlink",
-            "device": "STM32F401CC",
             "interface": "swd",
             "runToEntryPoint": "main",
-            "armToolchainPath": "/usr/bin/",
-            "svdFile": "${workspaceFolder}/scripts/STM32F401.svd",
-            "gdbPath": "gdb-multiarch",
+            
+           
             "liveWatch": {
                 "enabled": true,
                 "samplesPerSecond": 1
             },
+
+            //"gdbPath": "gdb-multiarch",
+            // "serverpath": "/opt/SEGGER/JLink/JLinkGDBServerCLExe",
+            // "armToolchainPath": "/usr/bin/",
+
+            "gdbPath": "C:/WORK/ThirdParty/arm-none-eabi/bin/arm-none-eabi-gdb.exe",
+            "serverpath": "C:/Program Files (x86)/SEGGER/JLink_V682g/JLinkGDBServerCL.exe",
+         //   "armToolchainPath": "C:/WORK/ThirdParty/arm-none-eabi/bin/",
+
+            // "executable": "${workspaceFolder}/build/bptest.elf",
+            // "device": "STM32F401CC",
+            // "svdFile": "${workspaceFolder}/scripts/STM32F401.svd",
+            
+            "executable": "${workspaceFolder}/build/cntrl_panel_v1_1_basis.elf",
+            "device": "GD32F450ZI",
+            "svdFile": "${workspaceFolder}/scripts/GD32F4xx.svd",
             
         }
     ]
