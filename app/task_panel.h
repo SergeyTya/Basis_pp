@@ -10,7 +10,9 @@
 
 #include "panelConfig.h"
 
-#define LG_NAME "12345 1234"
+#include "locale.h"
+
+
 
 //#define LG_NAME "������ ����"
 
@@ -39,7 +41,11 @@ typedef enum {
     KEY_AC1 = 10,
     KEY_AC2 = 11,
     KEY_DC1 = 12,
-    KEY_DC2 = 13
+    KEY_DC2 = 13,
+    KEY_AC1LONG = 14,
+    KEY_AC2LONG = 15,
+    KEY_DC1LONG = 16,
+    KEY_DC2LONG = 17
 }TypedefEnum_ButtonStates;
 
 
@@ -79,10 +85,5 @@ extern size_t configMenuSize;
 extern TypeDef_ConfigMenuItem configMenu[];
 extern const TypeDef_ConfigMenuItem nullMenuItem;
 
-// label size 3
-#define LABEL_AC1 "AC1"
-#define LABEL_AC2 "AC2"
-#define LABEL_DC1 "DC1"
-#define LABEL_DC2 "DC2"
 
 #endif

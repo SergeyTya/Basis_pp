@@ -44,6 +44,10 @@ typedef struct
     bool fault_source[5];
     uint32_t fault_code[5];
 
+    bool start_req[5];
+
+    bool master_wdg[5];
+
     void (*hw_reboot)();
     void (*hw_save)();
     void (*hw_load)();
