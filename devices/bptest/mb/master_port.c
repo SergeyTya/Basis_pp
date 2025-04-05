@@ -29,3 +29,21 @@ int  master_hwBytesToRead(){
     int retVal = VCP_CheckDataReceived();
     return retVal;
 }
+
+
+void master_hwFault(int dev){
+
+}
+
+void  master_hwStart(int dev){
+
+}
+
+void master_hwStop(int dev){
+
+}
+
+
+void master_hwTimeOut(int slaveAdr){
+
+}

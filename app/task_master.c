@@ -12,8 +12,12 @@ extern Typedef_PanelConfig panelConfig;
 extern void master_hwInit(uint16_t speed);
 extern void master_hwRead(uint8_t *buf, size_t len);
 extern void master_hwWrite(uint8_t *buf, size_t len);
+extern void master_hwFault(int dev);
+extern void master_hwStart(int dev);
+extern void master_hwStop(int dev);
+extern void master_hwTimeOut(int dev);
 extern void master_hwClearRxTxBuf();
-extern int master_hwBytesToRead();
+extern int  master_hwBytesToRead();
 
 TypedefEnum_MasterSates master_writeHolding(uint8_t slave, uint16_t adr, uint16_t val);
 TypedefEnum_MasterSates master_readHolding(uint8_t slave, uint16_t adr, uint16_t *out);
@@ -65,9 +69,39 @@ void vTask_Master(__attribute__((unused)) void *argument)
 
             if (slaveAdr == CONFIG_SLAVE_DC1 || slaveAdr == CONFIG_SLAVE_DC2)
             {
-                holding = GetHoldingByAdrFromTable(240, table);
-                master_readHolding(slaveAdr, holding->reg_adr & 0x0FFF, &tmpFaultReg); // holding->pntr);
-                checkCode(holding, slaveAdr, 8);
+                holding = GetHoldingByAdrFromTable(220, table);
+                master_readHolding(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr); // holding->pntr);
+                if( (*holding->pntr & 0x4)!= 0){ // error flag
+                    holding = GetHoldingByAdrFromTable(240, table);
+                    master_readHolding(slaveAdr, holding->reg_adr & 0x0FFF, &tmpFaultReg); // holding->pntr);
+                    checkCode(holding, slaveAdr, 8);
+                    master_hwFault(slaveAdr);
+                } else{
+                    panelConfig.fault_source[slaveAdr] = false;
+                }
+
+                if( (*holding->pntr & 0x2)!= 0){ // ready flag
+                    if(panelConfig.start_req[slaveAdr] == true){
+                        panelConfig.start_req[slaveAdr]=false;
+                        //send start;
+                        holding = GetHoldingByAdrFromTable(104, table);
+                        uint16_t valStart = *holding->pntr | 0x1;
+                        master_writeHolding( slaveAdr ,holding->reg_adr&0x0FFF, valStart);
+                        master_hwStart(slaveAdr);
+                    }
+                } 
+
+                if( (*holding->pntr & 0x1)!= 0){ // run flag
+                    if(panelConfig.start_req[slaveAdr] == true){
+                        panelConfig.start_req[slaveAdr]=false;
+                        //send stop;
+                        holding = GetHoldingByAdrFromTable(104, table);
+                        uint16_t valStart = *holding->pntr & (~0x1U);
+                        master_writeHolding( slaveAdr ,holding->reg_adr&0x0FFF, valStart);
+                        master_hwStop(slaveAdr);
+                    }
+                } 
+
             }
 
             if (slaveAdr != panelConfig.active_slave)
@@ -84,8 +118,7 @@ void vTask_Master(__attribute__((unused)) void *argument)
                 {
 
                     // send holding value to slave
-                    // TypedefEnum_MasterSates res = master_writeHolding( slaveAdr ,holding->reg_adr&0x0FFF, *holding->pntr);
-
+                    master_writeHolding( slaveAdr ,holding->reg_adr&0x0FFF, *holding->pntr);
                     holding->lock = false;
                     holding->change_req = false;
                     vTaskDelay(300);
@@ -100,6 +133,11 @@ void vTask_Master(__attribute__((unused)) void *argument)
                     {
                         *holding->pntr = out;
                     }
+
+                    //feed master wdg
+                    panelConfig.master_wdg[slaveAdr] = false;
+                }else if(res == MASTERSTATE_TIMEOUT){
+                    master_hwTimeOut(slaveAdr);
                 }
             }
 
@@ -218,7 +256,7 @@ static inline int checkCode(TypeDef_MB_Holding *holding, uint16_t slaveAdr, int 
     uint8_t faultCode = (*holding->pntr) & 0x00FF;
     if (faultCode > 0)
     {
-        for (size_t i = 0; i < mask; i++)
+        for (int i = 0; i < mask; i++)
         { // fault code is bit number
             uint8_t bit = (faultCode & (1 << i)) >> i;
             if (bit == 1)

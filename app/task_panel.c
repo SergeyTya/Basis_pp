@@ -119,11 +119,17 @@ void vTask_Panel(__attribute__((unused)) void *argument)
             }
         }
 
+        // charge master wdg
+        for (size_t i = 1; i < 5; i++)
+        {
+            panelConfig.master_wdg[5] = true;
+        }
+
         // copy display data
         xSemaphoreTake(xDisplayUpdaterSemaphore, portMAX_DELAY);
         memcpy(displayMemory, shadowDisplayMemory, 80);
         xSemaphoreGive(xDisplayUpdaterSemaphore);
-        vTaskDelay(10);
+        vTaskDelay(100);
     }
 }
 
@@ -135,8 +141,7 @@ void DisplayUpdater(__attribute__((unused)) void *argument)
 {
     vTaskDelay(1000);
     while (1)
-    {
-
+    { 
         xSemaphoreTake(xDisplayUpdaterSemaphore, portMAX_DELAY);
         displayUpdateHarBit = !displayUpdateHarBit;
         M204D08AA_UpdateDisplayFromBuffer(displayMemory);
@@ -260,11 +265,13 @@ static bool pageConfirmedRetVal = false;                // trye if OK button sel
 static void Page_Confirm(void *arg)
 {
     static const uint8_t pageConfirmCursorPos[] = {52, 45};
-    static const char *pageConfirmedMess = "                      SAVE SETTINGS?         YES    NO  ";
-
+   
     char *pntr = (char *)arg;
     memset(pntr, 0, 80);
-    snprintf(pntr, strlen(pageConfirmedMess), pageConfirmedMess);
+    snprintf(pntr, 80, 
+        "                        %s?           YES    NO  ",
+        LABEL_9_SAVE
+    );
 
     if (menu_cur_pos > 1) // there is only 2 options
     {
@@ -299,11 +306,14 @@ static void (*pageSaveWarningRetPoint)(void *arg) = NULL; // point we will retur
  */
 static void Page_SaveWarning(void *arg)
 {
-    static const char *pageSaveWarningMess = "|     WARNING      ||    PARAMETERS    ||    NOT SAVED!    ||        OK        | ";
     char *pntr = (char *)arg;
 
     memset(pntr, 0, 80);
-    snprintf(pntr, 80, pageSaveWarningMess);
+    snprintf(pntr, 80, "|     %s      ||    %s    ||   %s   ||        OK        | ",
+        LABEL_9_WARNING,   //9  
+        LABEL_11_PARAMETERS,     //11  
+        LABEL_13_NOTSAVED 
+    );
 
     flash_cursor(pntr, 69);
 
@@ -361,11 +371,18 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
         memset(pntr, 0, 80);
         snprintf(
             pntr, 80,
-            " AC%1d      %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d", acnum, LG_NAME,
+            " AC%1d   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d", 
+            acnum, 
+            panelConfig.master_wdg[acnum]==true? "!":" ",
+            LG_NAME,
             U[0], U[1], U[2],
             I[0], I[1], I[2],
             F,
             90);
+    }
+
+    if(panelConfig.master_wdg[acnum]==true){
+        flash_cursor(pntr,7);
     }
 
     menu_cur_pos = 0;
@@ -419,13 +436,21 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
     }
     else if (dcnum == 2 && panelConfig.fault_source[4] == true)
     {
+        
         Page_SlaveFault(pntr, LABEL_DC2, panelConfig.fault_code[4]);
     }
     else
     {
         snprintf(pntr, 80,
-                 " DC%1d      %s                    U,B  %2d,%1d  P,kBT 90 I,A  %4d", dcnum, LG_NAME,
+                 " DC%1d   %s  %s                    U,B  %2d,%1d  P,kBT 90 I,A  %4d", 
+                 dcnum, 
+                 panelConfig.master_wdg[dcnum+2]? "!": " ",
+                 LG_NAME,
                  volt_d, volt_p, I);
+    }
+
+    if(panelConfig.master_wdg[dcnum+2]==true){
+        flash_cursor(pntr,7);
     }
 
     switch (buttonState)
@@ -881,9 +906,14 @@ static inline void Page_AdvancedSetupTemplate(
     memset(pntr, 0, 80);
 
     snprintf(pntr, 80,
-             "KATALOG  %1d|      %sPARAMETR %1d|  %5d  HAZAD     |COXPAHiTbMONITORING|          ",
-
-             pageAdvancedSetupTemplateCat, label, pageAdvancedSetupTemplateParam, displayedValue);
+             "%s  %1d|      %s%s %1d|  %5d  %s     |%s%s|          ",
+             LABEL_7_KATALOG, 
+             pageAdvancedSetupTemplateCat, 
+             label, 
+             LABEL_8_PARAMETR,
+             pageAdvancedSetupTemplateParam, displayedValue,
+             LABEL_5_NAZAD, LABEL_9_SAVE, LABEL_10_MONIT
+             );
 
     if (menu_cur_pos >= sizeof(pageAdvancedSetupTemplateCursorPos))
         menu_cur_pos = 0;
