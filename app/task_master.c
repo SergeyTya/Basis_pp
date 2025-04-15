@@ -18,6 +18,7 @@ extern void master_hwStop(int dev);
 extern void master_hwTimeOut(int dev);
 extern void master_hwClearRxTxBuf();
 extern int  master_hwBytesToRead();
+extern void master_expectedByteCnt(int size);
 
 TypedefEnum_MasterSates master_writeHolding(uint8_t slave, uint16_t adr, uint16_t val);
 TypedefEnum_MasterSates master_readHolding(uint8_t slave, uint16_t adr, uint16_t *out);
@@ -39,6 +40,7 @@ void vTask_Master(__attribute__((unused)) void *argument)
 
     while (1)
     {
+        panelConfig.enableAC1 = true;
         for (size_t j = 1; j < 5; j++)
         {
             uint16_t slaveAdr = j;
@@ -165,6 +167,8 @@ TypedefEnum_MasterSates master_writeHolding(uint8_t slave, uint16_t adr, uint16_
 
     uint16_t expectedSize = 8;
 
+    master_expectedByteCnt(expectedSize);
+
     for (size_t i = 0; i < 300; i++)
     {
         uint8_t bytesToRead = master_hwBytesToRead();
@@ -214,9 +218,9 @@ TypedefEnum_MasterSates master_readHoldings(uint8_t slave, uint16_t adr, uint16_
     // master_hwClearRxTxBuf();
 
     master_hwWrite(masterRxTxBuf, 8);
-    vTaskDelay(1);
-
     uint16_t expectedSize = 5 + len * 2;
+    master_expectedByteCnt(expectedSize);
+   // vTaskDelay(1);
 
     for (size_t i = 0; i < 100; i++)
     {

@@ -24,6 +24,8 @@ function(create_device target_name )
             ${APP_PATH}/panelConfig.c
             ${APP_PATH}/advancedMenu.c
             ${APP_PATH}/task_master.c
+            ${APP_PATH}/task_modbus.c
+            ${APP_PATH}/task_keyboard.c
             ${APP_PATH}/mbsupport.c
             ${APP_PATH}/devices/${TARGET_NAME}/*.c
             )

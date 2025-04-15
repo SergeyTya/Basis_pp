@@ -117,7 +117,8 @@
         "cstring": "c",
         "format": "c",
         "mbsupport.h": "c",
-        "task_master.h": "c"
+        "task_master.h": "c",
+        "panelconfig.h": "c"
     }, 
      "cmake.configureArgs": [
                "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-gcc-toolchain.cmake"
@@ -125,6 +126,7 @@
     "cSpell.words": [
         "pntr"
     ],
+    "cortex-debug.variableUseNaturalFormat": false,
 
     
 }

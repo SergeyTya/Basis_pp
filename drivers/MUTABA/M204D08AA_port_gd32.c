@@ -1,8 +1,12 @@
 #include "stdint.h"
 #include "stdbool.h"
-#include "M204D08AA.h"
 
 #include "gd32f4xx_libopt.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
+
+#include "M204D08AA.h"
 
 #define M204D08AA_SPIx                           SPI3
 #define M204D08AA_SPIx_CLK                       RCU_SPI3
@@ -41,9 +45,12 @@
 static spi_parameter_struct GD25Q32_spi_struct;
 
 void M204D08AA_SPI_Config();
+void M204D08AA_gpio_congig();
 
 void M204D08AA_HardInit()
 {
+  M204D08AA_gpio_congig();
+  vTaskDelay(300);
   M204D08AA_SPI_Config();
 }
 
@@ -81,14 +88,19 @@ void M204D08AA_SPI_Config(void)
    spi_init(M204D08AA_SPIx, &GD25Q32_spi_struct);
    spi_nss_output_enable(M204D08AA_SPIx);
 
-   spi_enable(M204D08AA_SPIx);
 
-     // SPI CLK
-     GD32_CONGIG_PIN_AS_AF(M204D08AA_SPIx_SCK_PORT, M204D08AA_SPIx_SCK_PIN_AF, M204D08AA_SPIx_SCK_PIN);
-     // SPI TX
-     GD32_CONGIG_PIN_AS_AF(M204D08AA_SPIx_MOSI_PORT, M204D08AA_SPIx_MOSI_PIN_AF, M204D08AA_SPIx_MOSI_PIN);
-     // SPI NSS
-     GD32_CONGIG_PIN_AS_OUT(M204D08AA_SPIx_STB_PORT, M204D08AA_SPIx_STB_PIN);
+    spi_enable(M204D08AA_SPIx);
   
 
+}
+
+void M204D08AA_gpio_congig(){
+         // SPI CLK
+         GD32_CONGIG_PIN_AS_AF(M204D08AA_SPIx_SCK_PORT, M204D08AA_SPIx_SCK_PIN_AF, M204D08AA_SPIx_SCK_PIN);
+         // SPI TX
+         GD32_CONGIG_PIN_AS_AF(M204D08AA_SPIx_MOSI_PORT, M204D08AA_SPIx_MOSI_PIN_AF, M204D08AA_SPIx_MOSI_PIN);
+         // SPI NSS
+         GD32_CONGIG_PIN_AS_OUT(M204D08AA_SPIx_STB_PORT, M204D08AA_SPIx_STB_PIN);
+
+         gpio_bit_set(M204D08AA_SPIx_STB_PORT, M204D08AA_SPIx_STB_PIN);
 }

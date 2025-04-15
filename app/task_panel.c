@@ -60,16 +60,17 @@ static size_t menu_cur_pos = 0;                         // Position of blinking 
 void vTask_Panel(__attribute__((unused)) void *argument)
 {
 
-    StructureInit_PanelConfig(&panelConfig);
-    vTaskDelay(1000);
+   
     M204D08AA_DisplayInit();
     memset(displayMemory, 80, 0);
     vSemaphoreCreateBinary(xDisplayUpdaterSemaphore);
 
     xTaskCreate(DisplayUpdater, "DisplayUpdater", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
     bool faultTrigger[5] = {false};
+
     while (1)
     {
+        if(buttonState == KEY_LONGNO) buttonState = KEY_NO;
         // display page
         current_page(shadowDisplayMemory);
 
@@ -129,7 +130,8 @@ void vTask_Panel(__attribute__((unused)) void *argument)
         xSemaphoreTake(xDisplayUpdaterSemaphore, portMAX_DELAY);
         memcpy(displayMemory, shadowDisplayMemory, 80);
         xSemaphoreGive(xDisplayUpdaterSemaphore);
-        vTaskDelay(100);
+        vTaskDelay(30);
+
     }
 }
 
@@ -146,10 +148,7 @@ void DisplayUpdater(__attribute__((unused)) void *argument)
         displayUpdateHarBit = !displayUpdateHarBit;
         M204D08AA_UpdateDisplayFromBuffer(displayMemory);
         xSemaphoreGive(xDisplayUpdaterSemaphore);
-       // GPIO_ResetBits(GPIOC, GPIO_Pin_13); // Remove it
-       // vTaskDelay(5);                      // Remove it
-       // GPIO_SetBits(GPIOC, GPIO_Pin_13);   // Remove it
-        vTaskDelay(100);
+        vTaskDelay(28);    
     }
 }
 
@@ -1017,11 +1016,15 @@ static inline void onError(void *pntr)
              "NULL POINTER ERROR");
 }
 
-static inline void menu2dCheckLimit(int *cursorHPos, int *cursorVPos, int *firstLinePos, size_t menuSize)
+static inline void menu2dCheckLimit(int *cursorHPos, int *cursorVPos, int *firstLinePos, size_t menuSize, int vCnt, int hCnt )
 {
+    int vInd = vCnt - 1;
+    int vhInd = hCnt - 1;
+
+    if(vhInd <= 0) return;
     if (*cursorHPos < 0)
-        *cursorHPos = 2;
-    if (*cursorHPos > 2)
+        *cursorHPos = vhInd;
+    if (*cursorHPos > vhInd)
         *cursorHPos = 0;
 
     if (*cursorVPos < 0)
@@ -1032,12 +1035,12 @@ static inline void menu2dCheckLimit(int *cursorHPos, int *cursorVPos, int *first
             *firstLinePos = 0;
     }
 
-    if (*cursorVPos > 2)
+    if (*cursorVPos > vInd)
     {
-        *cursorVPos = 2;
+        *cursorVPos = vInd;
         *firstLinePos = *firstLinePos + 1;
-        if (*firstLinePos > (int)menuSize - 3)
-            *firstLinePos = (int)menuSize - 3;
+        if (*firstLinePos > (int)menuSize - vCnt)
+            *firstLinePos = (int)menuSize - vCnt;
     }
 }
 
@@ -1080,7 +1083,7 @@ static void Page_Config(void *arg)
         }
     }
 
-    menu2dCheckLimit(&pageConfigCursorHor, &pageConfigCursorVer, &pageConfigFirstLine, configMenuSize);
+    menu2dCheckLimit(&pageConfigCursorHor, &pageConfigCursorVer, &pageConfigFirstLine, configMenuSize, 3, 3);
 
     memset(pntr, 0, 80);
     snprintf(pntr, 80,
@@ -1131,6 +1134,10 @@ static void Page_Config(void *arg)
                 {
                     configMenu[i].modified = false;
                     *configMenu[i].val = configMenu[i].temVl;
+                    if( configMenu[i].itemChangedEvent != NULL){
+                        configMenu[i].itemChangedEvent();
+                    }
+                    MenuItemGeneralChangedEvent();
                     goto EXIT;
                 }
             }
@@ -1157,32 +1164,38 @@ EXIT:
     pageConfigFirstLine = 0;
 }
 
+static int pageMenuItemEditCursorVer = 0;
+static int pageMenuItemEditFirstLine = 0;
+static int pageMenuItemEditCursorHor = 0;
+
 static void Page_MenuItemEdit(void *arg)
 {
     char *pntr = (char *)arg;
     TypeDef_ConfigMenuItem *itemSelected = pageMenuItemEditItem;
-    static int pageMenuItemEditFirstLine = 0;
-    static int pageMenuItemEditCursorHor = 0;
-    static int pageMenuItemEditCursorVer = 0;
+  
+ 
     static const uint8_t pageMenuItemEditCursorPos[] = {36, 35, 34, 33, 32, 0}; // active display positions
     static const int pageMenuItemEditDelta[] = {1, 10, 100, 1000, 10000, 0};    // active display positions
     static uint8_t pageMenuItemEditCursorPosEdit = 0;
 
-    menu2dCheckLimit(&pageMenuItemEditCursorHor, &pageMenuItemEditCursorVer, &pageMenuItemEditFirstLine, itemSelected->options_len);
-    if (pageMenuItemEditCursorVer == 0)
-        pageMenuItemEditCursorVer = 1;
-    if (pageMenuItemEditCursorHor == 1)
-        pageMenuItemEditCursorHor = 2;
+    menu2dCheckLimit(
+        &pageMenuItemEditCursorHor, 
+        &pageMenuItemEditCursorVer, 
+        &pageMenuItemEditFirstLine, 
+        itemSelected->options_len, 
+        2 , 2
+    );
+
 
     pageMenuItemEditCursorPosEdit = menu_cur_pos;
     if (menu_cur_pos >= 5)
     {
         pageMenuItemEditCursorPosEdit = 5;
-        pageMenuItemEditCursorHor = 2;
+        pageMenuItemEditCursorHor = 1;
     }
     else
     {
-        pageMenuItemEditCursorHor = 0;
+        if (itemSelected->options_len == 0) pageMenuItemEditCursorHor = 0;
     }
     if (menu_cur_pos > 6)
         menu_cur_pos = 0;
@@ -1196,16 +1209,9 @@ static void Page_MenuItemEdit(void *arg)
 
     if (itemSelected->options_len != 0)
     {
-
-        for (size_t i = 0; i < 2; i++)
-        {
-            if (i >= itemSelected->options_len)
-                break;
-            snprintf(&pntr[20 + 20 * i], 20,
-                     "             %6d ", (int)itemSelected->options[i + pageMenuItemEditFirstLine]);
-        }
-
-        itemSelected->temVl = itemSelected->options[pageMenuItemEditFirstLine + pageMenuItemEditCursorVer - 1];
+        snprintf(&pntr[20 + 20 * 0], 20, "             %6d ", (int)itemSelected->options[pageMenuItemEditFirstLine + 0]);
+        snprintf(&pntr[20 + 20 * 1], 20, "             %6d ", (int)itemSelected->options[pageMenuItemEditFirstLine + 1]);
+        itemSelected->temVl = itemSelected->options[pageMenuItemEditFirstLine + pageMenuItemEditCursorVer];
     }
     else
     {
@@ -1228,7 +1234,19 @@ static void Page_MenuItemEdit(void *arg)
         }
     }
 
-    menu2DrawCursor(&pageMenuItemEditCursorHor, &pageMenuItemEditCursorVer, pntr);
+    //menu2DrawCursor(&pageMenuItemEditCursorHor, &pageMenuItemEditCursorVer, pntr);
+
+    if (pageMenuItemEditCursorHor == 0)
+    {
+        pntr[20 + 20 * pageMenuItemEditCursorVer] = '[';
+        pntr[39 + 20 * pageMenuItemEditCursorVer] = ']';
+    }
+
+    if (pageMenuItemEditCursorHor == 1)
+    {
+        pntr[60] = '[';
+        pntr[66] = ']';
+    }
 
     switch (buttonState)
     {
@@ -1286,7 +1304,7 @@ static void Page_MenuItemEdit(void *arg)
             pageMenuItemEditItem->modified = true; // confirm
             goto EXIT;
         }
-        else if (pageMenuItemEditCursorHor == 2)
+        else if (pageMenuItemEditCursorHor == 1)
         { // exit
             itemSelected->temVl = *itemSelected->val;
             itemSelected->modified = false;

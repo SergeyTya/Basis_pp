@@ -10,7 +10,7 @@
 #define LABEL_DC2 "DC2"
 
 #ifdef LOCALE_RU
-    #define LG_NAME "12345 1234" // 10
+    #define LG_NAME "¡¿«»— ¿›–Œ" // 10
     #define LABEL_7_KATALOG     " ¿“¿ÀŒ√"   //7
     #define LABEL_8_PARAMETR    "œ¿–¿Ã≈“–"  //8
     #define LABEL_5_NAZAD       "Õ¿«¿ƒ"     //5

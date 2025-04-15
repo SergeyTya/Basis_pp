@@ -14,7 +14,8 @@
 
 
 
-//#define LG_NAME "������ ����"
+void hwDriveHartBit_led1();
+void hwDriveHartBit_led2();
 
 
 
@@ -31,21 +32,22 @@ typedef struct {
 }TypeDef_ListWithCursor;
 
 typedef enum {
-    KEY_NO    = 0,
-    KEY_UP    = 8,
-    KEY_DOWN  = 2,
-    KEY_RIGHT = 6,
-    KEY_LEFT  = 4,
-    KEY_ENTER = 5,
-    KEY_LONGENTER = 7,
-    KEY_AC1 = 10,
-    KEY_AC2 = 11,
-    KEY_DC1 = 12,
-    KEY_DC2 = 13,
-    KEY_AC1LONG = 14,
-    KEY_AC2LONG = 15,
-    KEY_DC1LONG = 16,
-    KEY_DC2LONG = 17
+    KEY_NO     = 0x7c33,
+    KEY_LONGNO = ~0x7c33,
+    KEY_UP    = 0x7433,
+    KEY_DOWN  = 0x3c33,
+    KEY_RIGHT = 0x7833,
+    KEY_LEFT  = 0x5c33,
+    KEY_ENTER = 0x6c33,
+    KEY_LONGENTER = ~0x6c33,
+    KEY_AC1 = 0x7c32,
+    KEY_AC2 = 0x7c31,
+    KEY_DC1 = 0x7c23,
+    KEY_DC2 = 0x7c13,
+    KEY_AC1LONG = ~0x7c32,
+    KEY_AC2LONG = ~0x7c31,
+    KEY_DC1LONG = ~0x7c23,
+    KEY_DC2LONG = ~0x7c13,
 }TypedefEnum_ButtonStates;
 
 
@@ -74,6 +76,8 @@ typedef struct
 
     const uint32_t * options;
     const size_t options_len;
+
+    void (* itemChangedEvent) ();
      
 }TypeDef_ConfigMenuItem;
 
@@ -81,7 +85,7 @@ extern const uint8_t acAdvancedMenuSize;
 extern const TypeDef_AdvancedMenuItem acAdvancedMenu[ 4][15];
 extern const TypeDef_AdvancedMenuItem dcAdvancedMenu[14][15];
 extern Typedef_PanelConfig panelConfig;
-extern size_t configMenuSize;
+extern const size_t configMenuSize;
 extern TypeDef_ConfigMenuItem configMenu[];
 extern const TypeDef_ConfigMenuItem nullMenuItem;
 

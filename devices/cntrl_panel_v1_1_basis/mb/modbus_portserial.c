@@ -26,12 +26,12 @@ volatile char rtx_buffer[MB_BUF_SIZE_MAX];
 
 void setRDEstate(bool state){
   if(state==true){
-    gpio_bit_set(GPIOD, GPIO_PIN_15);
     gpio_bit_set(RS_GPIO_CTL_PORT, RS_CTL_PIN);
   }else{
     gpio_bit_reset(RS_GPIO_CTL_PORT, RS_CTL_PIN);
-    gpio_bit_reset(GPIOD, GPIO_PIN_15);
   }
+
+  hwDriveHartBit_led2();
 }
 
 static inline void txDMA_set_state(BOOL state, int32_t cnt){
@@ -91,9 +91,10 @@ static void usart_dma_config(void)
 BOOL xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBParity eParity )
 {
      /* enable GPIO clock */
-    //rcu_periph_clock_enable(RS_GPIO_CTL_CLK);
     rcu_periph_clock_enable(RS_GPIO_RX_CLK);
     rcu_periph_clock_enable(RS_GPIO_TX_CLK);
+    rcu_periph_clock_enable(RS_GPIO_CTL_CLK);
+
 
 
     /* enable USART clock */
@@ -101,8 +102,6 @@ BOOL xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBPar
 
     /* connect port to USARTx_Tx */
     gpio_af_set(RS_GPIO_TX_PORT, RS_GPIO_TX_AF, RS_TX_PIN);
-
-
     /* connect port to USARTx_Rx */
     gpio_af_set(RS_GPIO_RX_PORT, RS_GPIO_RX_AF, RS_RX_PIN);
 
@@ -126,11 +125,8 @@ BOOL xMBPortSerialInit( UCHAR ucPORT, ULONG ulBaudRate, UCHAR ucDataBits, eMBPar
     gpio_mode_set(RS_GPIO_CTL_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, RS_CTL_PIN);
     gpio_output_options_set(RS_GPIO_CTL_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, RS_CTL_PIN);
 
-    // tx alive pin
-    gpio_mode_set(GPIOD, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_15);
-    gpio_output_options_set(GPIOD, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_15);
-
     nvic_irq_enable(RS_USART_IRQn, 10, 0);
+    NVIC_EnableIRQ(RS_USART_IRQn);
     
     usart_receiver_timeout_enable(RS_USART);
     usart_receiver_timeout_threshold_config(RS_USART, 1);

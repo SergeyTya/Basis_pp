@@ -1,27 +1,253 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
 
-uint8_t tmpbuf[256];
+#include "gd32f4xx_libopt.h" 
 
-void master_hwInit(uint16_t speed){;}
+static uint8_t master_tx_buffer[256];
+static uint8_t master_rx_buffer[256];
+int rx_cnt = 0;
 
-void master_hwRead(uint8_t * buf, size_t len){
-   // VCP_ReceiveData(&USB_OTG_dev, buf, len);
-   // receive_count = 0;
+#define RSM_GPIO_TX_CLK            RCU_GPIOE
+#define RSM_GPIO_TX_PORT           GPIOE
+#define RSM_GPIO_TX_AF             GPIO_AF_8
+#define RSM_TX_PIN                 GPIO_PIN_1
+
+#define RSM_GPIO_RX_CLK            RCU_GPIOE
+#define RSM_GPIO_RX_PORT           GPIOE
+#define RSM_GPIO_RX_AF             GPIO_AF_8
+#define RSM_RX_PIN                 GPIO_PIN_0
+
+#define RSM_GPIO_CTL_CLK           RCU_GPIOB
+#define RSM_GPIO_CTL_PORT          GPIOB
+#define RSM_CTL_PIN                GPIO_PIN_9
+
+#define RSM_USART_CLK              RCU_UART7
+#define RSM_USART                  UART7
+#define RSM_USART_IRQHandler       UART7_IRQHandler
+#define RSM_USART_IRQn             UART7_IRQn
+
+#define RSM_DMA_DCU                RCU_DMA0
+#define RSM_DMA                    DMA0
+#define RSM_DMA_TXCH               DMA_CH0
+#define RSM_DMA_RXCH               DMA_CH7
+#define RSM_RX_DMA                 RSM_DMA,RSM_DMA_RXCH
+#define RSM_TX_DMA                 RSM_DMA,RSM_DMA_TXCH
+#define RSM_DMA_SUBPERI            DMA_SUBPERI5
+#define RSM_USATR_DATA_ADR         (UART7 + 4U)
+/************/
+
+int slaveResponseExpectedSize = 0; 
+static inline void Master_txDMA_set_state(bool state, int32_t cnt);
+static inline void Master_rxDMA_set_state(bool state, int32_t cnt);
+static inline void Master_setRDEstate(bool state);
+
+bool recive_complete = false;
+
+void master_hwInit(uint16_t speed) {
+
+    rcu_periph_clock_enable(RSM_GPIO_RX_CLK);
+    rcu_periph_clock_enable(RSM_GPIO_TX_CLK);
+    rcu_periph_clock_enable(RSM_GPIO_CTL_CLK);
+
+
+    /* enable GPIO clock */
+    rcu_periph_clock_enable(RSM_GPIO_RX_CLK);
+    rcu_periph_clock_enable(RSM_GPIO_TX_CLK);
+    rcu_periph_clock_enable(RSM_GPIO_CTL_CLK);
+
+    /* enable USART clock */
+    rcu_periph_clock_enable(RSM_USART_CLK);
+
+    /* connect port to USARTx_Tx */
+    gpio_af_set(RSM_GPIO_TX_PORT, RSM_GPIO_TX_AF, RSM_TX_PIN);
+    /* connect port to USARTx_Rx */
+    gpio_af_set(RSM_GPIO_RX_PORT, RSM_GPIO_RX_AF, RSM_RX_PIN);
+
+    /* configure USART Tx as alternate function push-pull */
+    gpio_mode_set(RSM_GPIO_TX_PORT, GPIO_MODE_AF, GPIO_PUPD_PULLUP, RSM_TX_PIN);
+    gpio_output_options_set(RSM_GPIO_TX_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, RSM_TX_PIN);
+
+    /* configure USART Rx as alternate function push-pull */
+    gpio_mode_set(RSM_GPIO_RX_PORT, GPIO_MODE_AF, GPIO_PUPD_PULLUP, RSM_RX_PIN);
+    gpio_output_options_set(RSM_GPIO_RX_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, RSM_RX_PIN);
+
+    /* USART configure */
+    usart_deinit(RSM_USART);
+    usart_baudrate_set(RSM_USART, 115200); /// ????????????
+    usart_parity_config(RSM_USART, USART_PM_NONE);
+    usart_stop_bit_set(RSM_USART, 1);
+    usart_receive_config(RSM_USART, USART_RECEIVE_ENABLE);
+    usart_transmit_config(RSM_USART, USART_TRANSMIT_ENABLE);
+    usart_enable(RSM_USART);
+
+    gpio_mode_set(RSM_GPIO_CTL_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, RSM_CTL_PIN);
+    gpio_output_options_set(RSM_GPIO_CTL_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, RSM_CTL_PIN);
+
+
+    dma_single_data_parameter_struct dma_init_struct;
+    /* enable DMA1 */
+    rcu_periph_clock_enable(RSM_DMA_DCU);
+    /* deinitialize DMA channe7(RS_USART TX) */
+    dma_deinit(RSM_TX_DMA);
+    dma_init_struct.direction = DMA_MEMORY_TO_PERIPH;
+    dma_init_struct.memory0_addr = (uint32_t)master_tx_buffer;
+    dma_init_struct.memory_inc = DMA_MEMORY_INCREASE_ENABLE;
+    dma_init_struct.number = 512;
+    dma_init_struct.periph_addr = RSM_USATR_DATA_ADR;
+    dma_init_struct.periph_inc = DMA_PERIPH_INCREASE_DISABLE;
+    dma_init_struct.periph_memory_width = DMA_PERIPH_WIDTH_8BIT;
+    dma_init_struct.priority = DMA_PRIORITY_ULTRA_HIGH;
+    dma_single_data_mode_init(RSM_TX_DMA, &dma_init_struct);
+    dma_channel_subperipheral_select(RSM_TX_DMA, RSM_DMA_SUBPERI);
+    /* configure DMA mode */
+    dma_circulation_disable(RSM_TX_DMA);
+  
+    /* deinitialize DMA channe2(USART0 RX) */
+    dma_deinit(RSM_RX_DMA);
+    dma_init_struct.number = 0;
+    dma_init_struct.direction = DMA_PERIPH_TO_MEMORY;
+    dma_init_struct.memory0_addr = (uint32_t)master_rx_buffer;
+    dma_single_data_mode_init(RSM_RX_DMA, &dma_init_struct);
+    dma_channel_subperipheral_select(RSM_RX_DMA, RSM_DMA_SUBPERI);
+    /* configure DMA mode */
+    dma_circulation_disable(RSM_RX_DMA);
+
+   // nvic_irq_enable(RSM_USART_IRQn, 10, 0);
+   // NVIC_EnableIRQ(RSM_USART_IRQn);
+ 
+    Master_setRDEstate(false);
+
+    Master_txDMA_set_state(false, 0);
+    Master_rxDMA_set_state(false, 0);
+
+    //nvic_irq_enable(DMA0_Channel7_IRQn, 10 ,0);
+    usart_interrupt_enable(RSM_USART, USART_INT_RBNE);
+    nvic_irq_enable(RSM_USART_IRQn, 10, 0);
+}
+
+void master_hwRead(uint8_t* buf, size_t len) {
+  slaveResponseExpectedSize = 0;
+//  Master_rxDMA_set_state(false, 0);
+  memcpy(buf, master_rx_buffer, len);
+}
+
+void master_expectedByteCnt(int expectedSize){
+//  Master_rxDMA_set_state(false, 0);
+  slaveResponseExpectedSize = expectedSize;
+  rx_cnt = 0;
+//  Master_rxDMA_set_state(true, slaveResponseExpectedSize);
+}
+
+void master_hwWrite(uint8_t* buf, size_t len) {
+
+    Master_setRDEstate(true);
+    memcpy(master_tx_buffer, buf, len);
+    Master_txDMA_set_state(true, len);
+    while(true){
+        if(usart_flag_get(RSM_USART, USART_FLAG_TC) == SET){
+            usart_flag_clear(RSM_USART, USART_FLAG_TC); // clear flag
+            Master_txDMA_set_state(DISABLE, 0);
+            Master_setRDEstate(false);
+            return;
+        }
+    }
 
 }
 
-void master_hwWrite(uint8_t * buf, size_t len){
-    //VCP_SendData(&USB_OTG_dev, buf, len);
+void master_hwClearRxTxBuf() {
+  slaveResponseExpectedSize = 0;
+  recive_complete = false;
 }
 
-void master_hwClearRxTxBuf(){
-    //VCP_ReceiveData(&USB_OTG_dev, tmpbuf, receive_count);
-    //receive_count = 0;
+int  master_hwBytesToRead() {
+
+  
+  return rx_cnt ;
 }
 
-int  master_hwBytesToRead(){
-    //int retVal = VCP_CheckDataReceived();
-    //return retVal;
+void master_hwFault(int dev) {
+
 }
 
+void  master_hwStart(int dev) {
+
+}
+
+void master_hwStop(int dev) {
+
+}
+
+
+void master_hwTimeOut(int slaveAdr) {
+
+}
+
+static inline void Master_txDMA_set_state(bool state, int32_t cnt){
+    if(state == true){
+      dma_transfer_number_config(RSM_TX_DMA, cnt); // setup dma max transfers
+      usart_dma_transmit_config(RSM_USART, USART_DENT_ENABLE); // enable uart receiver DMA
+      dma_flag_clear          (RSM_TX_DMA, DMA_FLAG_FTF); // clean dma transfer finishing flag
+      dma_channel_enable      (RSM_TX_DMA);  // enable DMA
+      return;
+    }
+    usart_dma_transmit_config(RSM_USART,USART_DENT_DISABLE); // enable uart receiver DMA
+    dma_channel_disable(RSM_TX_DMA);           // enable DMA
+  }
+  
+  static inline void Master_rxDMA_set_state(bool state, int32_t cnt){
+    if(state == ENABLE){
+      dma_transfer_number_config(RSM_RX_DMA, cnt); // setup dma max transfers
+      dma_circulation_disable(RSM_RX_DMA);
+      dma_channel_subperipheral_select(RSM_RX_DMA, DMA_SUBPERI4);
+      usart_dma_receive_config(RSM_USART, USART_DENR_ENABLE); // enable uart receiver DMA
+      dma_interrupt_enable(RSM_RX_DMA, DMA_CHXCTL_FTFIE);
+      dma_channel_enable      (RSM_RX_DMA);  // enable DMA
+      return;
+    }
+    dma_interrupt_disable(RSM_RX_DMA, DMA_CHXCTL_FTFIE);
+    usart_dma_receive_config(RSM_USART, USART_DENR_DISABLE); // enable uart receiver DMA
+    dma_channel_disable(RSM_RX_DMA);           // enable DMA
+  }
+
+  static inline void Master_setRDEstate(bool state){
+    if(state==true){
+      gpio_bit_set(RSM_GPIO_CTL_PORT, RSM_CTL_PIN);
+    }else{
+      gpio_bit_reset(RSM_GPIO_CTL_PORT, RSM_CTL_PIN);
+    }
+  
+  //  hwDriveHartBit_led3();
+  }
+
+
+  
+/*!
+    \brief      this function handles DMA0_Channel4_IRQHandler interrupt
+    \param[in]  none
+    \param[out] none
+    \retval     none
+*/
+void DMA0_Channel7_IRQHandler(void)
+{
+    if(dma_interrupt_flag_get(RSM_RX_DMA, DMA_INT_FLAG_FTF)) {
+        dma_interrupt_flag_clear(RSM_RX_DMA, DMA_INT_FLAG_FTF);
+        recive_complete = true;
+        Master_rxDMA_set_state(false, 0);
+    }
+
+    NVIC_ClearPendingIRQ(DMA0_Channel7_IRQn);
+}
+
+
+void RSM_USART_IRQHandler(){
+
+  if(usart_flag_get(RSM_USART, USART_FLAG_RBNE) == SET){
+    usart_flag_clear(RSM_USART, USART_FLAG_RBNE);
+    master_rx_buffer[rx_cnt++] = usart_data_receive(RSM_USART);
+  }
+
+  NVIC_ClearPendingIRQ(RSM_USART_IRQn); 
+
+}

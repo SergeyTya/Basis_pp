@@ -64,13 +64,48 @@ void M204D08AA_UpdateDisplayFromBuffer(char buff[80]){
 
 void M204D08AA_DisplayInit(){
     M204D08AA_HardInit(); 
-    vTaskDelay(1000);
+    vTaskDelay(300);
     M204D08AA_WriteCmdAsync(248,12);   //Display enable
-    vTaskDelay(1000);                  // Dispaly clean
+    vTaskDelay(300);                  // Dispaly clean
     M204D08AA_WriteCmdAsync(248,1);   //Display clean
     vTaskDelay(300);
     M204D08AA_WriteCmdAsync(248,63);  // Brightness 25%
     vTaskDelay(300);
 }
     
-   
+void M204D08AA_SetBrightnessLevel(int lvl){
+
+    M204D08AA_WriteCmdAsync(248,8) ;
+    vTaskDelay(100);
+    M204D08AA_WriteCmdAsync(248,1);
+    
+    switch (lvl)
+    {
+        case 25:
+        /* 25% */
+        M204D08AA_WriteCmdAsync(248,0b111000); 
+        break;
+        case 50:
+        /* 50% */
+        M204D08AA_WriteCmdAsync(248,0b111001); 
+        break;
+        case 75:
+        /* 75% */
+        M204D08AA_WriteCmdAsync(248,0b111010); 
+        break;
+        case 100:
+        /* 100% */
+        M204D08AA_WriteCmdAsync(248,0b111011); 
+        break;
+
+    default:
+        break;
+    }
+
+    vTaskDelay(100);
+    M204D08AA_WriteCmdAsync(248,12); 
+
+}
+
+
+// https://habr.com/ru/articles/392757/

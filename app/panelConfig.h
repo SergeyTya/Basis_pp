@@ -22,6 +22,8 @@ typedef struct
     /* data */
 }Typedef_Transport;
 
+void ConfigMenuSaveAll();
+void ConfigMenuReadAll();
 
 typedef struct
 {
@@ -61,7 +63,7 @@ typedef struct
 void PanelConfigHwDummy();
 
 void StructureInit_PanelConfig(Typedef_PanelConfig * panelConfig);
-
+void MenuItemGeneralChangedEvent();
 
 
 #endif
