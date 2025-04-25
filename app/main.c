@@ -15,6 +15,8 @@
 #include "task_master.h"
 #include "task_keybord.h"
 
+#include "lwipApp.h"
+
 uint16_t holdings[256];
 
 
@@ -32,6 +34,8 @@ void vTask_1s(void * arg){
 int main() {
 
     vMCU_init();
+    
+    init_ether();
 
     StructureInit_PanelConfig(&panelConfig);
     ConfigMenuReadAll();

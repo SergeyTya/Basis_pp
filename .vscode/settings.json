@@ -118,7 +118,8 @@
         "format": "c",
         "mbsupport.h": "c",
         "task_master.h": "c",
-        "panelconfig.h": "c"
+        "panelconfig.h": "c",
+        "sys_arch.h": "c"
     }, 
      "cmake.configureArgs": [
                "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-gcc-toolchain.cmake"

@@ -649,6 +649,20 @@ ErrStatus enet_software_reset(void)
     return enet_state;
 }
 
+
+ErrStatus enet_get_software_reset_status(void)
+{
+    ErrStatus enet_state = ERROR;
+ 
+    /* reset operation complete */
+    if(RESET == (ENET_DMA_BCTL & ENET_DMA_BCTL_SWR)) {
+        enet_state = SUCCESS;
+    }
+
+    return enet_state;
+}
+
+
 /*!
     \brief    check receive frame valid and return frame size
     \param[in]  none

@@ -69,9 +69,9 @@ OF SUCH DAMAGE.
 #ifndef _PHY_H_
 #define DP83848                          0
 #define LAN8700                          1
-#define PHY_TYPE                         DP83848
+#define PHY_TYPE                         LAN8700
 
-#define PHY_ADDRESS                      ((uint16_t)1U)                         /*!< phy address determined by the hardware */
+#define PHY_ADDRESS                      0x00                         /*!< phy address determined by the hardware */
 
 /* PHY read write timeouts */ 
 #define PHY_READ_TO                      ((uint32_t)0x0004FFFFU)                /*!< PHY read timeout */
@@ -1469,6 +1469,7 @@ void enet_initpara_config(enet_option_enum option, uint32_t para);
 ErrStatus enet_init(enet_mediamode_enum mediamode, enet_chksumconf_enum checksum, enet_frmrecept_enum recept);
 /* reset all core internal registers located in CLK_TX and CLK_RX */
 ErrStatus enet_software_reset(void);
+ErrStatus enet_get_software_reset_status(void);
 /* check receive frame valid and return frame size */
 uint32_t enet_rxframe_size_get(void);
 /* initialize the dma tx/rx descriptors's parameters in chain mode */
