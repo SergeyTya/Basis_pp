@@ -1,7 +1,7 @@
 #include "lwipApp.h"
 
 
-#include "gd32f4xx_enet_eval.h"
+#include "ethernetHwInit.h"
 #include "lwip/tcp.h"
 #include "lwip/timeouts.h"
 #include "netconf.h"

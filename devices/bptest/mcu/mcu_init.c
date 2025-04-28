@@ -29,6 +29,8 @@ void vMCU_init()
   GPIO_SetBits(GPIOC, GPIO_Pin_13);
 
   SCB->VTOR = 0x8000000L; // setup by loader
+
+  nvic_priority_group_set(NVIC_PRIGROUP_PRE4_SUB0);
     
  __enable_irq();
  

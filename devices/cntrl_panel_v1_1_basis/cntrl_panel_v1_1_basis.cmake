@@ -14,6 +14,7 @@ FILE(GLOB_RECURSE TARGET_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/mb/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/mcu/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/spi/*.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/ethernet/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MUTABA/M204D08AA.c
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MUTABA/M204D08AA_port_gd32.c
 

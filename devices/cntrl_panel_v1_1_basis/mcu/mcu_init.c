@@ -38,3 +38,10 @@ void hwDriveHartBit_led1(){
 void hwDriveHartBit_led2(){
   gpio_bit_toggle(HART_BIT_PIN2);
 }
+
+void HardFault_Handler(void)
+{
+    /* if Hard Fault exception occurs, go to infinite loop */
+    while(1) {
+    }
+}

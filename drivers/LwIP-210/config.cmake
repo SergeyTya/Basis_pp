@@ -15,12 +15,12 @@ set(LWIP_PATH ${CMAKE_CURRENT_SOURCE_DIR}/drivers/lwIP-210)
         ${LWIP_PATH}/src/include/compat/posix/net#
         ${LWIP_PATH}/src/include/compat/posix/sys#
         ${LWIP_PATH}/src/include/compat/stdc#
-        ${LWIP_PATH}/port/lan8742
-        ${LWIP_PATH}/port/lwip/App
+        #${LWIP_PATH}/src/include/lwip/arch
         ${LWIP_PATH}/port/lwip/arch
+        ${LWIP_PATH}/port/lwip/
+        ${LWIP_PATH}/port/lwip/App
         ${LWIP_PATH}/port/lwip/Target
-        ${LWIP_PATH}/port/lwip/Target/Base
-       #${LWIP_PATH}/port/lwip/Target/FreeRTOS
+        ${LWIP_PATH}/port/lwip/Target/FreeRTOS
     )
 
 
@@ -77,17 +77,11 @@ set(LWIP_PATH ${CMAKE_CURRENT_SOURCE_DIR}/drivers/lwIP-210)
     ${LWIP_PATH}/src/netif/bridgeif_fdb.c
     ${LWIP_PATH}/src/netif/slipif.c
     #TARGET
-    ${LWIP_PATH}/port/lan8742/lan8742.c
-    ${LWIP_PATH}/port/LwIP/App/lwipApp.c
-    ${LWIP_PATH}/port/LwIP/App/ithandler.c
-    ${LWIP_PATH}/port/LwIP/App/gd32f4xx_enet_eval.c
-    ${LWIP_PATH}/port/LwIP/App/netconf.c
-    ${LWIP_PATH}/port/LwIP/arch/sys_arch.c
-
-    ${LWIP_PATH}/port/LwIP/App/gd32f4xx_it.c
-
-    #${LWIP_PATH}/port/LwIP/Target/FreeRTOS/ethernetif.c
-    ${LWIP_PATH}/port/LwIP/Target/Base/ethernetif.c
+    ${LWIP_PATH}/port/lwip/App/lwipApp.c
+    ${LWIP_PATH}/port/lwip/App/netconf.c
+    ${LWIP_PATH}/port/lwip/arch/sys_arch.c
+   # ${LWIP_PATH}/src/include/lwip/arch/sys_arch.c
+    ${LWIP_PATH}/port/lwip/Target/FreeRTOS/ethernetif.c
     )
 
 

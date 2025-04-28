@@ -35,9 +35,7 @@ OF SUCH DAMAGE.
 #ifndef NETCONF_H
 #define NETCONF_H
 
-#include "gd32f4xx.h"
 #include "stdint.h"
-#include "gd32f4xx_enet_eval.h"
 
 #ifdef USE_DHCP
 void lwip_dhcp_address_get(void);
@@ -45,7 +43,7 @@ void lwip_dhcp_address_get(void);
 
 void lwip_stack_init(void);
 void lwip_frame_recv(void);
-void lwip_timeouts_check(__IO uint32_t localtime);
+void lwip_timeouts_check(uint32_t localtime);
 void lwip_netif_status_callback(struct netif *netif);
 
 

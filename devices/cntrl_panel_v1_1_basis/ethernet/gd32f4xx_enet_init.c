@@ -33,7 +33,7 @@ OF SUCH DAMAGE.
 */
 
 #include "gd32f4xx_enet.h"
-#include "gd32f4xx_enet_eval.h"
+#include "ethernetHwInit.h"
 #include "main.h"
 
 const uint8_t gd32_str[] = {"\r\n ############ Welcome GigaDevice ############\r\n"};
@@ -126,7 +126,7 @@ enet_init_status = enet_init(
 */
 static void nvic_configuration(void)
 {
-    nvic_irq_enable(ENET_IRQn, 0, 0);
+    nvic_irq_enable(ENET_IRQn, 127, 0);
 }
 #endif /* USE_ENET_INTERRUPT */
 
@@ -214,5 +214,22 @@ static void enet_gpio_config(void)
     
 
     gpio_bit_set(GPIOA, GPIO_PIN_3);
+
+}
+
+
+extern xSemaphoreHandle g_rx_semaphore;
+
+void ENET_IRQHandler(void)
+{
+    /* clear the enet DMA Rx interrupt pending bits */
+    enet_interrupt_flag_clear(ENET_DMA_INT_FLAG_RS_CLR);
+    enet_interrupt_flag_clear(ENET_DMA_INT_FLAG_NI_CLR);
+
+    static portBASE_TYPE xHigherPriorityTaskWoken;
+    xHigherPriorityTaskWoken = pdFALSE;
+
+    xSemaphoreGiveFromISR(g_rx_semaphore, &xHigherPriorityTaskWoken) ;
+
 
 }

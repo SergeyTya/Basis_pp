@@ -34,7 +34,6 @@ void vTask_1s(void * arg){
 int main() {
 
     vMCU_init();
-    
     init_ether();
 
     StructureInit_PanelConfig(&panelConfig);
