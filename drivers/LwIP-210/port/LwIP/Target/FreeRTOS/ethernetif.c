@@ -51,11 +51,11 @@
 #include "semphr.h"
 
 
-#define ETHERNETIF_INPUT_TASK_STACK_SIZE          (350)
+#define ETHERNETIF_INPUT_TASK_STACK_SIZE          (5*350)
 #define ETHERNETIF_INPUT_TASK_PRIO                (configMAX_PRIORITIES - 1)
-#define LOWLEVEL_OUTPUT_WAITING_TIME              (250)
+#define LOWLEVEL_OUTPUT_WAITING_TIME              (25)
 /* The time to block waiting for input */
-#define LOWLEVEL_INPUT_WAITING_TIME               ((portTickType )100)
+#define LOWLEVEL_INPUT_WAITING_TIME               ((portTickType )1)
 
 /* define those to better describe your network interface */
 #define IFNAME0 'G'

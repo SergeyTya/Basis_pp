@@ -27,44 +27,32 @@
 static eMBEventType eQueuedEvent;
 static BOOL     xEventInQueue;
 
-extern bool isTCP; 
-
-extern BOOL xMBPortEventInitTCP(void);
-extern BOOL xMBPortEventInitRTU(void);
-
-extern BOOL xMBPortEventPostTCP(eMBEventType eEvent );
-extern BOOL xMBPortEventPostRTU(eMBEventType eEvent );
-
-extern BOOL xMBPortEventGetTCP(eMBEventType * eEvent);
-extern BOOL xMBPortEventGetRTU(eMBEventType * eEvent);
-
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
-xMBPortEventInit( void )
+xMBPortEventInitRTU( void )
 {
-    if(isTCP){
-        return  xMBPortEventInitTCP();
-       }else{
-        return  xMBPortEventInitRTU();
-       }
+    xEventInQueue = FALSE;
+    return TRUE;
 }
 
 BOOL
-xMBPortEventPost( eMBEventType eEvent )
+xMBPortEventPostRTU( eMBEventType eEvent )
 {
-    if(isTCP){
-        return  xMBPortEventPostTCP(eEvent);
-       }else{
-        return  xMBPortEventPostRTU(eEvent);
-       }
+    xEventInQueue = TRUE;
+    eQueuedEvent = eEvent;
+    return TRUE;
 }
 
 BOOL
-xMBPortEventGet( eMBEventType * eEvent )
+xMBPortEventGetRTU( eMBEventType * eEvent )
 {
-   if(isTCP){
-    return  xMBPortEventGetTCP(eEvent);
-   }else{
-    return  xMBPortEventGetRTU(eEvent);
-   }
+    BOOL            xEventHappened = FALSE;
+
+    if( xEventInQueue )
+    {
+        *eEvent = eQueuedEvent;
+        xEventInQueue = FALSE;
+        xEventHappened = TRUE;
+    }
+    return xEventHappened;
 }

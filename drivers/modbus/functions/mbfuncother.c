@@ -118,17 +118,17 @@ eMBFuncReportSlaveID(UCHAR *pucFrame, USHORT *usLen)
 eMBException
 eMBFuncSendScopeData(UCHAR *pucFrame, USHORT *usLen)
 {
-    uint32_t Fadr;
+    // uint32_t Fadr;
 
-    portBASE_TYPE xStatus = xQueueReceive(xQueue, &Fadr, 0);
+    // portBASE_TYPE xStatus = xQueueReceive(xQueue, &Fadr, 0);
 
-    if (xStatus != pdPASS)
-    {
-        return MB_EX_SLAVE_BUSY;
-    }
+    // if (xStatus != pdPASS)
+    // {
+    //     return MB_EX_SLAVE_BUSY;
+    // }
 
-    memcpy(&pucFrame[MB_PDU_DATA_OFF], (uint8_t *)Fadr, SCOPE_FRAME_SIZE);
-    *usLen = (USHORT)(MB_PDU_DATA_OFF + SCOPE_FRAME_SIZE);
+    // memcpy(&pucFrame[MB_PDU_DATA_OFF], (uint8_t *)Fadr, SCOPE_FRAME_SIZE);
+    // *usLen = (USHORT)(MB_PDU_DATA_OFF + SCOPE_FRAME_SIZE);
 
     return MB_EX_NONE;
 }
