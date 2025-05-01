@@ -30,18 +30,19 @@ void vTask_modbusRTU(__attribute__((unused)) void *argument)
     }
 }
 
+eMBErrorCode  xStatus;
 
-void vTask_modbusTCP(void* arg){
+void vTask_modbus(void* arg){
 
-    isTCP = true;
+   // isTCP = true;
     
-    eMBErrorCode  xStatus;
+
     vTaskDelay(2000);
    
     for( ;; )
     {
 
-        eMBErrorCode init = eMBTCPInit( 7 );
+        eMBErrorCode init = eMBTCPInit( 0 );
         if( init != MB_ENOERR )
         {
             vTaskDelay(1000);
@@ -55,7 +56,7 @@ void vTask_modbusTCP(void* arg){
             do
             {
                 xStatus = eMBPoll(  );
-                vTaskDelay(30);
+                vTaskDelay(1);
             }
             while( xStatus == MB_ENOERR );
         }
@@ -66,7 +67,7 @@ void vTask_modbusTCP(void* arg){
 }
 
 
-void vTask_modbus(__attribute__((unused)) void *argument)
-{
-    vTask_modbusTCP(argument);
-}
+// void vTask_modbus(__attribute__((unused)) void *argument)
+// {
+//     vTask_modbusTCP(argument);
+// }

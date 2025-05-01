@@ -27,7 +27,7 @@ void vTask_blinkBlakpill(__attribute__((unused)) void *argument);
 void vTask_1s(void * arg){
     while(1){
         hwDriveHartBit_led1();
-        vTaskDelay(1000);
+        vTaskDelay(300);
     }
 }
 

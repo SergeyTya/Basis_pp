@@ -112,28 +112,28 @@ void lwip_stack_init(void)
     /* set a default network interface */
     netif_set_default(&g_mynetif);
 
-    /* set a callback when interface is up/down */
-    netif_set_status_callback(&g_mynetif, lwip_netif_status_callback);
+    // /* set a callback when interface is up/down */
+    // netif_set_status_callback(&g_mynetif, lwip_netif_status_callback);
 
-    /* set the flag of netif as NETIF_FLAG_LINK_UP */
-    netif_set_link_up(&g_mynetif);
+    // /* set the flag of netif as NETIF_FLAG_LINK_UP */
+    // netif_set_link_up(&g_mynetif);
 
-    /* bring an interface up and set the flag of netif as NETIF_FLAG_UP */
-    netif_set_up(&g_mynetif);
+    // /* bring an interface up and set the flag of netif as NETIF_FLAG_UP */
+    // netif_set_up(&g_mynetif);
 
-    // if (netif_is_link_up(&g_mynetif))
-    // {
-    //   /* When the netif is fully configured this function must be called */
-    //   netif_set_up(&g_mynetif);
-    // }
-    // else
-    // {
-    //   /* When the netif link is down this function must be called */
-    //   netif_set_down(&g_mynetif);
-    // }
+    if (netif_is_link_up(&g_mynetif))
+    {
+      /* When the netif is fully configured this function must be called */
+      netif_set_up(&g_mynetif);
+    }
+    else
+    {
+      /* When the netif link is down this function must be called */
+      netif_set_down(&g_mynetif);
+    }
   
-    // /* Set the link callback function, this function is called on change of link status*/
-    // netif_set_link_callback(&g_mynetif, lwip_netif_status_callback);
+    /* Set the link callback function, this function is called on change of link status*/
+    netif_set_link_callback(&g_mynetif, lwip_netif_status_callback);
   
 }
 

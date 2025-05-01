@@ -220,6 +220,8 @@ static void enet_gpio_config(void)
 
 extern xSemaphoreHandle g_rx_semaphore;
 
+volatile int irq_cnt = 0;
+
 void ENET_IRQHandler(void)
 {
     /* clear the enet DMA Rx interrupt pending bits */
@@ -228,8 +230,10 @@ void ENET_IRQHandler(void)
 
     static portBASE_TYPE xHigherPriorityTaskWoken;
     xHigherPriorityTaskWoken = pdFALSE;
+    uint32_t reval = enet_rxframe_size_get();
 
-    xSemaphoreGiveFromISR(g_rx_semaphore, &xHigherPriorityTaskWoken) ;
-
-
+    if(reval > 1) {
+        xSemaphoreGiveFromISR(g_rx_semaphore, &xHigherPriorityTaskWoken) ;
+        irq_cnt++;
+    }
 }

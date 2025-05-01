@@ -91,7 +91,7 @@ xMBTCPPortInit( USHORT usTCPPort )
         bOkay = FALSE;
     }
  //  else if( tcp_bind( pxPCBListenNew, IP_ADDR_ANY, ( u16_t ) usPort ) != ERR_OK )
-    else if( tcp_bind( pxPCBListenNew, IP_ADDR_ANY, 7 ) != ERR_OK )
+    else if( tcp_bind( pxPCBListenNew, IP_ADDR_ANY, ( u16_t ) usPort ) != ERR_OK )
     {
         /* Bind failed - Maybe illegal port value or in use. */
         ( void )tcp_close( pxPCBListenOld );
@@ -216,6 +216,7 @@ prvvMBTCPPortError( void *pvArg, err_t xErr )
     }
 }
 
+volatile int reccnt = 0; 
 err_t
 prvxMBTCPPortReceive( void *pvArg, struct tcp_pcb *pxPCB, struct pbuf *p, err_t xErr )
 {
@@ -268,6 +269,7 @@ prvxMBTCPPortReceive( void *pvArg, struct tcp_pcb *pxPCB, struct pbuf *p, err_t 
             else if( usTCPBufPos == ( MB_TCP_UID + usLength ) )
             {
                 ( void )xMBPortEventPost( EV_FRAME_RECEIVED );
+                reccnt++;
             }
             else
             {
@@ -293,6 +295,9 @@ xMBTCPPortGetRequest( UCHAR ** ppucMBTCPFrame, USHORT * usTCPLength )
     return TRUE;
 }
 
+volatile int trans_id = 0;
+volatile int rescnt = 0; 
+
 BOOL
 xMBTCPPortSendResponse( const UCHAR * pucMBTCPFrame, USHORT usTCPLength )
 {
@@ -302,7 +307,8 @@ xMBTCPPortSendResponse( const UCHAR * pucMBTCPFrame, USHORT usTCPLength )
     {
         /* Make sure we can send the packet. */
         assert( tcp_sndbuf( pxPCBClient ) >= usTCPLength );
-
+        trans_id = pucMBTCPFrame[1];
+        rescnt++;
         if( tcp_write( pxPCBClient, pucMBTCPFrame, ( u16_t ) usTCPLength, 1 ) == ERR_OK )
         {
 #ifdef MB_TCP_DEBUG

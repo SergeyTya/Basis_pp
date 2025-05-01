@@ -121,7 +121,8 @@
         "panelconfig.h": "c",
         "sys_arch.h": "c",
         "gd32f4xx_it.h": "c",
-        "lwipapp.h": "c"
+        "lwipapp.h": "c",
+        "task_keybord.h": "c"
     }, 
      "cmake.configureArgs": [
                "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-gcc-toolchain.cmake"

@@ -38,33 +38,64 @@ extern BOOL xMBPortEventPostRTU(eMBEventType eEvent );
 extern BOOL xMBPortEventGetTCP(eMBEventType * eEvent);
 extern BOOL xMBPortEventGetRTU(eMBEventType * eEvent);
 
+// /* ----------------------- Start implementation -----------------------------*/
+// BOOL
+// xMBPortEventInit( void )
+// {
+//     if(isTCP){
+//         return  xMBPortEventInitTCP();
+//        }else{
+//         return  xMBPortEventInitRTU();
+//        }
+// }
+
+// BOOL
+// xMBPortEventPost( eMBEventType eEvent )
+// {
+//     if(isTCP){
+//         return  xMBPortEventPostTCP(eEvent);
+//        }else{
+//         return  xMBPortEventPostRTU(eEvent);
+//        }
+// }
+
+// BOOL
+// xMBPortEventGet( eMBEventType * eEvent )
+// {
+//    if(isTCP){
+//     return  xMBPortEventGetTCP(eEvent);
+//    }else{
+//     return  xMBPortEventGetRTU(eEvent);
+//    }
+// }
+
+
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
 xMBPortEventInit( void )
 {
-    if(isTCP){
-        return  xMBPortEventInitTCP();
-       }else{
-        return  xMBPortEventInitRTU();
-       }
+    xEventInQueue = FALSE;
+    return TRUE;
 }
 
 BOOL
 xMBPortEventPost( eMBEventType eEvent )
 {
-    if(isTCP){
-        return  xMBPortEventPostTCP(eEvent);
-       }else{
-        return  xMBPortEventPostRTU(eEvent);
-       }
+    xEventInQueue = TRUE;
+    eQueuedEvent = eEvent;
+    return TRUE;
 }
 
 BOOL
 xMBPortEventGet( eMBEventType * eEvent )
 {
-   if(isTCP){
-    return  xMBPortEventGetTCP(eEvent);
-   }else{
-    return  xMBPortEventGetRTU(eEvent);
-   }
+    BOOL            xEventHappened = FALSE;
+
+    if( xEventInQueue )
+    {
+        *eEvent = eQueuedEvent;
+        xEventInQueue = FALSE;
+        xEventHappened = TRUE;
+    }
+    return xEventHappened;
 }

@@ -75,7 +75,7 @@ void lwip_netif_status_callback(struct netif *netif);
 #define BOARD_GW_ADDR0   192
 #define BOARD_GW_ADDR1   168
 #define BOARD_GW_ADDR2   137
-#define BOARD_GW_ADDR3   1
+#define BOARD_GW_ADDR3   0
 
 /* MII and RMII mode selection */
 #define RMII_MODE  // user have to provide the 50 MHz clock by soldering a 50 MHz oscillator

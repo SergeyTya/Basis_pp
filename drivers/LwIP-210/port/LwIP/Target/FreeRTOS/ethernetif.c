@@ -52,8 +52,8 @@
 
 
 #define ETHERNETIF_INPUT_TASK_STACK_SIZE          (5*350)
-#define ETHERNETIF_INPUT_TASK_PRIO                (configMAX_PRIORITIES - 1)
-#define LOWLEVEL_OUTPUT_WAITING_TIME              (25)
+#define ETHERNETIF_INPUT_TASK_PRIO                (tskIDLE_PRIORITY+1)
+#define LOWLEVEL_OUTPUT_WAITING_TIME              (1)
 /* The time to block waiting for input */
 #define LOWLEVEL_INPUT_WAITING_TIME               ((portTickType )1)
 
@@ -275,25 +275,29 @@ static struct pbuf * low_level_input(struct netif *netif)
 *
 * @param netif the lwip network interface structure for this ethernetif
 */
+
+volatile int inputcnt = 0;
 void ethernetif_input( void * pvParameters )
 {
     struct pbuf *p;
     SYS_ARCH_DECL_PROTECT(sr);
   
     for( ;; ){   
-        if(pdTRUE == xSemaphoreTake(g_rx_semaphore, LOWLEVEL_INPUT_WAITING_TIME)){ 
-TRY_GET_NEXT_FRAME:
-            SYS_ARCH_PROTECT(sr);
-            p = low_level_input( low_netif );
-            SYS_ARCH_UNPROTECT(sr);
-          
-            if   (p != NULL){
-                if (ERR_OK != low_netif->input( p, low_netif)){
-                    pbuf_free(p);
-                }else{
-                    goto TRY_GET_NEXT_FRAME;
+        if(pdTRUE == xSemaphoreTake(g_rx_semaphore, portMAX_DELAY)){ 
+            inputcnt++;
+            do
+            {
+              SYS_ARCH_PROTECT(sr);
+              p = low_level_input( low_netif );
+              SYS_ARCH_PROTECT(sr);
+              if (p != NULL)
+              {
+                if (ERR_OK != low_netif->input( p, low_netif))
+                {
+                  pbuf_free(p);
                 }
-            }
+              }
+            } while(p!=NULL);
         }
     }
 }

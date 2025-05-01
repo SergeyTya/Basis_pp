@@ -47,11 +47,11 @@ OF SUCH DAMAGE.
 #endif
 
 #ifndef ENET_RXBUF_NUM
-#define ENET_RXBUF_NUM                   3U                                     /*!< ethernet Rx DMA descriptor number */
+#define ENET_RXBUF_NUM                   5U                                     /*!< ethernet Rx DMA descriptor number */
 #endif
 
 #ifndef ENET_TXBUF_NUM
-#define ENET_TXBUF_NUM                   3U                                     /*!< ethernet Tx DMA descriptor number */
+#define ENET_TXBUF_NUM                   5U                                     /*!< ethernet Tx DMA descriptor number */
 #endif
 
 #ifndef ENET_RXBUF_SIZE
@@ -1451,7 +1451,7 @@ typedef struct
 #define ETH_WAKEUP_REGISTER_LENGTH                8U                                            /*!< remote wake-up frame register length */
 
 /* ENET frame size */ 
-#define ENET_MAX_FRAME_SIZE                       512U                                         /*!< header + frame_extra + payload + CRC */    
+#define ENET_MAX_FRAME_SIZE                       1024U                                         /*!< header + frame_extra + payload + CRC */    
 
 /* ENET delay timeout */
 #define ENET_DELAY_TO                             ((uint32_t)0x0004FFFFU)                       /*!< ENET delay timeout */

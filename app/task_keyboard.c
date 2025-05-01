@@ -15,27 +15,33 @@ void keyboard_spi_hw_init();
 uint16_t keyboard_spi_hw_rw(uint8_t data);
 
 uint8_t state;
+int cnt = 0;
 
 extern TypedefEnum_ButtonStates buttonState;
+static uint16_t button_before = 0;
+
+uint8_t leds = 0x2f;
+volatile int leds_pwm = 20;
+volatile int leds_pls = 20;
 
 void vTask_keyboard(void * arg){
 
     keyboard_spi_hw_init();
 
-    uint8_t button_cntr = 0;
-    uint16_t button_before;
-    
+    uint16_t button_cntr = 0;
+
     while(1){
 
-
-        uint16_t button_now =  keyboard_spi_hw_rw(1<<state);
-        if(button_now == button_before) { if(button_cntr<110) button_cntr++;} else{button_cntr = 0;}
-        if(button_cntr == 10){
+        leds = 0xff;
+        if(cnt < leds_pwm){ leds = 0; }
+        uint16_t button_now =  keyboard_spi_hw_rw(leds);
+        if(button_now == button_before) { if(button_cntr<1100) button_cntr++;} else{button_cntr = 0;}
+        if(button_cntr == 100){
             
             buttonState = button_now;
         }
 
-        if(button_cntr == 100){
+        if(button_cntr == 1000){
             
             buttonState = ~button_now; // long press
 
@@ -44,10 +50,11 @@ void vTask_keyboard(void * arg){
 
         button_before=button_now;
          
-
-        state++;
-        if(state>8) state = 8;
-        vTaskDelay(10);
+        if(cnt++>leds_pls){
+            cnt = 0;
+        }
+        
+        vTaskDelay(1);
 
     }
 
