@@ -27,29 +27,41 @@ target_sources(${TARGET_NAME}
         PUBLIC  ${RTOS_PATH}/CMSIS_RTOS/cmsis_os.c
         )
 
+# set(MCU_TYPE  "Cortex-M4")
 
-if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
+# if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
 
-    if(${MCU_TYPE} STREQUAL "Cortex-M3" )
-        target_include_directories(${TARGET_NAME} PUBLIC ${RTOS_PATH}/portable/GCC/ARM_CM3)
-        target_sources(${TARGET_NAME} PUBLIC
-                ${RTOS_PATH}/portable/GCC/ARM_CM3/port.c
-                )
-    endif()
+#     if(${MCU_TYPE} STREQUAL "Cortex-M3" )
+#         target_include_directories(${TARGET_NAME} PUBLIC ${RTOS_PATH}/portable/GCC/ARM_CM3)
+#         target_sources(${TARGET_NAME} PUBLIC
+#                 ${RTOS_PATH}/portable/GCC/ARM_CM3/port.c
+#                 )
+#     endif()
 
-    if(${MCU_TYPE} STREQUAL "Cortex-M4" )
-        target_include_directories(${TARGET_NAME} PUBLIC ${RTOS_PATH}/portable/GCC/ARM_CM4F)
-        target_sources(${TARGET_NAME} PUBLIC
-                ${RTOS_PATH}/portable/GCC/ARM_CM4F/port.c
-                )
-    endif()
+#     if(${MCU_TYPE} STREQUAL "Cortex-M4" )
+#         target_include_directories(${TARGET_NAME} PUBLIC ${RTOS_PATH}/portable/GCC/ARM_CM4F)
+#         target_sources(${TARGET_NAME} PUBLIC
+#                 ${RTOS_PATH}/portable/GCC/ARM_CM4F/port.c
+#                 )
+#     endif()
 
-    target_compile_options(${TARGET_NAME}
+#     target_compile_options(${TARGET_NAME}
+#         PUBLIC ${CPU_FLAGS}
+#         PUBLIC -Og
+#     )
+
+# endif()
+
+
+target_include_directories(${TARGET_NAME} PUBLIC ${RTOS_PATH}/portable/GCC/ARM_CM4F)
+target_sources(${TARGET_NAME} PUBLIC
+    ${RTOS_PATH}/portable/GCC/ARM_CM4F/port.c
+)
+
+target_compile_options(${TARGET_NAME}
         PUBLIC ${CPU_FLAGS}
         PUBLIC -Og
-    )
-
-endif()
+)
 
 
 target_include_directories(${TARGET_NAME} PUBLIC "${RTOS_CONFIGH}")

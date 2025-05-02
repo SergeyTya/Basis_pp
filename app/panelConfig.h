@@ -15,8 +15,7 @@ typedef struct
     uint32_t ip;
     uint32_t port;
     uint32_t mask;
-
-
+    
     bool enable;
 
     /* data */

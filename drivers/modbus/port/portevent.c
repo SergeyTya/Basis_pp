@@ -38,38 +38,6 @@ extern BOOL xMBPortEventPostRTU(eMBEventType eEvent );
 extern BOOL xMBPortEventGetTCP(eMBEventType * eEvent);
 extern BOOL xMBPortEventGetRTU(eMBEventType * eEvent);
 
-// /* ----------------------- Start implementation -----------------------------*/
-// BOOL
-// xMBPortEventInit( void )
-// {
-//     if(isTCP){
-//         return  xMBPortEventInitTCP();
-//        }else{
-//         return  xMBPortEventInitRTU();
-//        }
-// }
-
-// BOOL
-// xMBPortEventPost( eMBEventType eEvent )
-// {
-//     if(isTCP){
-//         return  xMBPortEventPostTCP(eEvent);
-//        }else{
-//         return  xMBPortEventPostRTU(eEvent);
-//        }
-// }
-
-// BOOL
-// xMBPortEventGet( eMBEventType * eEvent )
-// {
-//    if(isTCP){
-//     return  xMBPortEventGetTCP(eEvent);
-//    }else{
-//     return  xMBPortEventGetRTU(eEvent);
-//    }
-// }
-
-
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
 xMBPortEventInit( void )

@@ -216,6 +216,7 @@ prvvMBTCPPortError( void *pvArg, err_t xErr )
     }
 }
 
+volatile int wtfcnt =0 ;
 volatile int reccnt = 0; 
 err_t
 prvxMBTCPPortReceive( void *pvArg, struct tcp_pcb *pxPCB, struct pbuf *p, err_t xErr )
@@ -265,6 +266,8 @@ prvxMBTCPPortReceive( void *pvArg, struct tcp_pcb *pxPCB, struct pbuf *p, err_t 
             /* Is the frame already complete. */
             if( usTCPBufPos < ( MB_TCP_UID + usLength ) )
             {
+                prvvMBPortReleaseClient( pxPCB );
+                wtfcnt++;
             }
             else if( usTCPBufPos == ( MB_TCP_UID + usLength ) )
             {

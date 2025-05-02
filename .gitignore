@@ -7,5 +7,9 @@
 *analizer*
 *analyzer*
 /tools/generated/*
-#/drivers/lwip-2.2.0/*
+/drivers/lwip-2.2.0/doc
+/drivers/lwip-2.2.0/test
+/drivers/lwip-2.2.0/contrib
+
+
 

@@ -1,5 +1,6 @@
 #include "stdint.h"
 #include "stdbool.h"
+#include "string.h"
 
 #include  "task_list.h"
 #include  "mcu_init.h"
@@ -15,33 +16,40 @@
 #include "task_master.h"
 #include "task_keybord.h"
 
-#include "lwipApp.h"
+#include "gd32f4xx_enet_init.h"
+#include "netconf.h"
 
 uint16_t holdings[256];
 
 
 void vTask_ethercat(__attribute__((unused)) void *argument);
-void vTask_VCP(__attribute__((unused)) void *argument);
-void vTask_blinkBlakpill(__attribute__((unused)) void *argument);
 
-void vTask_1s(void * arg){
-    while(1){
-        hwDriveHartBit_led1();
-        vTaskDelay(300);
-    }
-}
 
 int main() {
 
     vMCU_init();
-    init_ether();
-
+    enet_system_setup();
+    
     StructureInit_PanelConfig(&panelConfig);
     ConfigMenuReadAll();
+
+    uint8_t * ipadr = (uint8_t *) &panelConfig.modbus_TCP.ip; 
+    uint8_t * ipmas = (uint8_t *) &panelConfig.modbus_TCP.mask;
+
+    ipadr[0] = BOARD_IP_ADDR0; ipadr[1] = BOARD_IP_ADDR1; ipadr[2] = BOARD_IP_ADDR2; ipadr[3] = BOARD_IP_ADDR3;
+    ipmas[0] = BOARD_NETMASK_ADDR0 ; ipmas[1] =BOARD_NETMASK_ADDR1 ;ipmas[2] = BOARD_NETMASK_ADDR2; ipmas[3] =BOARD_NETMASK_ADDR3;
+
+    lwip_stack_init((uint8_t *) &panelConfig.modbus_TCP.ip, (uint8_t *) &panelConfig.modbus_TCP.mask);
+
+    panelConfig.modbus_RTU.enable = false;
+    if(panelConfig.modbus_RTU.enable){
+        xTaskCreate(vTask_modbusRTU    , "ModbusSlaveRTU"   , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, NULL);
+    }else{
+        xTaskCreate(vTask_modbusTCP    , "ModbusSlaveTCP"   , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, NULL);
+    }
   
     xTaskCreate(vTask_Master    , "Master"        , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
     xTaskCreate(vTask_Panel     , "Panel"         , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 4, NULL);
-    xTaskCreate(vTask_modbus    , "ModbusSlave"   , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, NULL);
     xTaskCreate(vTask_keyboard  , "Keyboard"      , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 6, NULL);
 
     vTaskStartScheduler();

@@ -26,16 +26,13 @@ void vTask_modbusRTU(__attribute__((unused)) void *argument)
         eMBPoll();
 
         uint16_t ToCounter = eMBGetTimeoutCounter();
-        vTaskDelay(1);
+        vTaskDelay(5);
     }
 }
 
 eMBErrorCode  xStatus;
 
-void vTask_modbus(void* arg){
-
-   // isTCP = true;
-    
+void vTask_modbusTCP(void* arg){
 
     vTaskDelay(2000);
    
@@ -65,9 +62,3 @@ void vTask_modbus(void* arg){
         ( void )eMBClose(  );
     }
 }
-
-
-// void vTask_modbus(__attribute__((unused)) void *argument)
-// {
-//     vTask_modbusTCP(argument);
-// }
