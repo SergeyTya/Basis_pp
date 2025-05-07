@@ -52,7 +52,7 @@ void vTask_modbusTCP(void* arg){
         {
             do
             {
-               // xStatus = eMBPoll(  );
+                xStatus = eMBPoll(  );
                 vTaskDelay(2);
             }
             while( xStatus == MB_ENOERR );

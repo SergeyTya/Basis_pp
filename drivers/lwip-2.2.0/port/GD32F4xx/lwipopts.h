@@ -43,13 +43,13 @@ OF SUCH DAMAGE.
 #define LWIP_TCPIP_TIMEOUT 0
 //#define LWIP_TIMERS
 
-#define LWIP_TCPIP_CORE_LOCKING 1
+#define LWIP_TCPIP_CORE_LOCKING 0
 
-#define SYS_LIGHTWEIGHT_PROT    1                        /* SYS_LIGHTWEIGHT_PROT==1: if you want inter-task protection 
+#define SYS_LIGHTWEIGHT_PROT    0                        /* SYS_LIGHTWEIGHT_PROT==1: if you want inter-task protection 
                                                             for certain critical regions during buffer allocation,
                                                             deallocation and memory allocation and deallocation */                                                            
 
-#define NO_SYS                  0                        /* NO_SYS==1: provides VERY minimal functionality. 
+#define NO_SYS                  1                        /* NO_SYS==1: provides VERY minimal functionality. 
                                                             Otherwise, use lwIP facilities */
 
 /*  memory options  */
@@ -79,14 +79,14 @@ OF SUCH DAMAGE.
 #define MEMP_NUM_NETBUF         8                        /* the number of struct netbufs */
 
 /* Pbuf options */
-#define PBUF_POOL_SIZE          10                       /* the number of buffers in the pbuf pool */
+#define PBUF_POOL_SIZE          15                       /* the number of buffers in the pbuf pool */
 #define PBUF_POOL_BUFSIZE       1500                     /* the size of each pbuf in the pbuf pool */
 
 /* TCP options */
 #define LWIP_TCP                1
 #define TCP_TTL                 255
 
-#define TCP_QUEUE_OOSEQ         0                        /* controls if TCP should queue segments that arrive out of
+#define TCP_QUEUE_OOSEQ         1                        /* controls if TCP should queue segments that arrive out of
                                                             order, Define to 0 if your device is low on memory. */
 
 #define TCP_MSS                 (1500 - 40)              /* TCP Maximum segment size, 
@@ -98,7 +98,9 @@ OF SUCH DAMAGE.
                                                             as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work */
 
 #define TCP_WND                 (2*TCP_MSS)              /* TCP receive window */
-                                                   
+    
+#define LWIP_WND_SCALE                  1
+#define TCP_RCV_SCALE                   2
 
 /* ICMP options */
 #define LWIP_ICMP               1
@@ -109,7 +111,7 @@ OF SUCH DAMAGE.
                                                             DHCP is not implemented in lwIP 0.5.1, however, so
                                                             turning this on does currently not work. */
 
-#define LWIP_NETIF_STATUS_CALLBACK 1
+#define LWIP_NETIF_STATUS_CALLBACK 0
 
 /* UDP options */
 #define LWIP_UDP                1
@@ -124,7 +126,7 @@ OF SUCH DAMAGE.
 #define CHECKSUM_BY_HARDWARE                             /* computing and verifying the IP, UDP, TCP and ICMP  checksums by hardware */
 
 /* sequential layer options */
-#define LWIP_NETCONN            1                        /* set to 1 to enable netconn API (require to use api_lib.c) */
+#define LWIP_NETCONN            0                        /* set to 1 to enable netconn API (require to use api_lib.c) */
 
 #define MEMP_NUM_NETCONN        4                        /* the number of struct netconns */
 

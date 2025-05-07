@@ -216,14 +216,13 @@ prvvMBTCPPortError( void *pvArg, err_t xErr )
     }
 }
 
-volatile int wtfcnt =0 ;
-volatile int reccnt = 0; 
+
 err_t
 prvxMBTCPPortReceive( void *pvArg, struct tcp_pcb *pxPCB, struct pbuf *p, err_t xErr )
 {
     USHORT          usLength;
 
-    err_t           error;
+    err_t           error = ERR_OK;
 
     if( xErr != ERR_OK )
     {
@@ -266,13 +265,12 @@ prvxMBTCPPortReceive( void *pvArg, struct tcp_pcb *pxPCB, struct pbuf *p, err_t 
             /* Is the frame already complete. */
             if( usTCPBufPos < ( MB_TCP_UID + usLength ) )
             {
-                prvvMBPortReleaseClient( pxPCB );
-                wtfcnt++;
+               // prvvMBPortReleaseClient( pxPCB );
+
             }
             else if( usTCPBufPos == ( MB_TCP_UID + usLength ) )
             {
                 ( void )xMBPortEventPost( EV_FRAME_RECEIVED );
-                reccnt++;
             }
             else
             {
@@ -298,8 +296,6 @@ xMBTCPPortGetRequest( UCHAR ** ppucMBTCPFrame, USHORT * usTCPLength )
     return TRUE;
 }
 
-volatile int trans_id = 0;
-volatile int rescnt = 0; 
 
 BOOL
 xMBTCPPortSendResponse( const UCHAR * pucMBTCPFrame, USHORT usTCPLength )
@@ -310,8 +306,6 @@ xMBTCPPortSendResponse( const UCHAR * pucMBTCPFrame, USHORT usTCPLength )
     {
         /* Make sure we can send the packet. */
         assert( tcp_sndbuf( pxPCBClient ) >= usTCPLength );
-        trans_id = pucMBTCPFrame[1];
-        rescnt++;
         if( tcp_write( pxPCBClient, pucMBTCPFrame, ( u16_t ) usTCPLength, 1 ) == ERR_OK )
         {
 #ifdef MB_TCP_DEBUG

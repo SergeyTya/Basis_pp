@@ -38,7 +38,8 @@ target_include_directories(${TARGET_NAME} PUBLIC
         ${LWIP_DIR}/src/include/
         ${LWIP_DIR}/src/include/lwip
         ${LWIP_DIR}/port/GD32F4xx/
-        ${LWIP_DIR}/port/GD32F4xx/FreeRTOS/
+       # ${LWIP_DIR}/port/GD32F4xx/FreeRTOS/
+        ${LWIP_DIR}/port/GD32F4xx/Basic/
         ${LWIP_DIR}/port/GD32F4xx/hw/
         ${LWIP_DIR}/port/GD32F4xx/app/
         
@@ -51,8 +52,9 @@ target_sources(${TARGET_NAME}  PUBLIC
  ${lwipcore4_SRCS}
  ${lwipapi_SRCS} 
  ${lwipnetif_SRCS} 
- ${LWIP_DIR}/port/GD32F4xx/FreeRTOS/ethernetif.c
- ${LWIP_DIR}/port/GD32F4xx/FreeRTOS/sys_arch.c
+ #${LWIP_DIR}/port/GD32F4xx/FreeRTOS/ethernetif.c
+ #${LWIP_DIR}/port/GD32F4xx/FreeRTOS/sys_arch.c
+ ${LWIP_DIR}/port/GD32F4xx/Basic/ethernetif.c
  ${LWIP_DIR}/port/GD32F4xx/hw/gd32f4xx_enet_init.c
  ${LWIP_DIR}/port/GD32F4xx/app/netconf.c
  

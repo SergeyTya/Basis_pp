@@ -34,6 +34,7 @@ OF SUCH DAMAGE.
 
 #include "gd32f4xx_enet.h"
 #include "main.h"
+#include "lwipopts.h"
 
 const uint8_t gd32_str[] = {"\r\n ############ Welcome GigaDevice ############\r\n"};
 static __IO uint32_t enet_init_status = 0;
@@ -81,8 +82,6 @@ void enet_system_setup(void)
 */
 static void enet_mac_dma_config(void)
 {
-    ErrStatus reval_state = ERROR;
-
     /* enable ethernet clock  */
     rcu_periph_clock_enable(RCU_ENET);
     rcu_periph_clock_enable(RCU_ENETTX);
@@ -154,7 +153,7 @@ static void timer_additional_config(void)
   timer_interrupt_enable(TIMER7, TIMER_INT_UP);
   nvic_irq_enable(TIMER7_UP_TIMER12_IRQn, 1, 0);
 
-  //timer_enable(TIMER7);
+  timer_enable(TIMER7);
 }
 
 int enetTime = 0;
@@ -264,16 +263,22 @@ void ENET_IRQHandler(void)
     /* clear the enet DMA Rx interrupt pending bits */
     static portBASE_TYPE xHigherPriorityTaskWoken;
     xHigherPriorityTaskWoken = pdFALSE;
-    uint32_t reval = enet_rxframe_size_get();
-
-    if(reval > 1) {
-        xSemaphoreGiveFromISR(g_rx_semaphore, &xHigherPriorityTaskWoken) ;
-        irq_cnt++;
-    }
+   
+    // if(reval > 1) {
+    //     xSemaphoreGiveFromISR(g_rx_semaphore, &xHigherPriorityTaskWoken) ;
+    //    irq_cnt++;
+    // }
 
     enet_interrupt_flag_clear(ENET_DMA_INT_FLAG_RS_CLR);
     enet_interrupt_flag_clear(ENET_DMA_INT_FLAG_NI_CLR);
 
-    //lwip_timeouts_check(sys_now());
+    uint32_t reval = 0;
+    do {
+        reval = enet_rxframe_size_get();
+
+        if(reval > 1) {
+            lwip_frame_recv();
+        }
+    } while(reval != 0);
    
 }
