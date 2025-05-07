@@ -222,7 +222,7 @@ TypedefEnum_MasterSates master_readHoldings(uint8_t slave, uint16_t adr, uint16_
     master_expectedByteCnt(expectedSize);
    // vTaskDelay(1);
 
-    for (size_t i = 0; i < 100; i++)
+    for (size_t i = 0; i < 300; i++)
     {
         uint8_t bytesToRead = master_hwBytesToRead();
         if (bytesToRead == expectedSize)
@@ -248,8 +248,8 @@ TypedefEnum_MasterSates master_readHoldings(uint8_t slave, uint16_t adr, uint16_
                 vTaskDelay(10);
                 return MASTERSTATE_CRCERROR;
             }
-            vTaskDelay(1);
         }
+        vTaskDelay(1);
     }
 
     return MASTERSTATE_TIMEOUT;

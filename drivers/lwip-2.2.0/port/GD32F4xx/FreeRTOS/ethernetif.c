@@ -269,28 +269,50 @@ static struct pbuf * low_level_input(struct netif *netif)
 #include "mb.h"
 #include "mbport.h"
 
+volatile int ifcnt = 0;
+volatile int ifcnt2 = 0;
+volatile int et = 0;
+
+void timeouts(){
+    while(1){
+
+        tcp_tmr();
+        vTaskDelay(249);
+    }
+}
+
 void ethernetif_input( void * pvParameters )
 {
     struct pbuf *p;
     SYS_ARCH_DECL_PROTECT(sr);
 
+   // xTaskCreate(timeouts , "",  configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES , NULL);
+
+
     while(1){
-        lwip_timeouts_check(sys_now());
+        
+        
+       
+      // lwip_timeouts_check(sys_now());
+
+      
+       
         if(
 #ifdef USE_ENET_INTERRUPT                    
             pdTRUE == xSemaphoreTake(g_rx_semaphore, 1)
 #else
             enet_rxframe_size_get()
 #endif
-        ){
+    )
+        {
            
-           do
-            {
+            do{ 
               SYS_ARCH_PROTECT(sr);
               p = low_level_input( low_netif );
               SYS_ARCH_UNPROTECT(sr);
               if (p != NULL)
               {
+                ifcnt ++;
                 if (low_netif->input( p, low_netif) != ERR_OK )
                 {
                   pbuf_free(p);
@@ -298,6 +320,15 @@ void ethernetif_input( void * pvParameters )
               }
             }while(p!=NULL);
         }
+
+        ///sys_check_timeouts();
+        lwip_timeouts_check(sys_now());
+
+        eMBPoll();
+
+
+  
+      //  lwip_timeouts_check(sys_now());
 
 #ifndef USE_ENET_INTERRUPT
      vTaskDelay(1);

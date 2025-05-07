@@ -50,7 +50,7 @@ void lwip_netif_status_callback(struct netif *netif);
 //#define USE_DHCP       1 /* enable DHCP, if disabled static address is used */
 
 //#define USE_ENET_INTERRUPT
-#define TIMEOUT_CHECK_USE_LWIP
+//#define TIMEOUT_CHECK_USE_LWIP
 /* MAC address: BOARD_MAC_ADDR0:BOARD_MAC_ADDR1:BOARD_MAC_ADDR2:BOARD_MAC_ADDR3:BOARD_MAC_ADDR4:BOARD_MAC_ADDR5 */
 #define MAC_ADDR0   0x20
 #define MAC_ADDR1   0x40

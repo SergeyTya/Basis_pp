@@ -40,9 +40,12 @@ OF SUCH DAMAGE.
 
 #include "netconf.h"
 
-#define LWIP_TCPIP_CORE_LOCKING 0
+#define LWIP_TCPIP_TIMEOUT 0
+//#define LWIP_TIMERS
 
-#define SYS_LIGHTWEIGHT_PROT    0                        /* SYS_LIGHTWEIGHT_PROT==1: if you want inter-task protection 
+#define LWIP_TCPIP_CORE_LOCKING 1
+
+#define SYS_LIGHTWEIGHT_PROT    1                        /* SYS_LIGHTWEIGHT_PROT==1: if you want inter-task protection 
                                                             for certain critical regions during buffer allocation,
                                                             deallocation and memory allocation and deallocation */                                                            
 
@@ -121,7 +124,7 @@ OF SUCH DAMAGE.
 #define CHECKSUM_BY_HARDWARE                             /* computing and verifying the IP, UDP, TCP and ICMP  checksums by hardware */
 
 /* sequential layer options */
-#define LWIP_NETCONN            0                        /* set to 1 to enable netconn API (require to use api_lib.c) */
+#define LWIP_NETCONN            1                        /* set to 1 to enable netconn API (require to use api_lib.c) */
 
 #define MEMP_NUM_NETCONN        4                        /* the number of struct netconns */
 
@@ -134,6 +137,7 @@ OF SUCH DAMAGE.
 /* Lwip debug options */
 #define LWIP_DEBUG              0
 
+#define LWIP_ARP 1
 
 
 #ifdef CHECKSUM_BY_HARDWARE

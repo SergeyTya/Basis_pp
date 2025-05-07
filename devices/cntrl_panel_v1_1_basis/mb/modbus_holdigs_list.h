@@ -13,6 +13,7 @@ extern const char * build_info;
 #include "events.h"
 
 extern uint16_t holdings[];
+extern void events_dummy();
 
 #define REG_HOLDINGS_TABLE_LEN 5
 #define REG_HOLDINGS_TABLE_INIT {                                 \
@@ -26,15 +27,15 @@ extern uint16_t holdings[];
 #define MB_EXTERNAL_HOLDINGS_NREGS 9
 #define MB_EXTERNAL_HOLDINGS {                                                                                           \
                                                                                                                     \
-HR_CREATE_UINT16_PARAM  (/*ADR=*/103, holdings[0],        "Control word"        ,/*min=*/      0,/*max=*/      4, /*def=*/     1,  /*on_change=*/events_dummy),                \
-HR_CREATE_UINT16_PARAM  (/*ADR=*/101, holdings[1],        "Freq ref"            ,/*min=*/      0,/*max=*/      4, /*def=*/     1,  /*on_change=*/events_dummy),                \
-HR_CREATE_UINT16_PARAM  (/*ADR=*/102, holdings[2],        "Volt ref"            ,/*min=*/      0,/*max=*/      4, /*def=*/     1,  /*on_change=*/events_dummy),                \
-HR_CREATE_UINT16_RO     (/*ADR=*/240, holdings[3],        "Volt U"            ),                                                                                               \
-HR_CREATE_UINT16_RO     (/*ADR=*/241, holdings[4],        "Volt I"            ),                                                                                               \
-HR_CREATE_UINT16_RO     (/*ADR=*/242, holdings[5],        "Volt W"            ),                                                                                               \
-HR_CREATE_UINT16_RO     (/*ADR=*/243, holdings[6],        "Curr I"            ),                                                                                               \
-HR_CREATE_UINT16_RO     (/*ADR=*/244, holdings[7],        "Curr U"            ),                                                                                               \
-HR_CREATE_UINT16_RO     (/*ADR=*/245, holdings[8],        "Curr W"            )                                                                                                       \
+HR_CREATE_UINT16_PARAM  (/*ADR=*/0, holdings[1],        "Freq ref"            ,/*min=*/      0,/*max=*/      4, /*def=*/     1,  /*on_change=*/events_dummy),                \
+HR_CREATE_UINT16_PARAM  (/*ADR=*/1, holdings[2],        "Volt ref"            ,/*min=*/      0,/*max=*/      4, /*def=*/     1,  /*on_change=*/events_dummy),                \
+HR_CREATE_UINT16_PARAM  (/*ADR=*/2, holdings[0],        "Control word"        ,/*min=*/      0,/*max=*/      4, /*def=*/     1,  /*on_change=*/events_dummy),                \
+HR_CREATE_UINT16_RO     (/*ADR=*/3, holdings[3],        "Volt U"            ),                                                                                               \
+HR_CREATE_UINT16_RO     (/*ADR=*/4, holdings[4],        "Volt I"            ),                                                                                               \
+HR_CREATE_UINT16_RO     (/*ADR=*/5, holdings[5],        "Volt W"            ),                                                                                               \
+HR_CREATE_UINT16_RO     (/*ADR=*/6, holdings[6],        "Curr I"            ),                                                                                               \
+HR_CREATE_UINT16_RO     (/*ADR=*/7, holdings[7],        "Curr U"            ),                                                                                               \
+HR_CREATE_UINT16_RO     (/*ADR=*/8, holdings[8],        "Curr W"            )                                                                                                       \
 }\
 
 #define MB_SLAVE_AC1_HOLDING_SHIFT 0x1000U

@@ -49,7 +49,7 @@ static eMBEventType eMailBoxEvent;
 
 /* ----------------------- Start implementation -----------------------------*/
 BOOL
-xMBPortEventInitTCP( void )
+xMBPortEventInit( void )
 {
     eMailBoxEvent = EV_READY;
     // sys_mbox_new(&xMailBox, 10);
@@ -86,7 +86,7 @@ static inline void post_event(QueueHandle_t mbox, void * data){
 }
 
 BOOL
-xMBPortEventPostTCP( eMBEventType eEvent )
+xMBPortEventPost( eMBEventType eEvent )
 {
     eMailBoxEvent = eEvent;
     
@@ -125,7 +125,7 @@ static inline uint32_t fetch_event(QueueHandle_t mbox, void **msg, u32_t timeout
 }
 
 BOOL
-xMBPortEventGetTCP( eMBEventType * eEvent )
+xMBPortEventGet( eMBEventType * eEvent )
 {
     eMBEventType *  peMailBoxEvent;
     BOOL            xEventHappend = FALSE;

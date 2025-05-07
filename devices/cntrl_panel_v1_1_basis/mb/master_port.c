@@ -75,9 +75,22 @@ void master_hwInit(uint16_t speed) {
 
     /* USART configure */
     usart_deinit(RSM_USART);
-    usart_baudrate_set(RSM_USART, 115200); /// ????????????
-    usart_parity_config(RSM_USART, USART_PM_NONE);
+
+    usart_oversample_config(RSM_USART, USART_OVSMOD_8);
+
+    
+    usart_word_length_set(RSM_USART, USART_WL_9BIT);
+    usart_parity_check_coherence_config(RSM_USART, USART_PCM_EN);
+    usart_parity_config(RSM_USART, USART_PM_EVEN);
+
+
+    // usart_word_length_set(RSM_USART, USART_WL_8BIT);
+    // usart_parity_check_coherence_config(RSM_USART, USART_PCM_NONE);
+    // usart_parity_config(RSM_USART, USART_PM_NONE);
+
+
     usart_stop_bit_set(RSM_USART, 1);
+    usart_baudrate_set(RSM_USART, 115200); /// ????????????
     usart_receive_config(RSM_USART, USART_RECEIVE_ENABLE);
     usart_transmit_config(RSM_USART, USART_TRANSMIT_ENABLE);
     usart_enable(RSM_USART);

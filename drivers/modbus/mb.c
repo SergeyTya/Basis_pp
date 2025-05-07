@@ -70,7 +70,9 @@ extern signed short int *usRegInputRegBuf[1];
 
 const char *device_info = DEVICE_INFO;
 
-
+void events_dummy(void *arg)
+{
+}
 
 static enum {
     STATE_ENABLED,

@@ -23,7 +23,7 @@ void vTask_modbusRTU(__attribute__((unused)) void *argument)
 
     while (1)
     {
-        eMBPoll();
+     //   eMBPoll();
 
         uint16_t ToCounter = eMBGetTimeoutCounter();
         vTaskDelay(5);
@@ -52,8 +52,8 @@ void vTask_modbusTCP(void* arg){
         {
             do
             {
-                xStatus = eMBPoll(  );
-                vTaskDelay(1);
+               // xStatus = eMBPoll(  );
+                vTaskDelay(2);
             }
             while( xStatus == MB_ENOERR );
         }

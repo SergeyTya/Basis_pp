@@ -130,6 +130,41 @@ static void nvic_configuration(void)
 }
 #endif /* USE_ENET_INTERRUPT */
 
+static timer_parameter_struct timer_initpara;
+static void timer_additional_config(void)
+{
+
+  int timer_max = SystemCoreClock / (2 * 1000);
+  rcu_periph_clock_enable(RCU_TIMER7);
+  rcu_timer_clock_prescaler_config(RCU_TIMER_PSC_MUL4);
+  timer_deinit(TIMER7);
+  timer_initpara.prescaler = 0;
+  timer_initpara.alignedmode = TIMER_COUNTER_CENTER_BOTH;
+  timer_initpara.counterdirection = TIMER_COUNTER_CENTER_UP;
+  timer_initpara.period = timer_max;
+  timer_initpara.repetitioncounter = 1;
+  timer_init(TIMER7, &timer_initpara);
+
+  /* select the master slave mode */
+ // timer_master_slave_mode_config(TIMER7, TIMER_MASTER_SLAVE_MODE_ENABLE);
+  /* TIMER1 update event is used as trigger output for ADC*/
+ // timer_master_output_trigger_source_select(TIMER7, TIMER_TRI_OUT_SRC_UPDATE);
+  //timer_update_event_enable(TIMER7);
+
+  timer_interrupt_enable(TIMER7, TIMER_INT_UP);
+  nvic_irq_enable(TIMER7_UP_TIMER12_IRQn, 1, 0);
+
+  //timer_enable(TIMER7);
+}
+
+int enetTime = 0;
+
+void  TIMER7_UP_TIMER12_IRQHandler(void){
+    timer_interrupt_flag_clear(TIMER7, TIMER_INT_FLAG_UP);
+    enetTime ++;
+  }
+
+
 /*!
     \brief      configures the different GPIO ports
     \param[in]  none
@@ -215,6 +250,8 @@ static void enet_gpio_config(void)
 
     gpio_bit_set(GPIOA, GPIO_PIN_3);
 
+    timer_additional_config();
+
 }
 
 
@@ -236,5 +273,7 @@ void ENET_IRQHandler(void)
 
     enet_interrupt_flag_clear(ENET_DMA_INT_FLAG_RS_CLR);
     enet_interrupt_flag_clear(ENET_DMA_INT_FLAG_NI_CLR);
+
+    //lwip_timeouts_check(sys_now());
    
 }

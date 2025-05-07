@@ -19,6 +19,8 @@
 #include "gd32f4xx_enet_init.h"
 #include "netconf.h"
 
+#include "task_scope.h"
+
 uint16_t holdings[256];
 
 
@@ -43,7 +45,7 @@ int main() {
 
     panelConfig.modbus_RTU.enable = false;
     if(panelConfig.modbus_RTU.enable){
-        xTaskCreate(vTask_modbusRTU    , "ModbusSlaveRTU"   , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, NULL);
+      //  xTaskCreate(vTask_modbusRTU    , "ModbusSlaveRTU"   , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, NULL);
     }else{
         xTaskCreate(vTask_modbusTCP    , "ModbusSlaveTCP"   , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, NULL);
     }
@@ -51,6 +53,7 @@ int main() {
     xTaskCreate(vTask_Master    , "Master"        , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
     xTaskCreate(vTask_Panel     , "Panel"         , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 4, NULL);
     xTaskCreate(vTask_keyboard  , "Keyboard"      , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 6, NULL);
+    xTaskCreate(vTask_Scope     , "Scope"         , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
 
     vTaskStartScheduler();
     return 0;

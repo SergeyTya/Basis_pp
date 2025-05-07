@@ -5,7 +5,7 @@
 
 #include "task_scope.h"
 
-extern xQueueHandle xQueue;
+xQueueHandle xQueue;
 TypeDef_xSCOPE xSCOPE;
 
 

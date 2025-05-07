@@ -118,17 +118,17 @@ eMBFuncReportSlaveID(UCHAR *pucFrame, USHORT *usLen)
 eMBException
 eMBFuncSendScopeData(UCHAR *pucFrame, USHORT *usLen)
 {
-    // uint32_t Fadr;
+    uint32_t Fadr;
 
-    // portBASE_TYPE xStatus = xQueueReceive(xQueue, &Fadr, 0);
+    portBASE_TYPE xStatus = xQueueReceive(xQueue, &Fadr, 0);
 
-    // if (xStatus != pdPASS)
-    // {
-    //     return MB_EX_SLAVE_BUSY;
-    // }
+    if (xStatus != pdPASS)
+    {
+        return MB_EX_SLAVE_BUSY;
+    }
 
-    // memcpy(&pucFrame[MB_PDU_DATA_OFF], (uint8_t *)Fadr, SCOPE_FRAME_SIZE);
-    // *usLen = (USHORT)(MB_PDU_DATA_OFF + SCOPE_FRAME_SIZE);
+    memcpy(&pucFrame[MB_PDU_DATA_OFF], (uint8_t *)Fadr, SCOPE_FRAME_SIZE);
+    *usLen = (USHORT)(MB_PDU_DATA_OFF + SCOPE_FRAME_SIZE);
 
     return MB_EX_NONE;
 }
@@ -149,9 +149,9 @@ eMBFuncSendScopeData(UCHAR *pucFrame, USHORT *usLen)
 eMBException
 eMBFuncGetScopeChnlAdr(UCHAR *pucFrame, USHORT *usLen)
 {
-    // pucFrame[MB_PDU_DATA_OFF] = SCOPE_CHANNEL_MAX;
-    // memcpy(&pucFrame[MB_PDU_DATA_OFF+1], xSCOPE.adr, 4*SCOPE_CHANNEL_MAX);
-    // *usLen = (USHORT)(MB_PDU_DATA_OFF+1+4*SCOPE_CHANNEL_MAX);
+    pucFrame[MB_PDU_DATA_OFF] = SCOPE_CHANNEL_MAX;
+    memcpy(&pucFrame[MB_PDU_DATA_OFF+1], xSCOPE.adr, 4*SCOPE_CHANNEL_MAX);
+    *usLen = (USHORT)(MB_PDU_DATA_OFF+1+4*SCOPE_CHANNEL_MAX);
     return MB_EX_NONE;
 }
 
@@ -171,12 +171,12 @@ eMBFuncGetScopeChnlAdr(UCHAR *pucFrame, USHORT *usLen)
 eMBException
 eMBFuncSetScopeChnlAdr(UCHAR *pucFrame, USHORT *usLen)
 {
-    // uint8_t cnt = pucFrame[MB_PDU_DATA_OFF];
-    // if(cnt>SCOPE_CHANNEL_MAX){
-    //      return MB_EX_ILLEGAL_DATA_VALUE;
-    // }
-    // memcpy(xSCOPE.adr, &pucFrame[MB_PDU_DATA_OFF+1], 4*cnt);
-    // *usLen = 0;
+    uint8_t cnt = pucFrame[MB_PDU_DATA_OFF];
+    if(cnt>SCOPE_CHANNEL_MAX){
+         return MB_EX_ILLEGAL_DATA_VALUE;
+    }
+    memcpy(xSCOPE.adr, &pucFrame[MB_PDU_DATA_OFF+1], 4*cnt);
+    *usLen = 0;
     return MB_EX_NONE;
 }
 
@@ -197,23 +197,23 @@ eMBException
 eMBFuncSetScopeParam(UCHAR *pucFrame, __attribute__((unused)) USHORT *usLen)
 {
 
-    // /*
-    //  0 - count
-    //  1 - freq
-    //  * */
-    // uint8_t count;
-    // uint8_t freq;
+    /*
+     0 - count
+     1 - freq
+     * */
+    uint8_t count;
+    uint8_t freq;
 
-    // count = pucFrame[MB_PDU_DATA_OFF];
-    // freq = pucFrame[MB_PDU_DATA_OFF + 1];
-    // if(count==0) {
-    //     return MB_EX_ILLEGAL_DATA_VALUE;
-    // }
-    // if(count > SCOPE_CHANNEL_MAX){
-    //     return MB_EX_ILLEGAL_DATA_VALUE;
-    // }
-    // xSCOPE.CNTRL.chn_num = count;
-    // xSCOPE.CNTRL.delay = freq;
+    count = pucFrame[MB_PDU_DATA_OFF];
+    freq = pucFrame[MB_PDU_DATA_OFF + 1];
+    if(count==0) {
+        return MB_EX_ILLEGAL_DATA_VALUE;
+    }
+    if(count > SCOPE_CHANNEL_MAX){
+        return MB_EX_ILLEGAL_DATA_VALUE;
+    }
+    xSCOPE.CNTRL.chn_num = count;
+    xSCOPE.CNTRL.delay = freq;
     return MB_EX_NONE;
 }
 
@@ -269,10 +269,10 @@ eMBException
 eMBFunGetRegistersCount(UCHAR *pucFrame, USHORT *usLen)
 {
      // holding address
-    // uint16_t holding_cnt = REG_HOLDING_NREGS_x00;
-    // pucFrame[MB_PDU_DATA_OFF    ] = ( (uint8_t *) &holding_cnt)[1];
-    // pucFrame[MB_PDU_DATA_OFF + 1] = ( (uint8_t *) &holding_cnt)[0];
-    // *usLen =  3;
+    uint16_t holding_cnt = MB_EXTERNAL_HOLDINGS_NREGS;
+    pucFrame[MB_PDU_DATA_OFF    ] = ( (uint8_t *) &holding_cnt)[1];
+    pucFrame[MB_PDU_DATA_OFF + 1] = ( (uint8_t *) &holding_cnt)[0];
+    *usLen =  3;
 
     return MB_EX_NONE;
 }
@@ -345,33 +345,31 @@ eMBException
 eMBFunPutHoldingsToScope(UCHAR *pucFrame, USHORT *usLen)
 {
 
-    // uint16_t adr0 = pucFrame[MB_PDU_DATA_OFF+1] + (pucFrame[MB_PDU_DATA_OFF+0]<<8);
-    // uint16_t adr1 = pucFrame[MB_PDU_DATA_OFF+3] + (pucFrame[MB_PDU_DATA_OFF+2]<<8);
-    // uint16_t adr2 = pucFrame[MB_PDU_DATA_OFF+5] + (pucFrame[MB_PDU_DATA_OFF+4]<<8);
-    // uint16_t adr3 = pucFrame[MB_PDU_DATA_OFF+7] + (pucFrame[MB_PDU_DATA_OFF+6]<<8);
+    uint16_t adr0 = pucFrame[MB_PDU_DATA_OFF+1] + (pucFrame[MB_PDU_DATA_OFF+0]<<8);
+    uint16_t adr1 = pucFrame[MB_PDU_DATA_OFF+3] + (pucFrame[MB_PDU_DATA_OFF+2]<<8);
+    uint16_t adr2 = pucFrame[MB_PDU_DATA_OFF+5] + (pucFrame[MB_PDU_DATA_OFF+4]<<8);
+    uint16_t adr3 = pucFrame[MB_PDU_DATA_OFF+7] + (pucFrame[MB_PDU_DATA_OFF+6]<<8);
 
-    // TypeDef_MB_Holding * hldg_ref0 = MB_GET_HOLDING_BASE_ADR(adr0);
-    // TypeDef_MB_Holding * hldg_ref1 = MB_GET_HOLDING_BASE_ADR(adr1);
-    // TypeDef_MB_Holding * hldg_ref2 = MB_GET_HOLDING_BASE_ADR(adr2);
-    // TypeDef_MB_Holding * hldg_ref3 = MB_GET_HOLDING_BASE_ADR(adr3);
+    TypeDef_MB_Holding * hldg_ref0 = MB_GET_HOLDING_BASE_ADR(adr0);
+    TypeDef_MB_Holding * hldg_ref1 = MB_GET_HOLDING_BASE_ADR(adr1);
+    TypeDef_MB_Holding * hldg_ref2 = MB_GET_HOLDING_BASE_ADR(adr2);
+    TypeDef_MB_Holding * hldg_ref3 = MB_GET_HOLDING_BASE_ADR(adr3);
 
-    // // wrong reques size or wrong holding address
-    // if ( *usLen != 9 || 
-    //      adr0 == 0 ||
-    //      adr1 == 0 ||
-    //      adr2 == 0 ||
-    //      adr3 == 0
-    // )
-    // {
-    //        return MB_EX_ILLEGAL_DATA_ADDRESS;
-    // }
+    // wrong reques size or wrong holding address
+    if ( *usLen != 9 || 
+         adr0 == 0 ||
+         adr1 == 0 ||
+         adr2 == 0 ||
+         adr3 == 0
+    )
+    {
+           return MB_EX_ILLEGAL_DATA_ADDRESS;
+    }
 
-    // xSCOPE.adr[0] = MB_GET_HOLDING_VALUE_PNTR( (hldg_ref0));
-    // xSCOPE.adr[1] = MB_GET_HOLDING_VALUE_PNTR( (hldg_ref1));
-    // xSCOPE.adr[2] = MB_GET_HOLDING_VALUE_PNTR( (hldg_ref2));
-    // xSCOPE.adr[3] = MB_GET_HOLDING_VALUE_PNTR( (hldg_ref3));
+    xSCOPE.adr[0] = MB_GET_HOLDING_VALUE_PNTR( (hldg_ref0));
+    xSCOPE.adr[1] = MB_GET_HOLDING_VALUE_PNTR( (hldg_ref1));
+    xSCOPE.adr[2] = MB_GET_HOLDING_VALUE_PNTR( (hldg_ref2));
+    xSCOPE.adr[3] = MB_GET_HOLDING_VALUE_PNTR( (hldg_ref3));
 
     return MB_EX_NONE;
 }
-
-void events_dummy(void * arg){}
