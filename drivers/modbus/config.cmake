@@ -11,7 +11,7 @@ target_sources(${TARGET_NAME}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/functions/mbfuncholding.c
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/functions/mbfuncother.c
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/functions/mbutils.c
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/port/porteventTCP.c
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/port/portevent.c
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/port/porttimer.c
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/port/porttcp.c
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/modbus/rtu/mbcrc.c

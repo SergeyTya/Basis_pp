@@ -66,7 +66,7 @@ extern enet_descriptors_struct  *dma_current_rxdesc;
 enet_descriptors_struct  ptp_txstructure[ENET_TXBUF_NUM];
 enet_descriptors_struct  ptp_rxstructure[ENET_RXBUF_NUM];
 
-void vTaskTimeout(void * arg);
+void vTaskEthernet(void * arg);
 /**
  * In this function, the hardware should be initialized.
  * Called from ethernetif_init().
@@ -133,13 +133,13 @@ static void low_level_init(struct netif *netif)
     /* enable MAC and DMA transmission and reception */
     enet_enable();
 
-     xTaskCreate(vTaskTimeout , "",  configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
+     xTaskCreate(vTaskEthernet , "ETHERNET",  configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
 
 }
 
 uint32_t g_localtime =0;
 
-void vTaskTimeout(void * arg){
+void vTaskEthernet(void * arg){
 
     g_localtime = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
