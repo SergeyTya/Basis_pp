@@ -8,11 +8,41 @@ void vTask_Master(__attribute__((unused)) void *argument);
 typedef enum
 {
 
-    MASTERSTATE_NOERROR = 0,
-    MASTERSTATE_ERROR = 1,
-    MASTERSTATE_TIMEOUT = 2,
-    MASTERSTATE_CRCERROR = 3
+    MASTER_TRANSPORT_NOERROR = 0,
+    MASTER_TRANSPORT_ERROR = 1,
+    MASTER_TRANSPORT_TIMEOUT = 2,
+    MASTERS_TRANSPORT_CRCERROR = 3
 
-} TypedefEnum_MasterSates;
+} TypedefEnum_MasterTransportSates;
+
+typedef enum
+{
+
+    MASTER_STATE_onREADY = 0,
+    MASTER_STATE_onFAULT = 1,
+    MASTER_STATE_onRUN = 2
+
+} TypedefEnum_MasterSlaveSates;
+
+typedef struct {
+
+    /* NOTE: slaveState[0] doesn't used, slave's numerated by slave modbus ID, started from 1 */
+    
+    TypedefEnum_MasterSlaveSates slaveStates[5]; 
+
+    bool     fault_source[5];
+    uint32_t fault_code[5];
+
+    bool start_req[5];
+
+    bool master_wdg[5];
+
+    void (*hw_reboot)();
+    void (*hw_save)();
+    void (*hw_load)();
+    void (*hw_deft)();
+
+
+}TypeDef_Master;
 
 #endif

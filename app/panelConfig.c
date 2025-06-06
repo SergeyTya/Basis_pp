@@ -9,10 +9,10 @@ void StructureInit_PanelConfig(Typedef_PanelConfig * panelConfig){
 
     panelConfig->brightness = 100;
     
-    panelConfig->hw_deft = PanelConfigHwDummy;
-    panelConfig->hw_load = PanelConfigHwDummy;
-    panelConfig->hw_reboot = PanelConfigHwDummy;
-    panelConfig->hw_reboot = PanelConfigHwDummy;
+    // panelConfig->hw_deft = PanelConfigHwDummy;
+    // panelConfig->hw_load = PanelConfigHwDummy;
+    // panelConfig->hw_reboot = PanelConfigHwDummy;
+    // panelConfig->hw_reboot = PanelConfigHwDummy;
 
     panelConfig->modbus_master.enable = true;
     panelConfig->modbus_master.speed  = 9600;

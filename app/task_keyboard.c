@@ -10,6 +10,8 @@
 #include "task_keybord.h"
 #include "task_panel.h"
 
+#include "keyboard_port.h"
+
 
 void keyboard_spi_hw_init();
 uint16_t keyboard_spi_hw_rw(uint8_t data);
@@ -20,7 +22,7 @@ int cnt = 0;
 extern TypedefEnum_ButtonStates buttonState;
 static uint16_t button_before = 0;
 
-uint8_t leds = 0x2f;
+static uint8_t leds = 0x2f;
 volatile int leds_pwm = 20;
 volatile int leds_pls = 20;
 
@@ -59,3 +61,31 @@ void vTask_keyboard(void * arg){
     }
 
 }
+
+static inline void setLedBit(bool state, uint32_t pos){
+     if(state){ 
+        leds |= (1<<pos);
+    } else{ 
+        leds ^= (1<<pos);
+    }
+}
+
+void keyboard_setFaultLedSate(bool state){
+    setLedBit(state, LED_FLT_POSITION);  
+}
+void keyboard_setOnLedSate(bool state){
+    setLedBit(state, LED__ON_POSITION);  
+}
+void keyboard_setAC1LedSate(bool state){
+    setLedBit(state, LED_AC1_POSITION);  
+}
+void keyboard_setAC2LedSate(bool state){
+    setLedBit(state, LED_AC2_POSITION);  
+}
+void keyboard_setDC1LedSate(bool state){
+    setLedBit(state, LED_DC1_POSITION);  
+}
+void keyboard_setDC2LedSate(bool state){
+    setLedBit(state, LED_DC2_POSITION);  
+}
+

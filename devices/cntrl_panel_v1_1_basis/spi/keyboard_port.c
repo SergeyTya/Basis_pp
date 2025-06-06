@@ -32,7 +32,9 @@
     }
 #endif
 
+
 #include "gd32f4xx_libopt.h"
+#include <stdbool.h>
 
 void keyboard_spi_hw_init(){
 
@@ -107,45 +109,8 @@ uint16_t keyboard_spi_hw_rw(uint8_t data){
 
     ((uint8_t *) &spi_rx)[1] = spi_i2s_data_receive(KBD_SPI);
 
-   
-   
-
-
     return spi_rx;
 
-    // if (keyboardSpiPos==0) {
-    //     // FSS is Low level
-    //     gpio_bit_reset(KBD_SPI_NSS1_PORT, KBD_SPI_NSS1_PORT);
-    //     // Keypad parallel load enable
-    //     for (int var = 0; var < 3; ++var) {
-    //         gpio_bit_set(KBD_SPI_NSS2_PORT, KBD_SPI_NSS2_PORT);
-    //     }
-    //     gpio_bit_reset(KBD_SPI_NSS2_PORT, KBD_SPI_NSS2_PORT);
-    //     // FSS is High level
-    //     gpio_bit_set(KBD_SPI_NSS1_PORT, KBD_SPI_NSS1_PORT);
-    //     // Get Keypad data
-    //     spi_rx_buf[keyboardSpiPos] = spi_i2s_data_receive(KBD_SPI);
-    //     // leds
-    //     while (spi_i2s_flag_get(KBD_SPI, SPI_FLAG_TRANS) == SET) {
-    //                 ;
-    //     }
-    //     spi_i2s_data_transmit(KBD_SPI, data);
-    //     while (spi_i2s_flag_get(KBD_SPI, SPI_FLAG_TRANS) == SET) {
-    //                 ;
-    //     }
-    // }
-
-    // spi_rx_buf[keyboardSpiPos] = spi_i2s_data_receive(KBD_SPI);
-
-    // // SPI send data
-    // spi_i2s_data_transmit(KBD_SPI, data);
-    // while (spi_i2s_flag_get(KBD_SPI, SPI_FLAG_TRANS) == SET) {
-    //             ;
-    // }
-
-    // keyboardSpiPos++;
-    // if (keyboardSpiPos > 5) {
-    //     keyboardSpiPos = 0;
-    // }
 }
+
 

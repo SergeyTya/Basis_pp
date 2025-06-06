@@ -6,6 +6,7 @@ target_include_directories(${TARGET_NAME}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/mb/
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/mcu/
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/spi/
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MUTABA/
         )
 

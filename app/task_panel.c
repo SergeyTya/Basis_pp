@@ -8,8 +8,11 @@
 #include "task_panel.h"
 #include "mbsupport.h"
 #include "panelConfig.h"
+#include "task_master.h"
+
 
 Typedef_PanelConfig panelConfig;
+extern TypeDef_Master master;
 
 static void Page_Logo(void *arg);
 static void Page_Ac1Indi(void *arg);
@@ -80,16 +83,22 @@ void vTask_Panel(__attribute__((unused)) void *argument)
             switch (buttonState)
             {
             case KEY_AC1:
-                current_page = Page_Ac1Indi;
+               if(panelConfig.enableAC1) current_page = Page_Ac1Indi;
                 break;
             case KEY_AC2:
-                current_page = Page_Ac2Indi;
+                if(panelConfig.enableAC2) current_page = Page_Ac2Indi;
                 break;
             case KEY_DC1:
-                current_page = Page_Dc1Indi;
+                 if(panelConfig.enableDC1) current_page = Page_Dc1Indi;
                 break;
             case KEY_DC2:
-                current_page = Page_Dc2Indi;
+                 if(panelConfig.enableDC2) current_page = Page_Dc2Indi;
+                break;
+
+            case KEY_AC1LONG:
+                 master.start_req[CONFIG_SLAVE_AC1] = true;
+            case KEY_DC1LONG:
+                 master.start_req[CONFIG_SLAVE_DC1] = true;
                 break;
 
             default:
@@ -105,7 +114,7 @@ void vTask_Panel(__attribute__((unused)) void *argument)
         static void(*pages[])(void * arg) = {NULL,Page_Ac1Indi, Page_Ac2Indi, Page_Dc1Indi, Page_Dc2Indi}; 
         for (size_t i = 1; i < 5; i++)
         {
-            if (panelConfig.fault_source[i] == true)
+            if (master.fault_source[i] == true)
             {
                 if (faultTrigger[i]==false)
                 {
@@ -123,7 +132,7 @@ void vTask_Panel(__attribute__((unused)) void *argument)
         // charge master wdg
         for (size_t i = 1; i < 5; i++)
         {
-            panelConfig.master_wdg[5] = true;
+            master.master_wdg[5] = true;
         }
 
         // copy display data
@@ -357,13 +366,15 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
         F = 999U;
 
     // process slave error code
-    if (acnum == 1 && panelConfig.fault_source[1] == true)
+    if (acnum == 1 && master.fault_source[1] == true)
     {
-        Page_SlaveFault(pntr, LABEL_AC1, panelConfig.fault_code[1]);
+        Page_SlaveFault(pntr, LABEL_AC1, master.fault_code[1]);
     }
-    else if (acnum == 2 && panelConfig.fault_source[2] == true)
+    else if (acnum == 2 && master.fault_source[2] == true)
     {
-        Page_SlaveFault(pntr, LABEL_AC2, panelConfig.fault_code[2]);
+        Page_SlaveFault(pntr, LABEL_AC2, master.fault_code[2]);
+    }else if(master.master_wdg[acnum]==true){
+        Page_SlaveFault(pntr, "CFL", 666);
     }
     else
     {
@@ -372,7 +383,7 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
             pntr, 80,
             " AC%1d   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d", 
             acnum, 
-            panelConfig.master_wdg[acnum]==true? "!":" ",
+            master.master_wdg[acnum]==true? "!":" ",
             LG_NAME,
             U[0], U[1], U[2],
             I[0], I[1], I[2],
@@ -380,7 +391,7 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
             90);
     }
 
-    if(panelConfig.master_wdg[acnum]==true){
+    if(master.master_wdg[acnum]==true){
         flash_cursor(pntr,7);
     }
 
@@ -429,26 +440,29 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
 
     menu_cur_pos = 0;
 
-    if (dcnum == 1 && panelConfig.fault_source[3] == true)
+    if (dcnum == 1 && master.fault_source[3] == true)
     {
-        Page_SlaveFault(pntr, LABEL_DC1, panelConfig.fault_code[3]);
+        Page_SlaveFault(pntr, LABEL_DC1, master.fault_code[3]);
     }
-    else if (dcnum == 2 && panelConfig.fault_source[4] == true)
+    else if (dcnum == 2 && master.fault_source[4] == true)
     {
         
-        Page_SlaveFault(pntr, LABEL_DC2, panelConfig.fault_code[4]);
+        Page_SlaveFault(pntr, LABEL_DC2, master.fault_code[4]);
+    }
+    else if(master.master_wdg[dcnum+2]==true){
+        Page_SlaveFault(pntr, "CFL", 666);
     }
     else
     {
         snprintf(pntr, 80,
                  " DC%1d   %s  %s                    U,B  %2d,%1d  P,kBT 90 I,A  %4d", 
                  dcnum, 
-                 panelConfig.master_wdg[dcnum+2]? "!": " ",
+                 master.master_wdg[dcnum+2]? "!": " ",
                  LG_NAME,
                  volt_d, volt_p, I);
     }
 
-    if(panelConfig.master_wdg[dcnum+2]==true){
+    if(master.master_wdg[dcnum+2]==true){
         flash_cursor(pntr,7);
     }
 
