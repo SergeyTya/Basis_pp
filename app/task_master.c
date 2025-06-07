@@ -325,6 +325,62 @@ void vTask_Master(__attribute__((unused)) void* argument)
 TypedefEnum_MasterTransportSates master_writeHolding(uint8_t slave, uint16_t adr, uint16_t val)
 {
     masterRxTxBuf[0] = slave;
+    masterRxTxBuf[1] = 0x06;
+    masterRxTxBuf[2] = ((uint8_t*)&adr)[1];
+    masterRxTxBuf[3] = ((uint8_t*)&adr)[0];
+    masterRxTxBuf[4] = ((uint8_t*)&val)[1];
+    masterRxTxBuf[5] = ((uint8_t*)&val)[0];
+    uint16_t crc = usMBCRC16(masterRxTxBuf, 6);
+    masterRxTxBuf[6] = ((uint8_t*)&crc)[0];
+    masterRxTxBuf[7] = ((uint8_t*)&crc)[1];
+
+    master_hwWrite(masterRxTxBuf, 8);
+
+    uint16_t expectedSize = 8;
+
+    master_expectedByteCnt(expectedSize);
+
+    for (size_t i = 0; i < 10; i++)
+    {
+        uint8_t bytesToRead = master_hwBytesToRead();
+        if (bytesToRead == expectedSize) {
+            master_hwBytesToRead(masterRxTxBuf, expectedSize);
+            uint16_t crcExpected = usMBCRC16(masterRxBuf, expectedSize - 2);
+            uint16_t crcReturned = (uint16_t)(masterRxBuf[expectedSize - 1] << 8 | masterRxBuf[expectedSize - 2]);
+            if (crcExpected == crcReturned) {
+                return MASTER_TRANSPORT_NOERROR;
+            }
+            else {
+                return MASTERS_TRANSPORT_CRCERROR;
+            }
+        }
+        else {
+            if (bytesToRead > expectedSize)
+            {
+                // master_hwRead(masterRxBuf, expectedSize);
+                master_hwClearRxTxBuf();
+                vTaskDelay(10);
+                return MASTERS_TRANSPORT_CRCERROR;
+            }
+            vTaskDelay(1);
+        }
+        vTaskDelay(10);
+    }
+
+    return MASTER_TRANSPORT_TIMEOUT;
+}
+
+/** TODO!!!
+* @brief Function for writing a value to a slave holding register
+*
+* @param slave Node address
+* @param adr Register address
+* @param val Value to write
+* @return Transport state
+*/
+TypedefEnum_MasterTransportSates master_writeHoldings(uint8_t slave, uint16_t adr, uint16_t val)
+{
+    masterRxTxBuf[0] = slave;
     masterRxTxBuf[1] = 0x10;
     masterRxTxBuf[2] = ((uint8_t*)&adr)[1];
     masterRxTxBuf[3] = ((uint8_t*)&adr)[0];
