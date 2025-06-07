@@ -101,6 +101,10 @@ void vTask_Panel(__attribute__((unused)) void *argument)
                  master.start_req[CONFIG_SLAVE_DC1] = true;
                 break;
 
+            case KEY_MENU:
+                 current_page = Page_Config;
+            break;
+
             default:
                 break;
             }
@@ -150,7 +154,7 @@ void vTask_Panel(__attribute__((unused)) void *argument)
  */
 void DisplayUpdater(__attribute__((unused)) void *argument)
 {
-    vTaskDelay(1000);
+    vTaskDelay(500);
     while (1)
     { 
         xSemaphoreTake(xDisplayUpdaterSemaphore, portMAX_DELAY);
@@ -373,9 +377,10 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
     else if (acnum == 2 && master.fault_source[2] == true)
     {
         Page_SlaveFault(pntr, LABEL_AC2, master.fault_code[2]);
-    }else if(master.master_wdg[acnum]==true){
-        Page_SlaveFault(pntr, "CFL", 666);
     }
+    // else if(master.master_wdg[acnum]==true){
+    //     Page_SlaveFault(pntr, "CFL", 666);
+    // }
     else
     {
         memset(pntr, 0, 80);
@@ -396,6 +401,8 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
     }
 
     menu_cur_pos = 0;
+
+    if(master.master_wdg[acnum]==true) return;
 
     switch (buttonState)
     {
@@ -449,9 +456,9 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
         
         Page_SlaveFault(pntr, LABEL_DC2, master.fault_code[4]);
     }
-    else if(master.master_wdg[dcnum+2]==true){
-        Page_SlaveFault(pntr, "CFL", 666);
-    }
+    // else if(master.master_wdg[dcnum+2]==true){
+    //     Page_SlaveFault(pntr, "CFL", 666);
+    // }
     else
     {
         snprintf(pntr, 80,
@@ -465,6 +472,8 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
     if(master.master_wdg[dcnum+2]==true){
         flash_cursor(pntr,7);
     }
+
+    if(master.master_wdg[dcnum+2]==true) return;
 
     switch (buttonState)
     {

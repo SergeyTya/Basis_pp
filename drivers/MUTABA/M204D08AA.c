@@ -64,13 +64,13 @@ void M204D08AA_UpdateDisplayFromBuffer(char buff[80]){
 
 void M204D08AA_DisplayInit(){
     M204D08AA_HardInit(); 
-    vTaskDelay(300);
+    vTaskDelay(30);
     M204D08AA_WriteCmdAsync(248,12);   //Display enable
-    vTaskDelay(300);                  // Dispaly clean
+    vTaskDelay(30);                  // Dispaly clean
     M204D08AA_WriteCmdAsync(248,1);   //Display clean
-    vTaskDelay(300);
+    vTaskDelay(30);
     M204D08AA_WriteCmdAsync(248,63);  // Brightness 25%
-    vTaskDelay(300);
+    vTaskDelay(30);
 }
     
 void M204D08AA_SetBrightnessLevel(int lvl){

@@ -34,7 +34,7 @@ void vTask_keyboard(void * arg){
 
     while(1){
 
-        leds = 0xff;
+       // leds = 0xff;
         if(cnt < leds_pwm){ leds = 0; }
         uint16_t button_now =  keyboard_spi_hw_rw(leds);
         if(button_now == button_before) { if(button_cntr<1100) button_cntr++;} else{button_cntr = 0;}

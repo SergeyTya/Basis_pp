@@ -34,7 +34,7 @@ eMBErrorCode  xStatus;
 
 void vTask_modbusTCP(void* arg){
 
-    vTaskDelay(2000);
+    vTaskDelay(200);
    
     for( ;; )
     {

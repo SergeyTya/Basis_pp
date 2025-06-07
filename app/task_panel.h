@@ -48,6 +48,7 @@ typedef enum {
     KEY_AC2LONG = ~0x7c31,
     KEY_DC1LONG = ~0x7c23,
     KEY_DC2LONG = ~0x7c13,
+    KEY_MENU = 0x7c20,
 }TypedefEnum_ButtonStates;
 
 

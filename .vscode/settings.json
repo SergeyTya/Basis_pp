@@ -127,7 +127,8 @@
         "opt.h": "c",
         "gd32f4xx_enet.h": "c",
         "ethernethwinit.h": "c",
-        "timers.h": "c"
+        "timers.h": "c",
+        "events.h": "c"
     }, 
      "cmake.configureArgs": [
                "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-gcc-toolchain.cmake"

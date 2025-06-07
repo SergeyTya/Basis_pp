@@ -8,6 +8,7 @@
 #include "panelConfig.h"
 
 
+
 extern Typedef_PanelConfig panelConfig;
 TypeDef_Master master;
 
@@ -98,12 +99,15 @@ void vTimerDC_Callback(TimerHandle_t xTimer) {
     5. Read displayed slave holding registers
 
 */
+
+volatile uint16_t reg_val_tmp = 0;
+volatile uint16_t reg_adr_tmp = 220;
 void vTask_Master(__attribute__((unused)) void* argument)
 {
     // Init master hardware for modbus RTU
     master_hwInit(panelConfig.modbus_master.speed);
 
-    vTaskDelay(3000);
+    vTaskDelay(300);
 /* 1. Get semaphore */
     vSemaphoreCreateBinary(xDisplayMasterR485Semaphore);
 
@@ -114,14 +118,28 @@ void vTask_Master(__attribute__((unused)) void* argument)
 
     while (1){
          
-        TypeDef_MB_Holding* holding;        
-        xSemaphoreTake(xDisplayMasterR485Semaphore, portMAX_DELAY);
-        panelConfig.enableAC1 = true;
-        // Reset fault LED
-        master_hwFaultReset();
+        TypeDef_MB_Holding* holding;  
+        
+        
+        // /// test
+        // xSemaphoreTake(xDisplayMasterR485Semaphore, portMAX_DELAY);
+        // // Reset fault LED
+        // master_hwFaultReset();
+
+        //  vTaskDelay(50); 
+
+        //   TypeDef_MB_Table* table1 = &holdings_table[3];
+        //   holding = GetHoldingByAdrFromTable(reg_adr_tmp, table1);
+                
+        //   reg_val_tmp = master_readHolding(3, holding->reg_adr & 0x0FFF, holding->pntr);
+
+        //   reg_val_tmp = *holding->pntr;
+        // xSemaphoreGive(xDisplayMasterR485Semaphore);
+        // continue;
+
         for (size_t j = 1; j < 5; j++) // Read all slaves from j (slave addr) = 1 to 4
         {
-            vTaskDelay(100);
+            vTaskDelay(50); // dalay between slaves
             // Current slave address
             uint16_t slaveAdr = j;
 
@@ -137,7 +155,6 @@ void vTask_Master(__attribute__((unused)) void* argument)
 
             if (slave_enable[j] != true)
             { // skip if slave not enabled
-                vTaskDelay(1);
                 continue;
             }
 
@@ -252,14 +269,13 @@ void vTask_Master(__attribute__((unused)) void* argument)
 /*  4. Check slave displayed */
             if (slaveAdr != panelConfig.active_slave)
             { // skip not active slave
-                vTaskDelay(1);
                 continue;
             }
 /*  5. Read displayed slave holding registers */
             int tocntr = 0;
             for (size_t i = 0; i < table->len; i++)
             {
-              //  vTaskDelay(10);
+              // vTaskDelay(10);
                 holding = &table->holdings[i];
 
                 if (holding->lock && holding->change_req)
@@ -271,7 +287,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
                     );
                     holding->lock = false;
                     holding->change_req = false;
-                    vTaskDelay(300);
+                    vTaskDelay(10); // Delay after write
                 }
 
                 // read holding value to slave
@@ -387,7 +403,7 @@ TypedefEnum_MasterTransportSates master_readHoldings(uint8_t slave, uint16_t adr
     master_expectedByteCnt(expectedSize);
     // vTaskDelay(1);
 
-    for (size_t i = 0; i < 30; i++)
+    for (size_t i = 0; i < 30; i++) // Timeout
     {
         uint8_t bytesToRead = master_hwBytesToRead();
         if (bytesToRead == expectedSize)
@@ -399,7 +415,10 @@ TypedefEnum_MasterTransportSates master_readHoldings(uint8_t slave, uint16_t adr
             {
                 for (uint16_t i = 0; i < len; i++)
                 {
-                    buff[i] = ((uint16_t*)&masterRxBuf[3])[i];
+                   // get value from buffer
+                   uint16_t val = ((uint16_t*)&masterRxBuf[3])[i];
+                   // swap bytes
+                   buff[i] = ((uint8_t *) &val)[1] + (((uint8_t *) &val)[0] << 8);
                 }
                 slave_rx_cnt[slave]++;
                 return MASTER_TRANSPORT_NOERROR;
