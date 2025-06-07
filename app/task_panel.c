@@ -295,11 +295,11 @@ static void Page_Confirm(void *arg)
     switch (buttonState)
     {
     case KEY_LEFT: // navigate
-        menu_cur_pos = 0;
+        menu_cur_pos = 1;
         buttonState = KEY_NO;
         break;
     case KEY_RIGHT: // navigate
-        menu_cur_pos = 1;
+        menu_cur_pos = 0;
         buttonState = KEY_NO;
         break;
     case KEY_ENTER:
@@ -818,8 +818,7 @@ static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
         if (!pageDcSetupUnlocked)
             break;
         // move cursor
-        if (menu_cur_pos != 0)
-            menu_cur_pos--;
+            menu_cur_pos++;
         break;
 
     case KEY_RIGHT:
@@ -829,7 +828,8 @@ static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
             pageDcSetupUnlocked = true;
             break;
         }
-        menu_cur_pos++;
+        if (menu_cur_pos != 0)
+            menu_cur_pos--;
         break;
 
     default: // AC1 //AC2 //DC1 //DC2
