@@ -96,9 +96,10 @@ void vTask_Panel(__attribute__((unused)) void *argument)
                 break;
 
             case KEY_AC1LONG:
-                 master.start_req[CONFIG_SLAVE_AC1] = true;
+                master.start_req[CONFIG_SLAVE_AC1] = true;
+                break;
             case KEY_DC1LONG:
-                 master.start_req[CONFIG_SLAVE_DC1] = true;
+                master.start_req[CONFIG_SLAVE_DC1] = true;
                 break;
 
             case KEY_MENU:

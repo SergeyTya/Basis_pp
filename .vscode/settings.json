@@ -128,7 +128,10 @@
         "gd32f4xx_enet.h": "c",
         "ethernethwinit.h": "c",
         "timers.h": "c",
-        "events.h": "c"
+        "events.h": "c",
+        "keyboard_port.h": "c",
+        "mastertransport.h": "c",
+        "stdio.h": "c"
     }, 
      "cmake.configureArgs": [
                "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-gcc-toolchain.cmake"

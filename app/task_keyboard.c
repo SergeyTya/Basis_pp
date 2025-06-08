@@ -23,8 +23,20 @@ extern TypedefEnum_ButtonStates buttonState;
 static uint16_t button_before = 0;
 
 static uint8_t leds = 0x2f;
+static uint8_t leds_val = 0;
 volatile int leds_pwm = 20;
 volatile int leds_pls = 20;
+
+static inline void setLedBit(bool state, uint32_t pos){
+     if(state){ 
+        leds_val |= (1<<pos);
+    } else{ 
+        leds_val &= ~(1<<pos);
+    }
+}
+
+volatile bool test_led_state = false;
+volatile uint8_t test_led_pos = 0;
 
 void vTask_keyboard(void * arg){
 
@@ -33,6 +45,10 @@ void vTask_keyboard(void * arg){
     uint16_t button_cntr = 0;
 
     while(1){
+
+     //   setLedBit(test_led_state, test_led_pos);
+
+        leds = leds_val;
 
        // leds = 0xff;
         if(cnt < leds_pwm){ leds = 0; }
@@ -62,30 +78,24 @@ void vTask_keyboard(void * arg){
 
 }
 
-static inline void setLedBit(bool state, uint32_t pos){
-     if(state){ 
-        leds |= (1<<pos);
-    } else{ 
-        leds ^= (1<<pos);
-    }
-}
+
 
 void keyboard_setFaultLedSate(bool state){
     setLedBit(state, LED_FLT_POSITION);  
 }
 void keyboard_setOnLedSate(bool state){
-    setLedBit(state, LED__ON_POSITION);  
+     setLedBit(state, LED__ON_POSITION);  
 }
 void keyboard_setAC1LedSate(bool state){
-    setLedBit(state, LED_AC1_POSITION);  
+     setLedBit(state, LED_AC1_POSITION);  
 }
 void keyboard_setAC2LedSate(bool state){
-    setLedBit(state, LED_AC2_POSITION);  
+     setLedBit(state, LED_AC2_POSITION);  
 }
 void keyboard_setDC1LedSate(bool state){
-    setLedBit(state, LED_DC1_POSITION);  
+     setLedBit(state, LED_DC1_POSITION);  
 }
 void keyboard_setDC2LedSate(bool state){
-    setLedBit(state, LED_DC2_POSITION);  
+     setLedBit(state, LED_DC2_POSITION);  
 }
 

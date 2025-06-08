@@ -150,6 +150,13 @@ void master_hwInit(uint16_t speed) {
   //nvic_irq_enable(DMA0_Channel7_IRQn, 10 ,0);
   usart_interrupt_enable(RSM_USART, USART_INT_RBNE);
   nvic_irq_enable(RSM_USART_IRQn, 10, 0);
+
+
+  //DO1,2 out PE3 PE2
+  gpio_mode_set(GPIOE, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_2|GPIO_PIN_3);           
+  gpio_output_options_set(GPIOE, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_2|GPIO_PIN_3); 
+
+
 }
 
 /**
@@ -223,7 +230,7 @@ int  master_hwBytesToRead() {
 *
 * @param dev Device modbus ID
 */
-void master_hwFaultReset() {
+void master_LEDonFaultReset() {
   keyboard_setFaultLedSate(false);
 }
 
@@ -232,8 +239,10 @@ void master_hwFaultReset() {
 *
 * @param dev Device modbus ID
 */
-void master_hwFault(int dev) {
+void master_LEDonFaultState() {
   keyboard_setFaultLedSate(true);
+  gpio_bit_reset(GPIOE, GPIO_PIN_3); //DO1
+  gpio_bit_reset(GPIOE, GPIO_PIN_2); //DO2
 }
 
 /**
@@ -241,7 +250,7 @@ void master_hwFault(int dev) {
 *
 * @param dev Device modbus ID
 */
-void  master_hwStart(int dev) {
+void  master_LEDonRUNstate(int dev) {
 
   // TODO RDO ENABLE
   switch (dev)
@@ -249,10 +258,12 @@ void  master_hwStart(int dev) {
   case 1: case 2:
     keyboard_setAC1LedSate(true);
     keyboard_setAC2LedSate(true);
+    gpio_bit_set(GPIOE, GPIO_PIN_3); //DO1
     break;
   case 3: case 4:
     keyboard_setDC1LedSate(true);
     keyboard_setDC2LedSate(true);
+    gpio_bit_set(GPIOE, GPIO_PIN_2); //DO1
     break;
 
   default:
@@ -260,22 +271,30 @@ void  master_hwStart(int dev) {
   }
 }
 
+void  master_LEDonGlobRunState(bool state) {
+
+  // TODO RDO ENABLE
+  keyboard_setOnLedSate(state);
+}
+
 /**
 * @brief Function for setup master HW Leds to onSTOP state
 *
 * @param dev Device modbus ID
 */
-void master_hwStop(int dev) {
+void master_LEDonReadyState(int dev) {
   // TODO RDO ENABLE
   switch (dev)
   {
   case 1: case 2:
     keyboard_setAC1LedSate(false);
     keyboard_setAC2LedSate(false);
+    gpio_bit_reset(GPIOE, GPIO_PIN_3); //DO1
     break;
   case 3: case 4:
     keyboard_setDC1LedSate(false);
     keyboard_setDC2LedSate(false);
+    gpio_bit_reset(GPIOE, GPIO_PIN_2); //DO2
     break;
 
   default:
@@ -288,8 +307,19 @@ void master_hwStop(int dev) {
 *
 * @param dev Device modbus ID
 */
-void master_hwTimeOut(int slaveAdr) {
+void master_LEDonTimeoutState() {
+  static bool FLblinker = false;
+  static uint16_t FLblinker_cntr = 0;
 
+  if (FLblinker_cntr == 0) {
+    FLblinker_cntr = 3;
+    FLblinker = !FLblinker;
+  } else {
+    FLblinker_cntr--;
+    return;
+  }
+
+  keyboard_setFaultLedSate(FLblinker);
 }
 /**
 * @brief Function for blinking slave state LED util start delay
@@ -298,9 +328,9 @@ void master_hwTimeOut(int slaveAdr) {
 */
 static bool blinker = false;
 static uint16_t blinker_cntr = 0;
-void master_hwBlink(int dev) {
+void master_LEDonWaitState(int dev) {
   if (blinker_cntr == 0) {
-    blinker_cntr = 30;
+    blinker_cntr = 3;
     blinker = !blinker;
   } else {
     blinker_cntr--;
@@ -312,10 +342,12 @@ void master_hwBlink(int dev) {
   case 1: case 2:
     keyboard_setAC1LedSate(blinker);
     keyboard_setAC2LedSate(blinker);
+        gpio_bit_reset(GPIOE, GPIO_PIN_3); //DO1
     break;
   case 3: case 4:
     keyboard_setDC1LedSate(blinker);
     keyboard_setDC2LedSate(blinker);
+        gpio_bit_reset(GPIOE, GPIO_PIN_3); //DO1
     break;
 
   default:

@@ -7,20 +7,12 @@ void vTask_Master(__attribute__((unused)) void *argument);
 
 typedef enum
 {
-
-    MASTER_TRANSPORT_NOERROR = 0,
-    MASTER_TRANSPORT_ERROR = 1,
-    MASTER_TRANSPORT_TIMEOUT = 2,
-    MASTERS_TRANSPORT_CRCERROR = 3
-
-} TypedefEnum_MasterTransportSates;
-
-typedef enum
-{
-
-    MASTER_STATE_onREADY = 0,
-    MASTER_STATE_onFAULT = 1,
-    MASTER_STATE_onRUN = 2
+    MASTER_STATE_EMPTY = 0,
+    MASTER_STATE_onREADY = 1,
+    MASTER_STATE_onFAULT = 2,
+    MASTER_STATE_onRUN = 3,
+    MASTER_STATE_onWAIT = 4,
+    MASTER_STATE_onTIMEOUT = 5
 
 } TypedefEnum_MasterSlaveSates;
 
