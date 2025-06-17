@@ -12,11 +12,10 @@ typedef struct
     uint32_t speed;
     uint32_t parity;
     uint32_t bits;
-    uint32_t ip;
+    uint32_t ip0, ip1, ip2, ip3;
     uint32_t port;
-    uint32_t mask;
-    
-    bool enable;
+    uint32_t mask0,mask1,mask2,mask3;
+    uint32_t enable;
 
     /* data */
 }Typedef_Transport;

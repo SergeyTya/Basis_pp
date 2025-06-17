@@ -16,7 +16,7 @@ void vTask_modbusRTU(__attribute__((unused)) void *argument)
     QueueHandle_t xQueue = NULL;
     eMBErrorCode eStatus;
 
-    eStatus = eMBInit(MB_RTU, panelConfig.modbus_RTU.adr, 0, panelConfig.modbus_RTU.speed, MB_PAR_NONE);
+    eStatus = eMBInit(MB_RTU, panelConfig.modbus_RTU.adr, 0, panelConfig.modbus_RTU.speed, panelConfig.modbus_RTU.parity);
     eStatus = eMBEnable();
 
     xQueue = xQueueCreate(6, sizeof(uint32_t));
