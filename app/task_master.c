@@ -26,7 +26,7 @@ TimerHandle_t xTimers_StartDelay[5];
 xSemaphoreHandle xDisplayMasterR485Semaphore;
 
 // Used for encode slave fault bits
-static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int mask);
+static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int mask, int16_t offset );
 
 #define MASTER_TRANSPORT_CHECK_TIMEOUT( xstate ) {\
         master.master_wdg[slaveAdr] = (xstate) != MASTER_TRANSPORT_NOERROR; \
@@ -51,8 +51,9 @@ void vTimerAC_Callback(TimerHandle_t xTimer) {
             // get control register pointer
             holding = GetHoldingByAdrFromTable(103, table);
             // Setup 
-            uint16_t valACStart = 0xF9; // bit #3
-            master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valACStart);
+            uint16_t valACStart = *holding->pntr | 8U; // bit #3
+           if( master.start_req[slaveAdr] == true) 
+                master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valACStart);
             // reset start request
             master.start_req[slaveAdr] = false;
             break;
@@ -74,7 +75,7 @@ void vTimerDC_Callback(TimerHandle_t xTimer) {
             master.start_req[slaveAdr] = false;
             //send start;
             holding = GetHoldingByAdrFromTable(104, table);
-            uint16_t valStart = *holding->pntr | 0x1;
+            uint16_t valStart = *holding->pntr | 0x2;
             master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart);
         }
     }
@@ -157,18 +158,28 @@ void vTask_Master(__attribute__((unused)) void* argument)
             {
 
                 // read AC slaves status
-                holding = GetHoldingByAdrFromTable(140, table);
+                holding = GetHoldingByAdrFromTable(270, table);
                 MASTER_TRANSPORT_CHECK_TIMEOUT(
                     master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr)
                 );
                 // check faults
-                checkCode(holding, slaveAdr, 12);
-                holding = GetHoldingByAdrFromTable(141, table);
+                int fltcode = 0;
+                fltcode = checkCode(holding, slaveAdr, 12, 0);
+                holding = GetHoldingByAdrFromTable(271, table);
                 MASTER_TRANSPORT_CHECK_TIMEOUT(
                     master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr)
                 );
                 // check faults
-                checkCode(holding, slaveAdr, 11);
+                fltcode += checkCode(holding, slaveAdr, 11, 16);
+
+                // Fault Reset
+                if(fltcode == 0){
+                    if(master.slaveStates[slaveAdr] == MASTER_STATE_onFAULT) {
+                        master.slaveStates[slaveAdr] = MASTER_STATE_onREADY;
+                        master.fault_source[slaveAdr] = false;
+                        master.fault_code[slaveAdr] = 0;
+                    }
+                }
 
                 if (master.slaveStates[slaveAdr] != MASTER_STATE_onFAULT) {
                     // Read control register
@@ -181,7 +192,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
 
                     if (!master.master_wdg[slaveAdr]) { //Skip if onTimeout state
             //AC onReady state
-                        if ((ac_slave_CR & 0x8)) {
+                        if ((ac_slave_CR & 0x8)==0) {
                             master.slaveStates[slaveAdr] = MASTER_STATE_onREADY;
                             if (master.start_req[slaveAdr] == true) { // Start request
                                 if (xTimerIsTimerActive(xTimers_StartDelay[slaveAdr]) == pdFALSE)
@@ -199,9 +210,9 @@ void vTask_Master(__attribute__((unused)) void* argument)
                             if (master.start_req[slaveAdr] == true) {
                                 // Stop request
                                 master.start_req[slaveAdr] = false;
-                                uint16_t valACStop = 0xE9; // bit #3
+                                uint16_t valStopACx =  *holding->pntr ^ 8;
                                 MASTER_TRANSPORT_CHECK_TIMEOUT(
-                                    master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valACStop)
+                                    master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStopACx)
                                 );
                             }
                         }
@@ -232,7 +243,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
                         MASTER_TRANSPORT_CHECK_TIMEOUT(
                             master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr)
                         );
-                        checkCode(holding, slaveAdr, 8); // Set slave onFAULT state here!
+                        checkCode(holding, slaveAdr, 8, -1); // Set slave onFAULT state here!
                         // stops active start requests
                         master.start_req[slaveAdr] = false;
                     }
@@ -260,13 +271,14 @@ void vTask_Master(__attribute__((unused)) void* argument)
                         master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
                         // SLAVE START STOP
                         if (master.start_req[slaveAdr] == true) {
-                            master.start_req[slaveAdr] = false;
                             //send stop;
                             holding = GetHoldingByAdrFromTable(104, table);
-                            uint16_t valStart = *holding->pntr & (~0x1U);
+                            uint16_t valStart = *holding->pntr ^ 0x2U;
                             MASTER_TRANSPORT_CHECK_TIMEOUT(
                                 master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart)
                             )
+                            master.start_req[slaveAdr] = false;
+                            vTaskDelay(300);
                         }
                     }
 
@@ -324,9 +336,9 @@ void vTask_Master(__attribute__((unused)) void* argument)
     }
 }
 
-static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int mask)
+static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int mask, int16_t offset)
 {
-    uint8_t faultCode = (*holding->pntr) & 0x00FF;
+    uint16_t faultCode = (*holding->pntr) & 0x0FFF;
     if (faultCode > 0)
     {
         for (int i = 0; i < mask; i++)
@@ -336,11 +348,12 @@ static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int 
             {
                 master.slaveStates[slaveAdr] = MASTER_STATE_onFAULT;
                 master.fault_source[slaveAdr] = true;
-                master.fault_code[slaveAdr] = i + 1;
-                return master.fault_code[slaveAdr];
+                master.fault_code[slaveAdr] = i + 1 + offset;
+                return  master.fault_code[slaveAdr]; 
             }
         }
     }
+    return 0;
 }
 
 

@@ -366,7 +366,7 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
             I[i] = 999U;
     }
 
-    uint16_t F = *foo(101);
+    uint16_t F = *foo(101)/10;
     if (F > 999)
         F = 999U;
 
@@ -504,8 +504,8 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
 static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr), int acnum, void *arg)
 {
 
-    static const uint8_t pageAcTemplateCursorPos[] = {35, 33, 32, 31, 55, 53, 52, 51, 75, 73, 72, 71};
-    static const uint16_t pageAcTemplateDlt[] = {1, 10, 100, 1000, 1, 10, 100, 1000, 1, 10, 100, 1000};
+    static const uint8_t pageAcTemplateCursorPos[] = {35, 33, 32, 31, 55, 53, 52, 51,  73, 72, 71};
+    static const uint16_t pageAcTemplateDlt[] = {1, 10, 100, 1000, 1, 10, 100, 1000,  1, 10, 100};
     static TypeDef_MB_Holding *pageAcTemplateAdr[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     static bool pageAcSetupUnlocked;
     static bool pageAcTemplateIsOnConfirmWait;
@@ -556,7 +556,9 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
 
     uint16_t U[2] = {(*Uref->pntr / 10), *Uref->pntr - (*Uref->pntr / 10) * 10};
     uint16_t F[2] = {(*Fref->pntr / 10), *Fref->pntr - (*Fref->pntr / 10) * 10};
-    uint16_t I[2] = {(*Iref->pntr / 10), *Iref->pntr - (*Iref->pntr / 10) * 10};
+   // uint16_t I[2] = {(*Iref->pntr / 10), *Iref->pntr - (*Iref->pntr / 10) * 10};
+
+   uint16_t I[2] = { *Iref->pntr , 0};
 
     if (U[0] > 999U)
         U[0] = 999U;
@@ -573,10 +575,10 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
         F[1] = 9U;
 
     snprintf(pntr, 80,
-             " AC%1d      %sS  U,B     %3d,%1d    E  F,Hz    %3d,%1d    T  LimI,A  %3d,%1d   ", acnum, LG_NAME,
+             " AC%1d      %sS  U,B     %3d,%1d    E  F,Hz    %3d,%1d    T  LimI,A  %3d     ", acnum, LG_NAME,
              U[0], U[1],
              F[0], F[1],
-             I[0], I[1]);
+             I[0]);
 
     if (menu_cur_pos >= sizeof(pageAcTemplateCursorPos))
         menu_cur_pos = 0;
@@ -706,7 +708,7 @@ AC_PARAM_EXIT:
 static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr), int dcnum, void *arg)
 {
     char *pntr = (char *)arg;
-    static const uint8_t pageDcTemplateCursorPos[] = {56, 54, 53, 52, 76, 74, 73, 72}; // TODO select correct positions
+    static const uint8_t pageDcTemplateCursorPos[] = {56, 54, 53, 52, 76, 75, 74, 73}; // TODO select correct positions
     static const uint16_t pageDcTemplateDlt[] = {1, 10, 100, 1000, 1, 10, 100, 1000};
     static TypeDef_MB_Holding *pageDcTemplateAdr[] = {0, 0, 0, 0, 0, 0, 0, 0};
     static bool pageDcSetupUnlocked;
@@ -745,10 +747,15 @@ static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
         pageDcTemplateIsOnConfirmWait = false; // acknowledge wait
     }
 
+    // snprintf(pntr, 80,
+    //          " DC%1d      %sS                   E   U,B     %3d,%1d   T   LimI,A  %3d,%1d   ", dcnum, LG_NAME,
+    //          *Uref->pntr / 10, *Uref->pntr - (*Uref->pntr / 10) * 10,
+    //          *Iref->pntr_base / 10, *Iref->pntr - (*Iref->pntr / 10) * 10);
+
     snprintf(pntr, 80,
-             " DC%1d      %sS                   E   U,B     %3d,%1d   T   LimI,A  %3d,%1d   ", dcnum, LG_NAME,
+             " DC%1d      %sS                   E   U,B     %3d,%1d   T   LimI,A   %4d   ", dcnum, LG_NAME,
              *Uref->pntr / 10, *Uref->pntr - (*Uref->pntr / 10) * 10,
-             *Iref->pntr_base / 10, *Iref->pntr - (*Iref->pntr / 10) * 10);
+             *Iref->pntr_base );
 
     if (pageDcSetupUnlocked)
     {

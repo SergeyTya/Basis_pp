@@ -44,7 +44,7 @@ HR_CREATE_UINT16_RO     (/*ADR=*/8, holdings[8],        "Curr W"            )   
 #define MB_SLAVE_AC1_PNTR_SHIFT    30U
 #define MB_SLAVE_AC2_PNTR_SHIFT    60U
 
-#define MB_SLAVE_AC_HOLDING_NREGS 25
+#define MB_SLAVE_AC_HOLDING_NREGS 27
 #define MB_SLAVE_AC_HOLDING(hld_sft,pntr_shft) {                                                                                     \
     HR_CREATE_UINT16_PARAM  (/*ADR=*/(hld_sft + 101U), holdings[pntr_shft+0],  "RefF" ,/*min=*/      0,/*max=*/      3, /*def=*/     3,  /*on_change=*/events_dummy),    \
     HR_CREATE_UINT16_PARAM  (/*ADR=*/(hld_sft + 102U), holdings[pntr_shft+1],  "RefU" ,/*min=*/      0,/*max=*/      4, /*def=*/     1,  /*on_change=*/events_dummy),      \
@@ -70,7 +70,9 @@ HR_CREATE_UINT16_RO     (/*ADR=*/8, holdings[8],        "Curr W"            )   
     HR_CREATE_UINT16_RO     (/*ADR=*/(hld_sft + 242U), holdings[pntr_shft+21], "Uw"), /*112*/  \
     HR_CREATE_UINT16_RO     (/*ADR=*/(hld_sft + 243U), holdings[pntr_shft+22], "Iu"), /*112*/  \
     HR_CREATE_UINT16_RO     (/*ADR=*/(hld_sft + 244U), holdings[pntr_shft+23], "Iv"), /*112*/  \
-    HR_CREATE_UINT16_RO     (/*ADR=*/(hld_sft + 245U), holdings[pntr_shft+24], "Iw")  /*112*/  \
+    HR_CREATE_UINT16_RO     (/*ADR=*/(hld_sft + 245U), holdings[pntr_shft+24], "Iw"), /*112*/  \
+    HR_CREATE_UINT16_RO     (/*ADR=*/(hld_sft + 270U), holdings[pntr_shft+25], "AvarState1"), /*112*/  \
+    HR_CREATE_UINT16_RO     (/*ADR=*/(hld_sft + 271U), holdings[pntr_shft+26], "AvarState2")  /*112*/  \
 }\
 
 #define MB_SLAVE_DC1_HOLDING_SHIFT 0x3000U

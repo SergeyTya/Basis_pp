@@ -31,17 +31,17 @@ extern TypeDef_MB_Holding mbsupportNullHolding;
 #define GET_HOLDING_PNTR_BY_ADR_FROM_DC2(adr) (GetHoldingPntrByAdrFromTable(adr, &DC2_TABLE))
 #define GET_HOLDING_VALUE_BY_ADR_FROM_DC2(adr) (*GET_HOLDING_PNTR_BY_ADR_FROM_DC2(adr))
 
-uint16_t * GetHoldingPntrByAdrFromTable(uint8_t adr, TypeDef_MB_Table * table );
-uint16_t * GetHoldingPntrByAdrFromAC1(uint8_t adr );
-uint16_t * GetHoldingPntrByAdrFromAC2(uint8_t adr );
-uint16_t * GetHoldingPntrByAdrFromDC1(uint8_t adr );
-uint16_t * GetHoldingPntrByAdrFromDC2(uint8_t adr );
+uint16_t * GetHoldingPntrByAdrFromTable(uint16_t adr, TypeDef_MB_Table * table );
+uint16_t * GetHoldingPntrByAdrFromAC1(uint16_t adr );
+uint16_t * GetHoldingPntrByAdrFromAC2(uint16_t adr );
+uint16_t * GetHoldingPntrByAdrFromDC1(uint16_t adr );
+uint16_t * GetHoldingPntrByAdrFromDC2(uint16_t adr );
 
-TypeDef_MB_Holding * GetHoldingByAdrFromTable(uint8_t adr, TypeDef_MB_Table * table );
-TypeDef_MB_Holding * GetHoldingByAdrFromAC1(uint8_t adr );
-TypeDef_MB_Holding * GetHoldingByAdrFromAC2(uint8_t adr );
-TypeDef_MB_Holding * GetHoldingByAdrFromDC1(uint8_t adr );
-TypeDef_MB_Holding * GetHoldingByAdrFromDC2(uint8_t adr );
+TypeDef_MB_Holding * GetHoldingByAdrFromTable(uint16_t adr, TypeDef_MB_Table * table );
+TypeDef_MB_Holding * GetHoldingByAdrFromAC1(uint16_t adr );
+TypeDef_MB_Holding * GetHoldingByAdrFromAC2(uint16_t adr );
+TypeDef_MB_Holding * GetHoldingByAdrFromDC1(uint16_t adr );
+TypeDef_MB_Holding * GetHoldingByAdrFromDC2(uint16_t adr );
 
 #define IS_HOLDING_NULL_POINTER( adr )  (adr == &mbsupportNullHolding)||(adr==0)?true:false
 
