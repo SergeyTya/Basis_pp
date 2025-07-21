@@ -1,26 +1,13 @@
 /**
-\addtogroup EL9800Appl EL9800 application
+\addtogroup BasisPanelDevice BasisPanelDevice
 @{
 */
 
 /**
-\file el9800appl.c
-\author EthercatSSC@beckhoff.com
+\file BasisPanelDevice.c
 \brief Implementation
 
-\version 5.11
-
-<br>Changes to version V5.10:<br>
-V5.11 ECAT11: create application interface function pointer, add eeprom emulation interface functions<br>
-V5.11 EL9800 1: reset outputs on fallback from OP state<br>
-<br>Changes to version V5.01:<br>
-V5.10 ECAT6: Add "USE_DEFAULT_MAIN" to enable or disable the main function<br>
-<br>Changes to version V5.0:<br>
-V5.01 EL9800 2: Add TxPdo Parameter object 0x1802<br>
-<br>Changes to version V4.30:<br>
-V4.50 ECAT2: Create generic application interface functions. Documentation in Application Note ET9300.<br>
-V4.50 COE2: Handle invalid PDO assign values.<br>
-V4.30 : create file
+\version 1.0.0.11
 */
 
 
@@ -31,16 +18,11 @@ V4.30 : create file
 -----------------------------------------------------------------------------------------*/
 #include "ecat_def.h"
 
-
-/* ECATCHANGE_START(V5.11) ECAT11*/
 #include "applInterface.h"
-/* ECATCHANGE_END(V5.11) ECAT11*/
 
-//#include "el9800hw.h"
-
-#define _EVALBOARD_
-#include "el9800appl.h"
-#undef _EVALBOARD_
+#define _BASIS_PANEL_DEVICE_ 1
+#include "BasisPanelDevice.h"
+#undef _BASIS_PANEL_DEVICE_
 /*--------------------------------------------------------------------------------------
 ------
 ------    local types and defines
@@ -64,7 +46,7 @@ V4.30 : create file
 ------    generic functions
 ------
 -----------------------------------------------------------------------------------------*/
-uint16_t uhADCxConvertedValue = 0;
+
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
  \brief    The function is called when an error state was acknowledged by the master
@@ -72,7 +54,8 @@ uint16_t uhADCxConvertedValue = 0;
 *////////////////////////////////////////////////////////////////////////////////////////
 
 void    APPL_AckErrorInd(UINT16 stateTrans)
-{ 
+{
+
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -80,12 +63,12 @@ void    APPL_AckErrorInd(UINT16 stateTrans)
  \return    AL Status Code (see ecatslv.h ALSTATUSCODE_....)
 
  \brief    The function is called in the state transition from INIT to PREOP when
-           all general settings were checked to start the mailbox handler. This function
-           informs the application about the state transition, the application can refuse
-           the state transition when returning an AL Status error code.
-           The return code NOERROR_INWORK can be used, if the application cannot confirm
-           the state transition immediately, in that case the application need to be complete 
-           the transition by calling ECAT_StateChange.
+             all general settings were checked to start the mailbox handler. This function
+             informs the application about the state transition, the application can refuse
+             the state transition when returning an AL Status error code.
+            The return code NOERROR_INWORK can be used, if the application cannot confirm
+            the state transition immediately, in that case this function will be called cyclically
+            until a value unequal NOERROR_INWORK is returned
 
 *////////////////////////////////////////////////////////////////////////////////////////
 
@@ -118,12 +101,12 @@ UINT16 APPL_StopMailboxHandler(void)
  \return    AL Status Code (see ecatslv.h ALSTATUSCODE_....)
 
  \brief    The function is called in the state transition from PREOP to SAFEOP when
-             all general settings were checked to start the input handler. This function
-             informs the application about the state transition, the application can refuse
-             the state transition when returning an AL Status error code.
-            The return code NOERROR_INWORK can be used, if the application cannot confirm
-            the state transition immediately, in that case the application need to be complete 
-            the transition by calling ECAT_StateChange.
+           all general settings were checked to start the input handler. This function
+           informs the application about the state transition, the application can refuse
+           the state transition when returning an AL Status error code.
+           The return code NOERROR_INWORK can be used, if the application cannot confirm
+           the state transition immediately, in that case the application need to be complete 
+           the transition by calling ECAT_StateChange.
 *////////////////////////////////////////////////////////////////////////////////////////
 
 UINT16 APPL_StartInputHandler(UINT16 *pIntMask)
@@ -178,25 +161,6 @@ UINT16 APPL_StartOutputHandler(void)
 
 UINT16 APPL_StopOutputHandler(void)
 {
-/*ECATCHANGE_START(V5.11) EL9800 1*/
-    sDOOutputs.bLED1 = 0;
-    sDOOutputs.bLED2 = 0;
-    sDOOutputs.bLED3 = 0;
-    sDOOutputs.bLED4 = 0;
-    sDOOutputs.bLED5 = 0;
-    sDOOutputs.bLED7 = 0;
-    sDOOutputs.bLED6 = 0;
-    sDOOutputs.bLED8 = 0;
-    
-    LED_1                        = sDOOutputs.bLED1;
-    LED_2                        = sDOOutputs.bLED2;
-    LED_3                        = sDOOutputs.bLED3;
-    LED_4                        = sDOOutputs.bLED4;
-    LED_5                        = sDOOutputs.bLED5;
-    LED_7                        = sDOOutputs.bLED7;
-    LED_6                        = sDOOutputs.bLED6;
-    LED_8                        = sDOOutputs.bLED8;
-/*ECATCHANGE_END(V5.11) EL9800 1*/
     return ALSTATUSCODE_NOERROR;
 }
 
@@ -209,17 +173,19 @@ UINT16 APPL_StopOutputHandler(void)
 \brief    This function calculates the process data sizes from the actual SM-PDO-Assign
             and PDO mapping
 *////////////////////////////////////////////////////////////////////////////////////////
-UINT16 APPL_GenerateMapping(UINT16* pInputSize,UINT16* pOutputSize)
+UINT16 APPL_GenerateMapping(UINT16 *pInputSize,UINT16 *pOutputSize)
 {
     UINT16 result = ALSTATUSCODE_NOERROR;
+    UINT16 InputSize = 0;
+    UINT16 OutputSize = 0;
+
+#if COE_SUPPORTED
     UINT16 PDOAssignEntryCnt = 0;
     OBJCONST TOBJECT OBJMEM * pPDO = NULL;
     UINT16 PDOSubindex0 = 0;
     UINT32 *pPDOEntry = NULL;
     UINT16 PDOEntryCnt = 0;
-    UINT16 InputSize = 0;
-    UINT16 OutputSize = 0;
-
+   
     /*Scan object 0x1C12 RXPDO assign*/
     for(PDOAssignEntryCnt = 0; PDOAssignEntryCnt < sRxPDOassign.u16SubIndex0; PDOAssignEntryCnt++)
     {
@@ -272,44 +238,42 @@ UINT16 APPL_GenerateMapping(UINT16* pInputSize,UINT16* pOutputSize)
     }
     InputSize = (InputSize + 7) >> 3;
 
+#else
+#if _WIN32
+   #pragma message ("Warning: Define 'InputSize' and 'OutputSize'.")
+#else
+    #warning "Define 'InputSize' and 'OutputSize'."
+#endif
+#endif
+
     *pInputSize = InputSize;
     *pOutputSize = OutputSize;
-     EC_PRINT("GenerateMapping InputSize=%d OutputSize=%d \r\n",*pInputSize , *pOutputSize );   
     return result;
-
-     
-
 }
-
 
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
 \param      pData  pointer to input process data
+
 \brief      This function will copies the inputs from the local memory to the ESC memory
             to the hardware
 *////////////////////////////////////////////////////////////////////////////////////////
 void APPL_InputMapping(UINT16* pData)
 {
-    UINT16 j = 0;
-    UINT16 *pTmpData = (UINT16 *)pData;
+#if _WIN32
+   #pragma message ("Warning: Implement input (Slave -> Master) mapping")
+#else
 
-    /* we go through all entries of the TxPDO Assign object to get the assigned TxPDOs */
-   for (j = 0; j < sTxPDOassign.u16SubIndex0; j++)
-   {
-      switch (sTxPDOassign.aEntries[j])
-      {
-      /* TxPDO 1 */
-      case 0x1A00:
-         *pTmpData++ = SWAPWORD(((UINT16 *) &sDIInputs)[1]);
-         break;
-      /* TxPDO 3 */
-      case 0x1A02:
-         *pTmpData++ = SWAPWORD(((UINT16 *) &sAIInputs)[1]);
-         *pTmpData++ = SWAPWORD(((UINT16 *) &sAIInputs)[2]);
-         break;
-      }
-   }
-  
+
+    uint16_t * pntr = pData;  
+
+    for (size_t i = 0; i < 18; i++)
+    {
+        *pntr++ = ((uint16_t *) (&SlaveData0x6000.AC1_Voltage))[i];
+    }
+    
+
+#endif
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -321,20 +285,12 @@ void APPL_InputMapping(UINT16* pData)
 *////////////////////////////////////////////////////////////////////////////////////////
 void APPL_OutputMapping(UINT16* pData)
 {
-    UINT16 j = 0;
-    UINT16 *pTmpData = (UINT16 *)pData;
-
-    /* we go through all entries of the RxPDO Assign object to get the assigned RxPDOs */
-    for (j = 0; j < sRxPDOassign.u16SubIndex0; j++)
-    {
-        switch (sRxPDOassign.aEntries[j])
-        {
-        /* RxPDO 2 */
-        case 0x1601:
-            ((UINT16 *) &sDOOutputs)[1] = SWAPWORD(*pTmpData++);
-            break;
-        }
-    }
+#if _WIN32
+   #pragma message ("Warning: Implement output (Master -> Slave) mapping")
+#else
+   // #warning "Implement output (Master -> Slave) mapping"
+    ControlUnit0x7000.Control = pData[0] + pData[1] * 65536; 
+#endif
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -342,122 +298,80 @@ void APPL_OutputMapping(UINT16* pData)
 \brief    This function will called from the synchronisation ISR 
             or from the mainloop if no synchronisation is supported
 *////////////////////////////////////////////////////////////////////////////////////////
+#define GET_FLOAT_BYTES(f) (*((uint32_t *) (&f)))
+
+volatile float ac1_volt = 220.f;
 void APPL_Application(void)
 {
-    LED_1                        = sDOOutputs.bLED1;
-    LED_2                        = sDOOutputs.bLED2;
-    LED_3                        = sDOOutputs.bLED3;
-    LED_4                        = sDOOutputs.bLED4;
-    LED_5                        = sDOOutputs.bLED5;
-    LED_7                        = sDOOutputs.bLED7;
-    LED_6                        = sDOOutputs.bLED6;
-    LED_8                        = sDOOutputs.bLED8;
+#if _WIN32
+   #pragma message ("Warning: Implement the slave application")
+#else
+   // #warning "Implement the slave application"    
+    SlaveData0x6000.AC1_Voltage = GET_FLOAT_BYTES(ac1_volt);
+    SlaveData0x6000.State = ControlUnit0x7000.Control;
 
-
-    sDIInputs.bSwitch1    = SWITCH_1;
-    sDIInputs.bSwitch2    = SWITCH_2;
-    sDIInputs.bSwitch3    = SWITCH_3;
-    sDIInputs.bSwitch4    = SWITCH_4;
-    sDIInputs.bSwitch5    = SWITCH_5;
-    sDIInputs.bSwitch6    = SWITCH_6;
-    sDIInputs.bSwitch7    = SWITCH_7;
-    sDIInputs.bSwitch8    = SWITCH_8;
-
-    /* start the conversion of the A/D converter */
-
-//AD1CON1bits.SAMP = 0; // start Converting
-//while (!AD1CON1bits.DONE);// conversion done?
-sAIInputs.i16Analoginput = uhADCxConvertedValue; // yes then get ADC value
-
-    /* we toggle the TxPDO Toggle after updating the data of the corresponding TxPDO */
-    sAIInputs.bTxPDOToggle ^= 1;
-
-    /* we simulate a problem of the analog input, if the Switch4 is on in this example,
-       in this case the TxPDO State has to set to indicate the problem to the master */
-    if ( sDIInputs.bSwitch4 )
-        sAIInputs.bTxPDOState = 1;
-    else
-        sAIInputs.bTxPDOState = 0;
+#endif
 }
 
+#if EXPLICIT_DEVICE_ID
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
- \param     index               index of the requested object.
- \param     subindex            subindex of the requested object.
- \param     objSize             size of the requested object data, calculated with OBJ_GetObjectLength
- \param     pData               Pointer to the buffer where the data can be copied to
- \param     bCompleteAccess     Indicates if a complete read of all subindices of the
-                                object shall be done or not
+ \return    The Explicit Device ID of the EtherCAT slave
 
- \return    ABORTIDX_XXX
-
- \brief     Handles SDO read requests to TxPDO Parameter
+ \brief     Calculate the Explicit Device ID
 *////////////////////////////////////////////////////////////////////////////////////////
-UINT8 ReadObject0x1802( UINT16 index, UINT8 subindex, UINT32 dataSize, UINT16 MBXMEM * pData, UINT8 bCompleteAccess )
+UINT16 APPL_GetDeviceID()
 {
-
-    if(bCompleteAccess)
-        return ABORTIDX_UNSUPPORTED_ACCESS;
-
-    if(subindex == 0)
-    {
-        *pData = TxPDO1802Subindex0;
-    }
-    else if(subindex == 6)
-    {
-        /*clear destination buffer (no excluded TxPDO set)*/
-        if(dataSize > 0)
-            MBXMEMSET(pData,0x00,dataSize);
-    }
-    else if(subindex == 7)
-    {
-        /*min size is one Byte*/
-        UINT8 *pu8Data = (UINT8*)pData;
-        
-        //Reset Buffer
-        *pu8Data = 0; 
-
-        *pu8Data = sAIInputs.bTxPDOState;
-    }
-    else if(subindex == 9)
-    {
-        /*min size is one Byte*/
-        UINT8 *pu8Data = (UINT8*)pData;
-        
-        //Reset Buffer
-        *pu8Data = 0; 
-
-        *pu8Data = sAIInputs.bTxPDOToggle;
-    }
-    else
-        return ABORTIDX_SUBINDEX_NOT_EXISTING;
-
-    return 0;
+#if _WIN32
+   #pragma message ("Warning: Implement explicit Device ID latching")
+#else
+    #warning "Implement explicit Device ID latching"
+#endif
+    /* Explicit Device 5 is expected by Explicit Device ID conformance tests*/
+    return 0x5;
 }
+#endif
 
 
+
+#if USE_DEFAULT_MAIN
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
 
  \brief    This is the main function
 
 *////////////////////////////////////////////////////////////////////////////////////////
-//int main(void)
-//{
-//    /* initialize the Hardware and the EtherCAT Slave Controller */
-//    HW_Init();
+#if _PIC24
+int main(void)
+#else
+void main(void)
+#endif
+{
+    /* initialize the Hardware and the EtherCAT Slave Controller */
+#if FC1100_HW
+    if(HW_Init())
+    {
+        HW_Release();
+        return;
+    }
+#else
+    HW_Init();
+#endif
+    MainInit();
 
-//    MainInit();
+    bRunApplication = TRUE;
+    do
+    {
+        MainLoop();
+        
+    } while (bRunApplication == TRUE);
 
-//    bRunApplication = TRUE;
-//    do
-//    {
-//        MainLoop();
-
-//    } while (bRunApplication == TRUE);
-
-//    HW_Release();
-//    return 0;
-//}
-
+    HW_Release();
+#if _PIC24
+    return 0;
+#endif
+}
+#endif //#if USE_DEFAULT_MAIN
 /** @} */
+
+

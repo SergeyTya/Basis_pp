@@ -36,6 +36,11 @@ OF SUCH DAMAGE.
 #include "main.h"
 #include "lwipopts.h"
 
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "semphr.h"
+#include "task.h"
+
 const uint8_t gd32_str[] = {"\r\n ############ Welcome GigaDevice ############\r\n"};
 static __IO uint32_t enet_init_status = 0;
 static void enet_gpio_config(void);

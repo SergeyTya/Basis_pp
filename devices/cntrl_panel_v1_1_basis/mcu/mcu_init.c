@@ -25,7 +25,9 @@ void vMCU_init()
   GD32_CONGIG_PIN_AS_OUT( GPIOG, GPIO_PIN_6 );
   GD32_CONGIG_PIN_AS_OUT( GPIOG, GPIO_PIN_7 );
 
+
   nvic_priority_group_set(NVIC_PRIGROUP_PRE4_SUB0);
+
 
   __enable_irq();
 }

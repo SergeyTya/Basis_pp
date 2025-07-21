@@ -726,7 +726,7 @@ UINT8 CheckSyncTypeValue(UINT16 index, UINT16 NewSyncType)
     {
     case SYNCTYPE_FREERUN:
         return 0; //free run sync mode is always accepted
-        //break;
+        break;
 
     case SYNCTYPE_SM_SYNCHRON:
         if ((index == 0x1C32) 
@@ -887,7 +887,7 @@ UINT8 OBJ_Read( UINT16 index, UINT8 subindex, UINT32 objSize, OBJCONST TOBJECT O
             p = (CHAR **) pVarPtr;
             pVarPtr = (UINT16 MBXMEM *)p[subindex-1];
 
-            if((((UINT16)pVarPtr) & 0x0001))// 指针转化成U16会丢失数据
+            if((((UINT16)pVarPtr) & 0x1) == 0x1)
             {
                 /*enum is stored at an odd address*/
                 UINT16 cnt = 0;

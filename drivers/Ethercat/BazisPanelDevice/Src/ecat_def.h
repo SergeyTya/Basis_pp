@@ -20,9 +20,7 @@
 ------	Slave Sample Code Configuration Defines
 ------	
 -----------------------------------------------------------------------------------------*/
-#ifndef DEVICE_ID
-#define DEVICE_ID                                 0x1234 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
-#endif
+
 /** 
 EL9800_HW: Shall be set if the Slave code is executed on the PIC mounted on the EL9800 EtherCAT Evaluation Board.<br>
 (if the MCI interface provided by EL9800 board should be used MCI_HW shall be set and this define shall be reset).<br>
@@ -57,27 +55,27 @@ from Texas Instruments) */
 /** 
 CONTROLLER_16BIT: Shall be set if the host controller is a 16Bit architecture */
 #ifndef CONTROLLER_16BIT
-#define CONTROLLER_16BIT                          0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
+#define CONTROLLER_16BIT                          1 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
 CONTROLLER_32BIT: Shall be set if the host controller is a 32Bit architecture */
 #ifndef CONTROLLER_32BIT
-#define CONTROLLER_32BIT                          1 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
+#define CONTROLLER_32BIT                          0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
-_STM32_IO4: Microchip PIC18F452 Specific Code <br>
+_PIC18: Microchip PIC18F452 Specific Code <br>
 This processor is mounted on the Beckhoff Slave Evaluation Board (Hardware version up to EL9800_2). */
-#ifndef _STM32_IO4
-#define _STM32_IO4                                    0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
+#ifndef _PIC18
+#define _PIC18                                    0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
-_STM32_IO8: Microchip PIC24HJ128GP306 Specific Code <br>
+_PIC24: Microchip PIC24HJ128GP306 Specific Code <br>
 This processor is mounted on the Beckhoff Slave Evaluation Board (Hardware version up to EL9800_4A). */
-#ifndef _STM32_IO8
-#define _STM32_IO8                                    1 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
+#ifndef _PIC24
+#define _PIC24                                    0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
@@ -114,8 +112,8 @@ If this switch is set, then BIG_ENDIAN_16BIT shall be reset. */
 #endif
 
 /** 
-EXT_DEBUGER_INTERFACE: If this switch is set, the external debugger interface on the EL9800_4A (_STM32_IO8) will be activated.<br>
-This define will be ignored if _STM32_IO8 is not set. */
+EXT_DEBUGER_INTERFACE: If this switch is set, the external debugger interface on the EL9800_4A (_PIC24) will be activated.<br>
+This define will be ignored if _PIC24 is not set. */
 #ifndef EXT_DEBUGER_INTERFACE
 #define EXT_DEBUGER_INTERFACE                     0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
@@ -195,7 +193,7 @@ Select this setting to test the slave stack or a master implementation. For furt
 /** 
 EL9800_APPLICATION: Should be set if the Slave Sample Code runs on an EL9800_x Evaluation Board. */
 #ifndef EL9800_APPLICATION
-#define EL9800_APPLICATION                        1 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
+#define EL9800_APPLICATION                        0 //This define was already evaluated by ET9300 Project Handler(V. 1.3.3.0)!
 #endif
 
 /** 
@@ -644,14 +642,14 @@ does not support different memory types, OBJSTRCPY shall be defined to a 'normal
 /** 
 MAKE_HUGE_PTR: Should be defined to the initialize a pointer variable with an absolute address */
 #ifndef MAKE_HUGE_PTR
-#define MAKE_HUGE_PTR 
+#define MAKE_HUGE_PTR                             _mkhp
 #endif
 
 /** 
 MAKE_PTR_TO_ESC: Should be defined to the initialize the pointer to the ESC */
-//#ifndef MAKE_PTR_TO_ESC
-//#define MAKE_PTR_TO_ESC 			0x60000000 
-//#endif
+#ifndef MAKE_PTR_TO_ESC
+#define MAKE_PTR_TO_ESC 
+#endif
 
 /** 
 EMCYMEMCPY: Should be defined to the memcpy function for EMCYMEM memory, if the microcontroller<br>
@@ -709,7 +707,7 @@ if the microcontroller does not support different memory types, VARMEM shall be 
 /** 
 MEM_ADDR: Type to access local memory addresses */
 #ifndef MEM_ADDR
-#define MEM_ADDR                                 UINT16
+#define MEM_ADDR                                  UINT16
 #endif
 
 /** 
@@ -810,25 +808,25 @@ VENDOR_ID: Object 0x1018 SI1 (Vendor ID)	 <br>
 An unique EtherCAT Vendor ID is required. Please find all valid Vendor IDs listed at www.ethercat.org/en/vendor_id_list.html.<br>
 If your company is not listed, please assign an ID for free at www.ethercat.org/memberarea/vendor_id.asp */
 #ifndef VENDOR_ID
-#define VENDOR_ID                                 0x9
+#define VENDOR_ID                                 0x1337
 #endif
 
 /** 
 PRODUCT_CODE: Object 0x1018 SI2 (EtherCAT product code) */
 #ifndef PRODUCT_CODE
-#define PRODUCT_CODE                              0x26483052
+#define PRODUCT_CODE                              0x1
 #endif
 
 /** 
 REVISION_NUMBER: Object 0x1018 SI3 (EtherCAT product revision number) */
 #ifndef REVISION_NUMBER
-#define REVISION_NUMBER                           0x00020111
+#define REVISION_NUMBER                           0x00000003
 #endif
 
 /** 
 SERIAL_NUMBER: Object 0x1018 SI4 (EtherCAT product serial number) */
 #ifndef SERIAL_NUMBER
-#define SERIAL_NUMBER                             0x00000000
+#define SERIAL_NUMBER                             0x160725
 #endif
 
 /** 
@@ -840,19 +838,19 @@ DEVICE_PROFILE_TYPE: Slave device type (Object 0x1000)  */
 /** 
 DEVICE_NAME: Name of the slave device (Object 0x1008) */
 #ifndef DEVICE_NAME
-#define DEVICE_NAME                               "HYKJ"
+#define DEVICE_NAME                               "BAZISAIR_POWER"
 #endif
 
 /** 
 DEVICE_NAME_LEN: Length of 'DEVICE_NAME' without '\0' */
 #ifndef DEVICE_NAME_LEN
-#define DEVICE_NAME_LEN                           0x4
+#define DEVICE_NAME_LEN                           0xE
 #endif
 
 /** 
 DEVICE_HW_VERSION: Hardware version of the slave device (Object 0x1009) */
 #ifndef DEVICE_HW_VERSION
-#define DEVICE_HW_VERSION                         "1.0"
+#define DEVICE_HW_VERSION                         "n.a."
 #endif
 
 /** 
@@ -953,13 +951,13 @@ MAX_PD_OUTPUT_SIZE: Maximum size of the process output data (Sync Manager 2) for
 MIN_PD_CYCLE_TIME: Minimum cycle time in ns the slave is supporting <br>
 (entry 0x1C32:05 or entry 0x1C33:05) */
 #ifndef MIN_PD_CYCLE_TIME
-#define MIN_PD_CYCLE_TIME                        50000 //0x7A120 //50us
+#define MIN_PD_CYCLE_TIME                         0x7A120
 #endif
 
 /** 
 MAX_PD_CYCLE_TIME: Maximum cycle time in ns the slave is supporting */
 #ifndef MAX_PD_CYCLE_TIME
-#define MAX_PD_CYCLE_TIME                         0xC3500000//3.2768s
+#define MAX_PD_CYCLE_TIME                         0xC3500000
 #endif
 
 /** 

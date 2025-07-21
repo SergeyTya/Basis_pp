@@ -189,9 +189,7 @@ V4.00 ECAT 7: The return values for the AL-StatusCode were changed to UINT16
 
 
 
-//#include "el9800appl.h"
-//#include "SSC-Device2.h"
-#include "SSC-Device_200k.h"
+#include "BasisPanelDevice.h"
 
 /*--------------------------------------------------------------------------------------
 ------
@@ -286,8 +284,6 @@ void UpdateEEPROMLoadedState(void)
        {
           EepromLoaded = TRUE;
        }
-
-       EC_PRINT("EepromLoaded = %d  \r\n",EepromLoaded);   
     }
 }
 
@@ -1122,11 +1118,11 @@ UINT16 StartInputHandler(void)
             if(Sync0Cycle < 5)
             {
                 /*Sync0 cycle less than 500us*/
-                Sync0WdValue = 10;
+                Sync0WdValue = 1;
             }
             else
             {
-                Sync0WdValue = (UINT16)(Sync0Cycle*20)/10;
+                Sync0WdValue = (UINT16)(Sync0Cycle*2)/10;
             }
         }
 
@@ -1134,28 +1130,28 @@ UINT16 StartInputHandler(void)
         if ( (dcControl & ESC_DC_SYNC1_ACTIVE_MASK) != 0 )
         {
             if(cycleTimeSync1 < cycleTimeSync0)
-						{
-										/* Sync 1 has the same cycle time than Sync0 (maybe with a shift (cycleTimeSync1 > 0))*/
-										Sync1WdValue = Sync0WdValue;
-						}
-						else
-						{
-										/* Sync1 cycle is larger than Sync0 (e.g. subordinated Sync0 cycles) */
-										UINT32 Sync1Cycle = cycleTimeSync1/100000;
-										if(Sync1Cycle < 5)
-										{
-												/*Sync0 cycle less than 500us*/
-												Sync1WdValue = 1;
-										}
-										else
-										{
-												Sync1WdValue = (UINT16)(Sync1Cycle*2)/10;
-										}
+        {
+                /* Sync 1 has the same cycle time than Sync0 (maybe with a shift (cycleTimeSync1 > 0))*/
+                Sync1WdValue = Sync0WdValue;
+        }
+        else
+        {
+                /* Sync1 cycle is larger than Sync0 (e.g. subordinated Sync0 cycles) */
+                UINT32 Sync1Cycle = cycleTimeSync1/100000;
+                if(Sync1Cycle < 5)
+                {
+                    /*Sync0 cycle less than 500us*/
+                    Sync1WdValue = 1;
+    }
+    else
+    {
+                    Sync1WdValue = (UINT16)(Sync1Cycle*2)/10;
+                }
 
-												/* add one Sync0 cycle because the Sync1 cycle starts on the next Sync0 after the Sync1 signal */
-													Sync1WdValue += Sync0WdValue/2;
-						}
-				}
+                /* add one Sync0 cycle because the Sync1 cycle starts on the next Sync0 after the Sync1 signal */
+                Sync1WdValue += Sync0WdValue/2;
+            }
+    }
     }
 
 
@@ -1246,7 +1242,7 @@ void StopInputHandler(void)
     {
         /* disable the Sync Manager Channel 2 (outputs) */
 /*ECATCHANGE_END(V5.11) HW1*/
-        DisableSyncManChannel(PROCESS_DATA_OUT);// �ر�SM2
+        DisableSyncManChannel(PROCESS_DATA_OUT);
 /*ECATCHANGE_END(V5.11) HW1*/
     }
 
@@ -1254,7 +1250,7 @@ void StopInputHandler(void)
     {
         /*disable Sync Manager 3 (inputs) if no outputs available*/
 /*ECATCHANGE_START(V5.11) HW1*/
-        DisableSyncManChannel(PROCESS_DATA_IN);// �ر�SM3
+        DisableSyncManChannel(PROCESS_DATA_IN);
 /*ECATCHANGE_END(V5.11) HW1*/
     }
 
@@ -1418,7 +1414,7 @@ void AL_ControlInd(UINT8 alControl, UINT16 alStatusCode)
             if result is unequal 0, the slave will stay in PREOP and set
             the ErrorInd Bit (bit 4) of the AL-Status */
         result = APPL_GenerateMapping(&nPdInputSize,&nPdOutputSize);
-		// ��ӡPDO�Ĵ�С
+
         if (result != 0)
             break;
         }
@@ -1854,7 +1850,7 @@ void AL_ControlRes(void)
                     if(bDcSyncActive)
                     {
                         /*SafeOP to OP timeout expired check which AL status code need to be written*/
-                        if(!bDcRunning) //
+                        if(!bDcRunning)
                         {
                             /*no Sync0 signal received*/
                             StatusCode = ALSTATUSCODE_NOSYNCERROR;
@@ -2038,7 +2034,6 @@ void AL_ControlRes(void)
  The analyse of the local flags is handled in "CheckIfEcatError"
 
 *////////////////////////////////////////////////////////////////////////////////////////
-
 void DC_CheckWatchdog(void)
 {
     if(bDcSyncActive)
@@ -2048,8 +2043,7 @@ void DC_CheckWatchdog(void)
         if((Sync0WdValue > 0) && (Sync0WdCounter >= Sync0WdValue))
         {
                 /*Sync0 watchdog expired*/
-
-					bDcRunning = FALSE;        
+                bDcRunning = FALSE;        
         }
         else
         {
@@ -2136,7 +2130,8 @@ void CheckIfEcatError(void)
       {
          /*The device is in OP state*/
 
-         if (bEcatOutputUpdateRunning)
+         if (bEcatOutputUpdateRunning
+            )
          {
             AL_ControlInd(STATE_SAFEOP, ALSTATUSCODE_SMWATCHDOG);
             return;
@@ -2146,12 +2141,10 @@ void CheckIfEcatError(void)
          {
             bEcatFirstOutputsReceived = FALSE;
          }
-      }else{
-         
       }
       /*ECATCHANGE_END(V5.11) ECAT4*/
    }
- 
+
    if(bDcSyncActive)
    {
        if(bEcatOutputUpdateRunning)
@@ -2320,17 +2313,13 @@ void ECAT_Init(void)
 
     TmpVar = SWAPWORD(TmpVar);
     nMaxSyncMan = (UINT8) ((TmpVar & ESC_SM_CHANNELS_MASK)>> ESC_SM_CHANNELS_SHIFT);
-    EC_PRINT("nMaxSyncMan = %d  \r\n",nMaxSyncMan);   
 
     HW_EscReadWord(TmpVar, ESC_DPRAM_SIZE_OFFSET);
     TmpVar = SWAPWORD(TmpVar);
-    
 
     //get max address (register + DPRAM size in Byte (in the register it is stored in KB))
     /* ECATCHANGE_START(V5.11) ESC1*/
     nMaxEscAddress = (UINT16) ((TmpVar & ESC_DPRAM_SIZE_MASK) << 10) + 0xFFF;
-
-    EC_PRINT("max address (register + DPRAM size in Byte = %d  \r\n",nMaxEscAddress);   
     /* ECATCHANGE_END(V5.11) ESC1*/
     }
 
@@ -2413,7 +2402,7 @@ void ECAT_Main(void)
     {
         /* AL Control event is set, get the AL Control register sent by the Master to acknowledge the event
           (that the corresponding bit in the AL Event register will be reset) */
-       HW_EscReadWord( EscAlControl, ESC_AL_CONTROL_OFFSET);
+        HW_EscReadWord( EscAlControl, ESC_AL_CONTROL_OFFSET);
         EscAlControl = SWAPWORD(EscAlControl);
 
 
@@ -2440,7 +2429,6 @@ void ECAT_Main(void)
     {
         AL_ControlRes();
     }
-	
     /*The order of mailbox event processing was changed to prevent race condition errors.
         The SM1 activate Byte (Register 0x80E) was read before reading AL Event register.
         1. Handle Mailbox Read event

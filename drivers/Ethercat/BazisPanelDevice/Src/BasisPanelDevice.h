@@ -1,26 +1,18 @@
 /**
- * \addtogroup SSC-Device_200k SSC-Device_200k
+ * \addtogroup BasisPanelDevice BasisPanelDevice
  * @{
  */
 
 /**
-\file SSC-Device_200k.h
-\brief SSC-Device_200k function prototypes and defines
+\file BasisPanelDevice.h
+\brief BasisPanelDevice function prototypes and defines
 
 \version 1.0.0.11
  */
 
-#ifdef EC_DEBUG
-#include <stdio.h>
-#define EC_PRINT printf
-#else
-#define EC_PRINT(...) do {} while (0)
-#endif
-
-
  
- #ifndef _SSC_DEVICE_200K_H_
-#define _SSC_DEVICE_200K_H_
+ #ifndef _BASIS_PANEL_DEVICE_H_
+#define _BASIS_PANEL_DEVICE_H_
 
 
 /*-----------------------------------------------------------------------------------------
@@ -38,13 +30,13 @@
 ------
 -----------------------------------------------------------------------------------------*/
 
-#endif //_SSC_DEVICE_200K_H_
+#endif //_BASIS_PANEL_DEVICE_H_
 
 //include custom application object dictionary 
-#include "SSC-Device_200kObjects.h"
+#include "BasisPanelDeviceObjects.h"
 
 
-#if defined(_SSC_DEVICE_200K_) && (_SSC_DEVICE_200K_ == 1)
+#if defined(_BASIS_PANEL_DEVICE_) && (_BASIS_PANEL_DEVICE_ == 1)
     #define PROTO
 #else
     #define PROTO extern

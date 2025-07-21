@@ -7,6 +7,8 @@
 #include "panelConfig.h"
 #include "masterTransport.h"
 
+#include "timers.h"
+
 
 extern Typedef_PanelConfig panelConfig;
 TypeDef_Master master;

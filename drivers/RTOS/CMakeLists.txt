@@ -23,7 +23,7 @@ target_sources(${TARGET_NAME}
         PUBLIC  ${RTOS_PATH}/stream_buffer.c
         PUBLIC  ${RTOS_PATH}/tasks.c
         PUBLIC  ${RTOS_PATH}/timers.c
-        PUBLIC  ${RTOS_PATH}/portable/MemMang/heap_2.c
+        PUBLIC  ${RTOS_PATH}/portable/MemMang/heap_4.c
         PUBLIC  ${RTOS_PATH}/CMSIS_RTOS/cmsis_os.c
         )
 

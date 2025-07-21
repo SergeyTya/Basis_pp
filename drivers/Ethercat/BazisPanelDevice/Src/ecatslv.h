@@ -36,13 +36,8 @@ V5.01 : Start file change log
 
 #include "ecat_def.h"
 
-
-#if MCI_HW
 #include "mcihw.h"
-#endif
-#if EL9800_HW
-#include "el9800hw.h"
-#endif
+
 
 /*-----------------------------------------------------------------------------------------
 ------
@@ -388,7 +383,7 @@ PROTO INT16                             i16WaitForPllRunningTimeout; /**< \brief
 
 PROTO INT16                             i16WaitForPllRunningCnt; /**< \brief Incremented with every valid Sync-SyncManger cycle */
 
-PROTO volatile UINT16                   Sync0WdCounter; /**< \brief Sync0 watchdog counter*/
+PROTO UINT16                            Sync0WdCounter; /**< \brief Sync0 watchdog counter*/
 PROTO UINT16                            Sync0WdValue; /**< \brief Sync0 watchdog value*/
 
 PROTO UINT16                            Sync1WdCounter; /**< \brief Sync1 watchdog counter*/

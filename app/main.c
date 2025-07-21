@@ -38,8 +38,8 @@ int main() {
     uint8_t ipadr[4] =  {panelConfig.modbus_TCP.ip0, panelConfig.modbus_TCP.ip1,panelConfig.modbus_TCP.ip2,panelConfig.modbus_TCP.ip3} ; 
     uint8_t ipmas[4] =  {panelConfig.modbus_TCP.mask0, panelConfig.modbus_TCP.mask1,panelConfig.modbus_TCP.mask2,panelConfig.modbus_TCP.mask3} ; 
 
-    // ipadr[0] = BOARD_IP_ADDR0; ipadr[1] = BOARD_IP_ADDR1; ipadr[2] = BOARD_IP_ADDR2; ipadr[3] = BOARD_IP_ADDR3;
-    // ipmas[0] = BOARD_NETMASK_ADDR0 ; ipmas[1] =BOARD_NETMASK_ADDR1 ;ipmas[2] = BOARD_NETMASK_ADDR2; ipmas[3] =BOARD_NETMASK_ADDR3;
+    ipadr[0] = BOARD_IP_ADDR0; ipadr[1] = BOARD_IP_ADDR1; ipadr[2] = BOARD_IP_ADDR2; ipadr[3] = BOARD_IP_ADDR3;
+    ipmas[0] = BOARD_NETMASK_ADDR0 ; ipmas[1] =BOARD_NETMASK_ADDR1 ;ipmas[2] = BOARD_NETMASK_ADDR2; ipmas[3] =BOARD_NETMASK_ADDR3;
 
     lwip_stack_init((uint8_t *) ipadr, (uint8_t *) ipmas);
 
@@ -55,6 +55,7 @@ int main() {
     xTaskCreate(vTask_keyboard  , "Keyboard"      , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 6, NULL);
     xTaskCreate(vTask_Scope     , "Scope"         , configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
 
+    xTaskCreate(vTask_ethercat, "EtherCAT", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 8, NULL);  
     vTaskStartScheduler();
     return 0;
 }

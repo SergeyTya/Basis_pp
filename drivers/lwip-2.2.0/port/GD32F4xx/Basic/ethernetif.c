@@ -44,6 +44,13 @@
 #include "main.h"
 #include <string.h>
 
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "semphr.h"
+#include "task.h"
+
+
+
 
 /* network interface name */
 #define IFNAME0 'G'

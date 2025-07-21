@@ -112,9 +112,8 @@ V4.00 ECAT 1: The handling of the Sync Manager Parameter was included according 
 #define _OBJD_
 
 /*Add Application specific Objects*/
-//#include "el9800appl.h"
-//#include "SSC-Device2.h"
-#include "SSC-Device_200k.h"
+#include "BasisPanelDevice.h"
+
 
 #undef _OBJD_
 /*-----------------------------------------------------------------------------------------
@@ -464,7 +463,7 @@ void COE_ObjInit(void)
         in DC mode (selected by the DC registers) this value will be overwritten
         with SYNCTYPE_DCSYNC0 or SYNCTYPE_DCSYNC1 */
      /*default mode is ECAT Synchron Mode */
-    sSyncManOutPar.u16SyncType     = SYNCTYPE_FREERUN;// OUT_PDOĬ��Ϊfreerunģʽ
+    sSyncManOutPar.u16SyncType     = SYNCTYPE_FREERUN;
 
     /* subindex 2 contains the cycle time of the application,
        in ECAT FreeRun mode it could be used for a timer interrupt to run the application,
@@ -477,7 +476,7 @@ void COE_ObjInit(void)
         master a very exactly calculation of delay times*/
     sSyncManOutPar.u32ShiftTime     = 0;
 
-    /* the subindex 4 contains the supported synchronization types */		  // ����֧�ֵ�ͬ��ģʽ
+    /* the subindex 4 contains the supported synchronization types */
 
     sSyncManOutPar.u16SyncTypesSupported    = SYNCTYPE_FREERUNSUPP            /* ECAT FreeRun Mode is supported */
                                               | SYNCTYPE_TIMESVARIABLE        /* the execution times depend on the connected modules */
@@ -511,7 +510,7 @@ void COE_ObjInit(void)
     /* initialize the Sync Manager Input parameter object 0x1C33 */
     sSyncManInPar.subindex0         = 32;
     /* default mode is ECAT Synchron Mode, if output size > 0 the inputs are updated with the SM2-event */
-    sSyncManInPar.u16SyncType         = SYNCTYPE_FREERUN;// IN_PDOĬ��Ϊfreerunģʽ
+    sSyncManInPar.u16SyncType         = SYNCTYPE_FREERUN;
 
     /* subindex 2: same as 0x1C32:02 */
     sSyncManInPar.u32CycleTime     = sSyncManOutPar.u32CycleTime;

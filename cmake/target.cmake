@@ -28,6 +28,7 @@ function(create_device target_name )
             ${APP_PATH}/task_modbus.c
             ${APP_PATH}/task_keyboard.c
             ${APP_PATH}/task_scope.c
+            ${APP_PATH}/task_ethercat.c
             ${APP_PATH}/mbsupport.c
             ${APP_PATH}/devices/${TARGET_NAME}/*.c
             )
@@ -50,7 +51,7 @@ function(create_device target_name )
     include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/RTOS/config.cmake)
 
     #message("-- include rtos ${RTOS}")
-    #include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/Ethercat/config.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/drivers/Ethercat/config.cmake)
     
     target_compile_definitions(${TARGET_NAME} PUBLIC BUILD_NAME_${TARGET_NAME})
 

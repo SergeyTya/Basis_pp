@@ -125,9 +125,9 @@ V4.00 APPL 6: The main function was split in MainInit and MainLoop
 #undef _APPL_INTERFACE_
 /* ECATCHANGE_END(V5.11) ECAT11*/
 
-//#include "el9800appl.h"
-//#include "SSC-Device2.h"
-#include "SSC-Device_200k.h"
+#include "BasisPanelDevice.h"
+
+
 
 /*--------------------------------------------------------------------------------------
 ------
@@ -175,13 +175,12 @@ BOOL bInitFinished = FALSE; /** < \brief indicates if the initialization is fini
 /**
 \brief      This function will copies the inputs from the local memory to the ESC memory
             to the hardware
-*////////////////////////////////////////////////////////////////////////////////////////b
+*////////////////////////////////////////////////////////////////////////////////////////
 void PDO_InputMapping(void)
 {
     APPL_InputMapping((UINT16*)aPdInputData);
-    HW_EscWriteIsr(((MEM_ADDR *) aPdInputData), nEscAddrInputData, nPdInputSize );	
+    HW_EscWriteIsr(((MEM_ADDR *) aPdInputData), nEscAddrInputData, nPdInputSize );
 }
-
 /////////////////////////////////////////////////////////////////////////////////////////
 /**
 \brief    This function will copies the outputs from the ESC memory to the local memory
@@ -190,9 +189,9 @@ void PDO_InputMapping(void)
 *////////////////////////////////////////////////////////////////////////////////////////
 void PDO_OutputMapping(void)
 {
-	// copy PDO from  ET1100 to var--->aPdOutputData[]
+
     HW_EscReadIsr(((MEM_ADDR *)aPdOutputData), nEscAddrOutputData, nPdOutputSize );
-	// 
+
     APPL_OutputMapping((UINT16*) aPdOutputData);
 }
 
@@ -219,7 +218,7 @@ void ECAT_CheckTimer(void)
 
 
 
-     DC_CheckWatchdog();
+    DC_CheckWatchdog();
 }
 
 /*ECATCHANGE_START(V5.11) ECAT6*/
@@ -227,11 +226,9 @@ void ECAT_CheckTimer(void)
 /**
  \brief    This function is called from the PDI_Isr and is used to calculate the bus cycle time 
   *////////////////////////////////////////////////////////////////////////////////////////
-UINT32 CalcCycleTime = 0;
 void HandleBusCycleCalculation(void)
 {
-    /*calculate the cycle time if device is in SM Sync mode and 
-    Cycle time was not calculated yet*/
+    /*calculate the cycle time if device is in SM Sync mode and Cycle time was not calculated yet*/
     if ( !bDcSyncActive && bEscIntEnabled)
     {
         BOOL bTiggerCalcCycleTime = FALSE;
@@ -257,7 +254,7 @@ void HandleBusCycleCalculation(void)
             {
                 UINT32 CurTimerCnt = (UINT32)HW_GetTimer();
 /*ECATCHANGE_START(V5.11) ECAT3*/
-               // UINT32 CalcCycleTime = 0;
+                UINT32 CalcCycleTime = 0;
 
 
 #if ECAT_TIMER_INC_P_MS
@@ -279,10 +276,9 @@ void HandleBusCycleCalculation(void)
     }
 }
 /*ECATCHANGE_END(V5.11) ECAT6*/
-// IRQ�жϷ�����
+
 void PDI_Isr(void)
 {
-
     if(bEscIntEnabled)
     {
         /* get the AL event register */
@@ -302,7 +298,7 @@ void PDI_Isr(void)
 
 /*ECATCHANGE_START(V5.11) ECAT6*/
             //calculate the bus cycle time if required
-            HandleBusCycleCalculation();// for SM-sync mode
+            HandleBusCycleCalculation();
 /*ECATCHANGE_END(V5.11) ECAT6*/
 
         /* Outputs were updated, set flag for watchdog monitoring */
@@ -336,12 +332,10 @@ void PDI_Isr(void)
         /*
             Call ECAT_Application() in SM Sync mode
         */
-        if (sSyncManOutPar.u16SyncType == SYNCTYPE_SM_SYNCHRON)// SMͬ��ʱִ�д˺���//DCͬ��ʱ��ִ��
+        if (sSyncManOutPar.u16SyncType == SYNCTYPE_SM_SYNCHRON)
         {
             /* The Application is synchronized to process data Sync Manager event*/
-
             ECAT_Application();
-
         }
 
     if ( bEcatInputUpdateRunning 
@@ -373,12 +367,10 @@ void PDI_Isr(void)
     } //if(bEscIntEnabled)
 }
 
-
 void Sync0_Isr(void)
 {
-
      Sync0WdCounter = 0;
-	
+
     if(bDcSyncActive)
     {
 
@@ -400,12 +392,12 @@ void Sync0_Isr(void)
                  sSyncManOutPar.u16SmEventMissedCounter = sSyncManOutPar.u16SmEventMissedCounter + 3;
               }
 
-	/*ECATCHANGE_START(V5.11) COE3*/
-						 if ((nPdInputSize > 0) && (nPdOutputSize == 0) && (sSyncManInPar.u16SmEventMissedCounter <= sErrorSettings.u16SyncErrorCounterLimit))
-						 {
-	/*ECATCHANGE_END(V5.11) COE3*/
-								 sSyncManInPar.u16SmEventMissedCounter = sSyncManInPar.u16SmEventMissedCounter + 3;
-						 }
+/*ECATCHANGE_START(V5.11) COE3*/
+           if ((nPdInputSize > 0) && (nPdOutputSize == 0) && (sSyncManInPar.u16SmEventMissedCounter <= sErrorSettings.u16SyncErrorCounterLimit))
+           {
+/*ECATCHANGE_END(V5.11) COE3*/
+               sSyncManInPar.u16SmEventMissedCounter = sSyncManInPar.u16SmEventMissedCounter + 3;
+           }
 
            } // if (u16SmSync0Counter > u16SmSync0Value)
 
@@ -445,9 +437,7 @@ void Sync0_Isr(void)
         }
 
         /* Application is synchronized to SYNC0 event*/
-
         ECAT_Application();
-
 
         if ( bEcatInputUpdateRunning 
            && (LatchInputSync0Value > 0) && (LatchInputSync0Value == LatchInputSync0Counter) ) /* Inputs shall be latched on a specific Sync0 event */
@@ -545,9 +535,6 @@ void MainLoop(void)
         /* FreeRun-Mode:  bEscIntEnabled = FALSE, bDcSyncActive = FALSE
            Synchron-Mode: bEscIntEnabled = TRUE, bDcSyncActive = FALSE
            DC-Mode:       bEscIntEnabled = TRUE, bDcSyncActive = TRUE */
-		// �˴�ִֻ��һ��
-		// Ϊ��Ӧ���һ��SM-event
-		// ����ж�����֮����˴�����ִ��
         if (
             (!bEscIntEnabled || !bEcatFirstOutputsReceived)     /* SM-Synchronous, but not SM-event received */
           && !bDcSyncActive                                               /* DC-Synchronous */
@@ -559,7 +546,6 @@ void MainLoop(void)
                at least once (bEcatFirstOutputsReceived = 1), otherwise no interrupt is generated
                and the function ECAT_Application has to be called here (with interrupts disabled,
                because the SM-event could be generated while executing ECAT_Application) */
-
             if ( !bEscIntEnabled )
             {
                 /* application is running in ECAT FreeRun Mode,
@@ -589,7 +575,6 @@ void MainLoop(void)
             }
 
             DISABLE_ESC_INT();
-
             ECAT_Application();
 
             if ( bEcatInputUpdateRunning )
@@ -599,9 +584,8 @@ void MainLoop(void)
             }
             ENABLE_ESC_INT();
         }
-	#if !ECAT_TIMER_INT
-        /* there is no interrupt routine for the hardware timer so check the timer register 
-				if the desired cycle elapsed*/
+
+        /* there is no interrupt routine for the hardware timer so check the timer register if the desired cycle elapsed*/
         {
             UINT32 CurTimer = (UINT32)HW_GetTimer();
 
@@ -610,10 +594,9 @@ void MainLoop(void)
                 ECAT_CheckTimer();
 
                 HW_ClearTimer();
-
             }
         }
-#endif
+
         /* call EtherCAT functions */
         ECAT_Main();
 
