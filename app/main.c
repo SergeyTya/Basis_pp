@@ -21,6 +21,8 @@
 
 #include "task_scope.h"
 
+#include "http_server.h"
+
 uint16_t holdings[256];
 
 
@@ -42,6 +44,8 @@ int main() {
     ipmas[0] = BOARD_NETMASK_ADDR0 ; ipmas[1] =BOARD_NETMASK_ADDR1 ;ipmas[2] = BOARD_NETMASK_ADDR2; ipmas[3] =BOARD_NETMASK_ADDR3;
 
     lwip_stack_init((uint8_t *) ipadr, (uint8_t *) ipmas);
+
+    http_server_init();
 
     panelConfig.modbus_RTU.enable = false;
     if(panelConfig.modbus_RTU.enable){

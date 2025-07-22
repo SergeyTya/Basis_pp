@@ -1,0 +1,15 @@
+const char *http_response =
+    "HTTP/1.1 200 OK\r\n"
+    "Content-Type: text/html; charset=UTF-8\r\n"
+    "Content-Length: 500\r\n"
+    "Location: https://bazisaero.ru/\r\n"
+    "Connection: close\r\n"
+    "\r\n"
+    "<html><body style='background:#1e3c72;color:#fff;font-family:sans-serif'>"
+    "<h1 style='color:#ffdd57;text-align:center'>Bazis Aero</h1>"
+    "<p style='text-align:center;margin:20px'>Российское производство аэродромных источников</p>"
+    "<div style='text-align:center'>"
+    "<a href='https://bazisaero.ru/' target='_blank' style='display:inline-block;padding:10px 20px;background:#ff6f61;color:white;border-radius:8px;text-decoration:none'>"
+    "Перейти на сайт</a></div>"
+    "<footer style='text-align:center;margin-top:20px;font-size:0.8em;opacity:0.7'>© <a href='https://bazisaero.ru/' target='_blank' style='color:#ffdd57'>Bazis Aero 2023</a></footer>"
+    "</body></html>";
