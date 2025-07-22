@@ -102,7 +102,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
             PUBLIC -ffreestanding
             PUBLIC -nostartfiles
             PUBLIC -nostdlib
-            PUBLIC -O0
+            PUBLIC -Og
             PUBLIC -std=gnu17
             PUBLIC -Wextra
             PUBLIC -Wall
@@ -111,9 +111,8 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
     target_link_options(${TARGET_NAME}
             PUBLIC ${CPU_FLAGS}
             -T $<TARGET_PROPERTY:LINKER_FILE>
-            -lgcc -lc
-            -specs=nano.specs 
-            -specs=nosys.specs 
+            #-specs=nano.specs 
+            -specs=nosys.specs -lgcc -lc
             -Wl,-Map=${TARGET_NAME}.map,--cref,--print-memory-usage
             -Wl,-gc-sections
             )
