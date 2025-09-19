@@ -19,7 +19,7 @@ FILE(GLOB_RECURSE TARGET_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/spi/*.c
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/ethercat/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MUTABA/M204D08AA.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MUTABA/M204D08AA_port_gd32.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MUTABA/M204D08AA_port_gd32_i2c.c
 
         )
 
