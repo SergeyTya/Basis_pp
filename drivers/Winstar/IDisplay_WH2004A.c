@@ -1,12 +1,9 @@
 #include "stdint.h"
 #include "stdbool.h"
-
 #include "gd32f4xx_libopt.h"
-
 #include "FreeRTOS.h"
 #include "task.h"
-
-#include "M204D08AA.h"
+#include "IDisplay_WH2004A.h"
 
 
 #define I2C I2C2
@@ -28,120 +25,99 @@
 #define SET_CGRAM_ADDRESS 0x40 // usage address |= SET_CGRAM_ADDRESS
 #define SET_DDRAM_ADDRESS 0x80
 
+const char WH2004A_Decode2Rus[] = {
+    'A',(char)0xA0, 'B',(char)0xA1,(char)0xE0,
+    'E', (char)0xA3,(char)0xA4,
+    (char)0xA5, (char)0xA6,'K',(char)0xA7,'M','H','O',
+    (char)0xA8,'P','C','T', (char)0xA9, (char)0xAA,'X',
+    (char)0xE1, (char)0xAB,(char)0xAC,(char)0xE2,
+    (char)0xAD,(char)0xAE,'b',(char)0xAF,(char)0xB0,(char)0xB1
+};
 
-static spi_parameter_struct GD25Q32_spi_struct;
-static bool PCF8574_writeByte(uint8_t data);
-static void LCD_WriteByte(uint8_t data, uint8_t isData);
-static void LCD_WriteByte_v2(uint8_t data, uint8_t isData);
-static void LCD_Cmd(uint8_t cmd);
-static void LCD_WriteChar(char ch);
+static void PCF8574_writeByte(uint8_t data);
+static void WH2004A_WriteByte(uint8_t data, uint8_t isData);
+static void WH2004A_WriteChar(char ch);
+void WH2004A_SPI_Config();
+void WH2004A_gpio_congig();
 
-static void LCD_SetBright(uint8_t brightness) {
+static void WH2004A_timer_additional_config(void);
 
-    TIMER_CH1CV(TIMER0) = TIMER_CAR(TIMER0) * (100 - brightness) / 100;
-}
 
-void LCD_WriteByte_8bit(uint8_t data, uint8_t isData);
-
-void LCD_WriteNibble(uint8_t nibble, uint8_t isData);
-
-void M204D08AA_SPI_Config();
-void M204D08AA_gpio_congig();
-
-static void timer_additional_config(void);
-
-extern const char Decode2Rus2[];
-
-void M204D08AA_HardInit()
+void WH2004A_DisplayInit()
 {
-    M204D08AA_gpio_congig();
-    vTaskDelay(300);
-    M204D08AA_SPI_Config();
-    timer_additional_config();
+    WH2004A_gpio_congig();
+    WH2004A_SPI_Config();
+    WH2004A_timer_additional_config();
 
+    vTaskDelay(150);
+    WH2004A_WriteByte(0x33, 0);
+    vTaskDelay(1);
+    WH2004A_WriteByte(0x32, 0);
+    vTaskDelay(1);
+
+    WH2004A_WriteByte(DATA_BUS_8BIT_PAGE0, 0);
+    vTaskDelay(1);
+    WH2004A_WriteByte(DISPLAY_OFF, 0);
+    vTaskDelay(1);
+    WH2004A_WriteByte(CLEAR_DISPLAY, 0);
+    vTaskDelay(10);
+    WH2004A_WriteByte(ENTRY_MODE_SET, 0);
+    vTaskDelay(1);
+    WH2004A_WriteByte(DISPLAY_ON, 0);
+    vTaskDelay(2);
+    WH2004A_WriteByte(CLEAR_DISPLAY, 0);
+    vTaskDelay(2);
+
+    uint8_t start_address = 0x0;
+    WH2004A_WriteByte((start_address |= SET_DDRAM_ADDRESS), 0);
 
     // // russian alphabet test
     // for (size_t i = 0; i < 31; i++)
     // {
-    //     LCD_WriteChar(Decode2Rus2[i]);
+    //     WH2004A_WriteChar(Decode2Rus2[i]);
     // }
 
     // bBrightness test
 
     for (int i = 0; i < 100; i++) {
-        LCD_SetBright(100 - i);
+        WH2004A_DisplaySetBrightnessLevel(100 - i);
         vTaskDelay(3);
     }
 
     for (int i = 0; i < 100; i++) {
-        LCD_SetBright(i);
+        WH2004A_DisplaySetBrightnessLevel(i);
         vTaskDelay(3);
     }
 
-    LCD_SetBright(25);
+    WH2004A_DisplaySetBrightnessLevel(25);
 }
 
-void M204D08AA_STB_SetState(bool state) {
-}
+void WH2004A_DisplayUpdateFromBuffer(char buff[80]) {
 
-volatile uint32_t xxcarr = 9000;
-void M204D08AA_STB_WriteWord(uint16_t data) {
+    WH2004A_WriteByte(CLEAR_DISPLAY, 0);
+    vTaskDelay(2);
+    int start_address = 0x0;
+    WH2004A_WriteByte((start_address |= SET_DDRAM_ADDRESS), 0);
 
-    uint8_t cmd = data >> 8;
-    uint8_t dtr = data & 0xFF;
-
-    if (cmd == 250) {
-        if (dtr == 0) dtr = ' ';
-        LCD_WriteChar(dtr);
-    }
-
-    uint8_t start_address = 0x0;
-    if (cmd == 248) {
-
-        switch (dtr)
-        {
-        case 1: // clear    
-            LCD_WriteByte(CLEAR_DISPLAY, 0); // очищаем дисплей
-            vTaskDelay(2);
-            break;
-
-        case 128:
-            start_address = 0x0;
-            break;
-        case 192:
-            start_address = 0x40;
-            break;
-        case 148:
-            start_address = 0x14;
-            break;
-        case 212:
-            start_address = 0x54;
-            break;
-
-        case 56:
-            LCD_SetBright(25);
-            break;
-        case 57:
-            LCD_SetBright(50);
-            break;
-        case 58:
-            LCD_SetBright(75);
-            break;
-        case 59:
-            LCD_SetBright(100);
-            break;
-
-        default:
-            break;
+    for (size_t i = 0; i < 80; i++)
+    {
+        char c = buff[i];
+        if (c >= -64 && c < -32) {
+            WH2004A_WriteChar(WH2004A_Decode2Rus[64 + c]);
         }
-        LCD_WriteByte((start_address |= SET_DDRAM_ADDRESS), 0);
+        else {
+            if (c == 0) { c = ' '; }
+            WH2004A_WriteChar(c);
+        }
     }
-
 }
 
+void WH2004A_DisplaySetBrightnessLevel(int lvl) {
 
+    TIMER_CH1CV(TIMER0) = TIMER_CAR(TIMER0) * (100 - lvl) / 100;
+}
 
-void M204D08AA_SPI_Config(void)
+void WH2004A_SPI_Config(void)
 {
 
     rcu_periph_clock_enable(RCU_I2C2);
@@ -152,29 +128,6 @@ void M204D08AA_SPI_Config(void)
     i2c_enable(I2C);
     /* enable acknowledge */
     i2c_ack_config(I2C, I2C_ACK_ENABLE);
-
-
-    vTaskDelay(150);
-    LCD_WriteByte(0x33, 0);
-    vTaskDelay(1);
-    LCD_WriteByte(0x32, 0);
-    vTaskDelay(1);
-
-    LCD_WriteByte(DATA_BUS_8BIT_PAGE0, 0);
-    vTaskDelay(1);
-    LCD_WriteByte(DISPLAY_OFF, 0);
-    vTaskDelay(1);
-    LCD_WriteByte(CLEAR_DISPLAY, 0);
-    vTaskDelay(10);
-    LCD_WriteByte(ENTRY_MODE_SET, 0);
-    vTaskDelay(1);
-    LCD_WriteByte(DISPLAY_ON, 0);
-    vTaskDelay(2);
-    LCD_WriteByte(CLEAR_DISPLAY, 0);
-    vTaskDelay(2);
-
-    uint8_t start_address = 0x0;
-    LCD_WriteByte((start_address |= SET_DDRAM_ADDRESS), 0);
 }
 
 #define GD32_CONGIG_PIN_AS_AF(PORT, AF, PIN)                                      \
@@ -194,7 +147,7 @@ void M204D08AA_SPI_Config(void)
 #define EN_PIN  GPIOG,GPIO_PIN_11
 #define I2C_8BIT_ENPIN(state) { if(state){gpio_bit_set(EN_PIN);}else{gpio_bit_reset(EN_PIN);} }
 #define I2C_8BIT_RSPIN(state) { if(state){gpio_bit_set(RS_PIN);}else{gpio_bit_reset(RS_PIN);} }
-void M204D08AA_gpio_congig() {
+void WH2004A_gpio_congig() {
 
     rcu_periph_clock_enable(RCU_GPIOA);
     rcu_periph_clock_enable(RCU_GPIOC);
@@ -216,7 +169,7 @@ void M204D08AA_gpio_congig() {
 }
 
 
-static bool PCF8574_writeByte(uint8_t data) {
+static void PCF8574_writeByte(uint8_t data) {
 
     while (i2c_flag_get(I2C, I2C_FLAG_I2CBSY));
     /* send a start condition to I2C bus */
@@ -243,9 +196,8 @@ static bool PCF8574_writeByte(uint8_t data) {
 
 static timer_parameter_struct timer_initpara;
 static timer_oc_parameter_struct timer_ocintpara;
-static timer_break_parameter_struct timer_breakpara;
 
-static void timer_additional_config(void)
+static void WH2004A_timer_additional_config(void)
 {
 
     rcu_periph_clock_enable(RCU_GPIOE);
@@ -281,24 +233,18 @@ static void timer_additional_config(void)
 
 }
 
-void LCD_Cmd(uint8_t cmd) {
-    LCD_WriteByte(cmd, 0);
+void WH2004A_Cmd(uint8_t cmd) {
+    WH2004A_WriteByte(cmd, 0);
 }
 
 /**
- * @brief Send a character to the LCD
+ * @brief Send a character to the WH2004A
  */
-void LCD_WriteChar(char ch) {
-    LCD_WriteByte(ch, 1);
+void WH2004A_WriteChar(char ch) {
+    WH2004A_WriteByte(ch, 1);
 }
 
-
-void LCD_WriteByte(uint8_t data, uint8_t isData) {
-    LCD_WriteByte_8bit(data, isData);
-}
-
-void LCD_WriteByte_8bit(uint8_t data, uint8_t isData) {
-
+void WH2004A_WriteByte(uint8_t data, uint8_t isData) {
     I2C_8BIT_RSPIN(isData);
     I2C_8BIT_ENPIN(1);
     PCF8574_writeByte(data);

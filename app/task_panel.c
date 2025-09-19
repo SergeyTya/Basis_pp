@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
-#include "M204D08AA.h"
+#include "IDisplay.h"
 #include "task_panel.h"
 #include "mbsupport.h"
 #include "panelConfig.h"
@@ -64,7 +64,7 @@ void vTask_Panel(__attribute__((unused)) void *argument)
 {
 
    
-    M204D08AA_DisplayInit();
+    DisplayInit();
     memset(displayMemory, 80, 0);
     vSemaphoreCreateBinary(xDisplayUpdaterSemaphore);
 
@@ -160,7 +160,7 @@ void DisplayUpdater(__attribute__((unused)) void *argument)
     { 
         xSemaphoreTake(xDisplayUpdaterSemaphore, portMAX_DELAY);
         displayUpdateHarBit = !displayUpdateHarBit;
-        M204D08AA_UpdateDisplayFromBuffer(displayMemory);
+        DisplayUpdateFromBuffer(displayMemory);
         xSemaphoreGive(xDisplayUpdaterSemaphore);
         vTaskDelay(28);    
     }

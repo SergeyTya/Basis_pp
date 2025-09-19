@@ -1,5 +1,4 @@
 #include <string.h>
-#include "M204D08AA.h"
 #include "M204D08AA_port.h"
 
 
@@ -30,6 +29,7 @@ const char Decode2Rus[] = {
     (char) 0x8C,(char) 0x8D,(char) 0x8E,'b',
     (char) 0x8F,(char) 0xAC,(char) 0xAD
 };
+
     
 static void PrintString(char *string,size_t len )
 {

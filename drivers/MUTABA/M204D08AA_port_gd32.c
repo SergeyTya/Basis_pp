@@ -6,7 +6,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#include "M204D08AA.h"
 
 #define M204D08AA_SPIx                           SPI3
 #define M204D08AA_SPIx_CLK                       RCU_SPI3

@@ -9,6 +9,8 @@ target_include_directories(${TARGET_NAME}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/spi/
         
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MUTABA/
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/drivers/Winstar/
+        
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/ethercat/
         )
 
@@ -17,10 +19,10 @@ FILE(GLOB_RECURSE TARGET_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/mb/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/mcu/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/spi/*.c
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/ethercat/*.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MUTABA/M204D08AA.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MUTABA/M204D08AA_port_gd32_i2c.c
-
+        ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}/ethercat/*.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MUTABA/IDisplay_M204D08AA.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/MUTABA/M204D08AA_port_gd32.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/drivers/Winstar/IDisplay_WH2004A.c
         )
 
 target_sources(${TARGET_NAME}  PUBLIC ${TARGET_SRC} )

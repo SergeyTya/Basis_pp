@@ -5,28 +5,30 @@
 
 #include "gd32f4xx_libopt.h" 
 
+// USART 0 PB6 PB7
+
 static uint8_t master_tx_buffer[256];
 static uint8_t master_rx_buffer[256];
 int rx_cnt = 0;
 
-#define RSM_GPIO_TX_CLK            RCU_GPIOE
-#define RSM_GPIO_TX_PORT           GPIOE
-#define RSM_GPIO_TX_AF             GPIO_AF_8
-#define RSM_TX_PIN                 GPIO_PIN_1
+#define RSM_GPIO_TX_CLK            RCU_GPIOB
+#define RSM_GPIO_TX_PORT           GPIOB
+#define RSM_GPIO_TX_AF             GPIO_AF_7
+#define RSM_TX_PIN                 GPIO_PIN_6
 
 #define RSM_GPIO_RX_CLK            RCU_GPIOE
 #define RSM_GPIO_RX_PORT           GPIOE
-#define RSM_GPIO_RX_AF             GPIO_AF_8
-#define RSM_RX_PIN                 GPIO_PIN_0
+#define RSM_GPIO_RX_AF             GPIO_AF_7
+#define RSM_RX_PIN                 GPIO_PIN_7
 
 #define RSM_GPIO_CTL_CLK           RCU_GPIOB
 #define RSM_GPIO_CTL_PORT          GPIOB
 #define RSM_CTL_PIN                GPIO_PIN_9
 
-#define RSM_USART_CLK              RCU_UART7
-#define RSM_USART                  UART7
+#define RSM_USART_CLK              RCU_USART0
+#define RSM_USART                  USART0
 #define RSM_USART_IRQHandler       UART7_IRQHandler
-#define RSM_USART_IRQn             UART7_IRQn
+#define RSM_USART_IRQn             USART0_IRQn
 
 #define RSM_DMA_DCU                RCU_DMA0
 #define RSM_DMA                    DMA0

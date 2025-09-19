@@ -1,5 +1,5 @@
 #include "task_panel.h"
-#include "M204D08AA.h"
+#include "IDisplay.h"
 #include "mcu_control.h"
 
 const uint32_t speed_options[] = {9600, 38400, 115200, 230400};
@@ -35,7 +35,7 @@ TypeDef_ConfigMenuItem configMenu[] = {
 };
 
 void MenuItemBrightnessChangedEvent(){
-    M204D08AA_SetBrightnessLevel((int) *configMenu[0].val);
+    DisplaySetBrightnessLevel((int) *configMenu[0].val);
     ConfigMenuSaveAll();
 }
 
