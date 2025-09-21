@@ -238,6 +238,7 @@ static void Page_Dc2AdvancedSetup(void *arg)
     panelConfig.active_slave = CONFIG_SLAVE_DC2;
 }
 
+extern float temp_ext;
 static void Page_Logo(void *arg)
 {
     // clear
@@ -245,7 +246,9 @@ static void Page_Logo(void *arg)
     memset(pntr, 0, 80);
     vTaskDelay(1);
     // set static
+    int32_t t = (int32_t) temp_ext;
     snprintf(&pntr[0], sizeof(LG_NAME), LG_NAME);
+    snprintf(&pntr[70], 10, "Temp= %2d" , t);
 
     if (buttonState == KEY_LONGENTER)
     {
@@ -264,7 +267,7 @@ void flash_cursor(char *pntr, size_t pos)
         }
         else
         {
-            pntr[pos] = 0;
+            pntr[pos] = ' ';
         }
     }
 }
@@ -1097,13 +1100,14 @@ static inline void menu2DrawCursor(int *cursorHPos, int *cursorVPos, char *p)
 }
 
 static TypeDef_ConfigMenuItem *pageMenuItemEditItem = &nullMenuItem;
+static int pageConfigCursorVer = 0;
+static int pageConfigCursorHor = 0;
+static int pageConfigFirstLine = 0;
 static void Page_Config(void *arg)
 {
     char *pntr = (char *)arg;
 
-    static int pageConfigCursorVer = 0;
-    static int pageConfigCursorHor = 0;
-    static int pageConfigFirstLine = 0;
+
     static TypeDef_ConfigMenuItem *pageConfigMenuItemSelected;
 
     for (size_t i = 0; i < configMenuSize; i++)
@@ -1117,6 +1121,7 @@ static void Page_Config(void *arg)
     menu2dCheckLimit(&pageConfigCursorHor, &pageConfigCursorVer, &pageConfigFirstLine, configMenuSize, 3, 3);
 
     memset(pntr, 0, 80);
+
     snprintf(pntr, 80,
              " %10s%s  %5d  %10s%s  %5d  %10s%s %6d  Apply         Exit  ",
              configMenu[pageConfigFirstLine + 0].label,

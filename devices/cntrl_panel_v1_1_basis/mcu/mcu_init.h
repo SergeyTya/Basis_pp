@@ -32,5 +32,13 @@
 
 #endif
 
+
+#define HART_BIT_PIN1 GPIOG,GPIO_PIN_4
+#define HART_BIT_PIN2 GPIOG,GPIO_PIN_5
+#define HART_BIT_PIN3 GPIOG,GPIO_PIN_6
+#define HART_BIT_PIN4 GPIOG,GPIO_PIN_7
+
+void hw_hbl_set(int led, uint8_t state);
+
 #endif 
 

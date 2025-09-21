@@ -4,7 +4,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "IDisplay_WH2004A.h"
-
+#include "string.h"
 
 #define I2C I2C2
 
@@ -12,7 +12,7 @@
 
 #define CLEAR_DISPLAY 0x1
 #define RETURN_HOME 0x2
-#define ENTRY_MODE_SET 0x6 // mode cursor shift rihgt, display non shift
+#define ENTRY_MODE_SET 6// 0x6 // mode cursor shift rihgt, display non shift
 #define DISPLAY_ON 0xC // non cursor
 #define DISPLAY_OFF 0x8
 #define CURSOR_SHIFT_LEFT 0x10
@@ -74,7 +74,7 @@ void WH2004A_DisplayInit()
     // // russian alphabet test
     // for (size_t i = 0; i < 31; i++)
     // {
-    //     WH2004A_WriteChar(Decode2Rus2[i]);
+    //     WH2004A_WriteChar(WH2004A_Decode2Rus[i]);
     // }
 
     // bBrightness test
@@ -92,12 +92,19 @@ void WH2004A_DisplayInit()
     WH2004A_DisplaySetBrightnessLevel(25);
 }
 
+
+uint8_t temp_buff[20];
 void WH2004A_DisplayUpdateFromBuffer(char buff[80]) {
 
     WH2004A_WriteByte(CLEAR_DISPLAY, 0);
     vTaskDelay(2);
     int start_address = 0x0;
     WH2004A_WriteByte((start_address |= SET_DDRAM_ADDRESS), 0);
+
+    memcpy(temp_buff, &buff[20], 20);
+    memcpy(&buff[20], &buff[40], 20);
+    memcpy(&buff[40], &temp_buff, 20);
+ 
 
     for (size_t i = 0; i < 80; i++)
     {

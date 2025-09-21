@@ -10,11 +10,14 @@
   #define INLINE inline __attribute__((always_inline))
 #endif
 
-bool hw_write_FLASH(uint16_t * src, size_t size);
-void hw_read_FLASH (uint16_t * dst, size_t size);
+bool hw_write_FLASH(uint32_t * src, size_t size);
+void hw_read_FLASH (uint32_t * dst, size_t size);
 
 void hw_hours_write();
 void hw_hours_read();
+uint8_t hw_get_revision();
+
+uint16_t hw_read_AI();
 
 
 #define HW_START_CRITICAL (__enable_irq())

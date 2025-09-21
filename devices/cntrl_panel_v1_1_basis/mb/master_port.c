@@ -27,18 +27,34 @@ int rx_cnt = 0;
 
 #define RSM_USART_CLK              RCU_USART0
 #define RSM_USART                  USART0
-#define RSM_USART_IRQHandler       UART7_IRQHandler
+#define RSM_USART_IRQHandler       USART0_IRQHandler
 #define RSM_USART_IRQn             USART0_IRQn
 
-#define RSM_DMA_DCU                RCU_DMA0
-#define RSM_DMA                    DMA0
-#define RSM_DMA_TXCH               DMA_CH0
-#define RSM_DMA_RXCH               DMA_CH7
+#define RSM_DMA_DCU                RCU_DMA1
+#define RSM_DMA                    DMA1
+#define RSM_DMA_TXCH               DMA_CH7
+#define RSM_DMA_RXCH               DMA_CH5
 #define RSM_RX_DMA                 RSM_DMA,RSM_DMA_RXCH
 #define RSM_TX_DMA                 RSM_DMA,RSM_DMA_TXCH
-#define RSM_DMA_SUBPERI            DMA_SUBPERI5
-#define RSM_USATR_DATA_ADR         (UART7 + 4U)
+#define RSM_DMA_SUBPERI            DMA_SUBPERI4
+#define RSM_USATR_DATA_ADR         (USART0 + 4U)
 /************/
+
+#define RSM_RDIO_PORT             GPIOE
+#define RSM_RDIO_OUT1_PIN         GPIO_PIN_2
+#define RSM_RDIO_OUT2_PIN         GPIO_PIN_3
+#define RSM_RDIO_OUT3_PIN         GPIO_PIN_4
+#define RSM_RDIO_OUT4_PIN         GPIO_PIN_5
+#define RSM_RDIO_OUT5_PIN         GPIO_PIN_6
+#define RSM_RDIO_DISABLE_ALL      gpio_bit_set(GPIOE, RSM_RDIO_OUT1_PIN|RSM_RDIO_OUT2_PIN|RSM_RDIO_OUT3_PIN|RSM_RDIO_OUT4_PIN|RSM_RDIO_OUT5_PIN )
+#define RSM_RDIO_SET_STATE(RDIO_GPIO_PIN, state) {if(state!=0) {gpio_bit_reset(RSM_RDIO_PORT, RDIO_GPIO_PIN);}else{ gpio_bit_set(RSM_RDIO_PORT,RDIO_GPIO_PIN);}}
+#define RSM_RDIO_OUT1_SET(state) RSM_RDIO_SET_STATE((RSM_RDIO_OUT1_PIN), state )
+#define RSM_RDIO_OUT2_SET(state) RSM_RDIO_SET_STATE((RSM_RDIO_OUT2_PIN), state )
+#define RSM_RDIO_OUT3_SET(state) RSM_RDIO_SET_STATE((RSM_RDIO_OUT3_PIN), state )
+#define RSM_RDIO_OUT4_SET(state) RSM_RDIO_SET_STATE((RSM_RDIO_OUT4_PIN), state )
+#define RSM_RDIO_OUT5_SET(state) RSM_RDIO_SET_STATE((RSM_RDIO_OUT5_PIN), state )
+
+
 
 extern void keyboard_setFaultLedSate(bool state);
 extern void keyboard_setOnLedSate(bool state);
@@ -154,11 +170,7 @@ void master_hwInit(uint16_t speed) {
   nvic_irq_enable(RSM_USART_IRQn, 10, 0);
 
 
-  //DO1,2 out PE3 PE2
-  gpio_mode_set(GPIOE, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO_PIN_2|GPIO_PIN_3);           
-  gpio_output_options_set(GPIOE, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_2|GPIO_PIN_3); 
-
-
+   RSM_RDIO_DISABLE_ALL;
 }
 
 /**
@@ -243,8 +255,7 @@ void master_LEDonFaultReset() {
 */
 void master_LEDonFaultState() {
   keyboard_setFaultLedSate(true);
-  gpio_bit_reset(GPIOE, GPIO_PIN_3); //DO1
-  gpio_bit_reset(GPIOE, GPIO_PIN_2); //DO2
+  RSM_RDIO_DISABLE_ALL;
 }
 
 /**
@@ -257,16 +268,22 @@ void  master_LEDonRUNstate(int dev) {
   // TODO RDO ENABLE
   switch (dev)
   {
-  case 1: case 2:
-    keyboard_setAC1LedSate(true);
-    keyboard_setAC2LedSate(true);
-    gpio_bit_set(GPIOE, GPIO_PIN_3); //DO1
-    break;
-  case 3: case 4:
-    keyboard_setDC1LedSate(true);
-    keyboard_setDC2LedSate(true);
-    gpio_bit_set(GPIOE, GPIO_PIN_2); //DO1
-    break;
+  case 1:
+  keyboard_setAC1LedSate(true);
+  RSM_RDIO_OUT1_SET(1);
+  break; 
+  case 2:
+  keyboard_setAC2LedSate(true);
+  RSM_RDIO_OUT2_SET(1);
+  break;
+  case 3:
+  keyboard_setDC2LedSate(true);
+  RSM_RDIO_OUT3_SET(1);
+  break;
+  case 4:
+  keyboard_setDC1LedSate(true); 
+  RSM_RDIO_OUT4_SET(1);
+  break;
 
   default:
     break;
@@ -288,16 +305,22 @@ void master_LEDonReadyState(int dev) {
   // TODO RDO ENABLE
   switch (dev)
   {
-  case 1: case 2:
-    keyboard_setAC1LedSate(false);
-    keyboard_setAC2LedSate(false);
-    gpio_bit_reset(GPIOE, GPIO_PIN_3); //DO1
-    break;
-  case 3: case 4:
-    keyboard_setDC1LedSate(false);
-    keyboard_setDC2LedSate(false);
-    gpio_bit_reset(GPIOE, GPIO_PIN_2); //DO2
-    break;
+  case 1:
+  keyboard_setAC1LedSate(false);
+  RSM_RDIO_OUT1_SET(0);
+  break; 
+  case 2:
+  keyboard_setAC2LedSate(false);
+  RSM_RDIO_OUT2_SET(0);
+  break;
+  case 3:
+  keyboard_setDC2LedSate(false);
+  RSM_RDIO_OUT3_SET(0);
+  break;
+  case 4:
+  keyboard_setDC1LedSate(false); 
+  RSM_RDIO_OUT4_SET(0);
+  break;
 
   default:
     break;
@@ -341,15 +364,21 @@ void master_LEDonWaitState(int dev) {
 
   switch (dev)
   {
-  case 1: case 2:
+  case 1: 
     keyboard_setAC1LedSate(blinker);
+    RSM_RDIO_OUT1_SET(0);
+     break;
+  case 2:
     keyboard_setAC2LedSate(blinker);
-        gpio_bit_reset(GPIOE, GPIO_PIN_3); //DO1
-    break;
-  case 3: case 4:
+    RSM_RDIO_OUT2_SET(0);
+   break;   
+  case 3: 
     keyboard_setDC1LedSate(blinker);
+    RSM_RDIO_OUT3_SET(0);
+    break;
+  case 4:
     keyboard_setDC2LedSate(blinker);
-        gpio_bit_reset(GPIOE, GPIO_PIN_3); //DO1
+    RSM_RDIO_OUT4_SET(0);
     break;
 
   default:
@@ -391,8 +420,6 @@ static inline void Master_setRDEstate(bool state) {
   else {
     gpio_bit_reset(RSM_GPIO_CTL_PORT, RSM_CTL_PIN);
   }
-
-  //  hwDriveHartBit_led3();
 }
 
 

@@ -34,6 +34,7 @@ function(create_device target_name )
             ${APP_PATH}/http_data.c
             ${APP_PATH}/devices/${TARGET_NAME}/*.c
             ${APP_PATH}/IDisplay.c
+            ${APP_PATH}/task_tempmes.c
             )
  
  

@@ -74,7 +74,7 @@ OF SUCH DAMAGE.
 #define PHY_ADDRESS                      0x00                         /*!< phy address determined by the hardware */
 
 /* PHY read write timeouts */ 
-#define PHY_READ_TO                      ((uint32_t)0x0004FFFFU)                /*!< PHY read timeout */
+#define PHY_READ_TO                      ((uint32_t)0x0000FFFFU)                /*!< PHY read timeout */
 #define PHY_WRITE_TO                     ((uint32_t)0x0004FFFFU)                /*!< PHY write timeout */
 
 /* PHY delay */

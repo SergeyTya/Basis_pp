@@ -11,7 +11,7 @@ const uint32_t par_options[] = {/*NONE*/0 , /*ODD*/1, /*EVEN*/2};
 void MenuItemBrightnessChangedEvent();
 
 const TypeDef_ConfigMenuItem nullMenuItem = {.label = "Null pointer"};
-const size_t configMenuSize = 17;
+const size_t configMenuSize = 18;
 TypeDef_ConfigMenuItem configMenu[] = {
 
     {.label="AC1 enable"  , .val=&panelConfig.enableAC1, .options=onof_options, .options_len=2 },
@@ -23,6 +23,7 @@ TypeDef_ConfigMenuItem configMenu[] = {
     {.label="RTU Speed"   , .val=&panelConfig.modbus_RTU.speed, .options=speed_options, .options_len=4},
     {.label="RTU Parity"  , .val=&panelConfig.modbus_RTU.parity, .options=par_options, .options_len=3},
     {.label="TCP enable"  , .val=&panelConfig.modbus_TCP.enable, .options=onof_options, .options_len=2},
+    {.label="ECT enable"  , .val=&panelConfig.ethercat.enable, .options=onof_options, .options_len=2},
     {.label="TCP IP[0]"   , .val=&panelConfig.modbus_TCP.ip0, .enableLim = true,  .limHi = 255, .limLo=0},
     {.label="TCP IP[1]"   , .val=&panelConfig.modbus_TCP.ip1, .enableLim = true,  .limHi = 255, .limLo=0 },
     {.label="TCP IP[2]"   , .val=&panelConfig.modbus_TCP.ip2, .enableLim = true,  .limHi = 255, .limLo=0 },
@@ -46,29 +47,29 @@ void MenuItemGeneralChangedEvent(){
 
 void ConfigMenuSaveAll(){
   
-    size_t len = configMenuSize*2;
-    uint16_t data[len];
-    uint32_t * pntr = (uint32_t *) data;
-
+    size_t len = configMenuSize;
+    uint32_t data[len];
+    
     for (size_t i = 0; i < configMenuSize; i++)
     {
-        pntr[i] =  *configMenu[i].val;
+        data[i] =  *configMenu[i].val;
     }
     
-   hw_write_FLASH((uint16_t*) data, len); // sent to hw
+   hw_write_FLASH( data, len); // sent to hw
 }
 
 void ConfigMenuReadAll(){
 
-    size_t len = configMenuSize*2;
-    uint16_t data[len];
-    uint32_t * pntr = (uint32_t *) data;
-
-    hw_read_FLASH((uint16_t*)pntr, len);
+    size_t len = configMenuSize;
+    uint32_t data[len];
+    
+    hw_read_FLASH(data, len);
 
     for (size_t i = 0; i < configMenuSize; i++)
     {
-        if(pntr[i] == 0xFFFFFFFF) return;
-        *configMenu[i].val = pntr[i];
+        if(data[i] == 0xFFFFFFFF){ 
+            return;
+        };
+        *configMenu[i].val = data[i];
     }
 }
