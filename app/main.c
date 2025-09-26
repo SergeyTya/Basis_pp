@@ -41,13 +41,14 @@ int main() {
       StructureInit_PanelConfig(&panelConfig);
       ConfigMenuReadAll();
 
-      // if(hw_get_revision() == 0){
-      //    DisplayMapMutaba();
-      // }
-      // if(hw_get_revision() == 1){
-      //     DisplayMapWinstar();
-      // }
-    DisplayMapWinstar();
+      uint8_t hwr = hw_get_revision();
+      if(hwr == 0b001){
+         DisplayMapMutaba();
+      }
+      if(hwr == 0b010){
+        DisplayMapWinstar();
+      }
+
 
     hw_hbl_set(0,0);
    
@@ -58,8 +59,8 @@ int main() {
     uint8_t ipadr[4] =  {panelConfig.modbus_TCP.ip0, panelConfig.modbus_TCP.ip1,panelConfig.modbus_TCP.ip2,panelConfig.modbus_TCP.ip3} ; 
     uint8_t ipmas[4] =  {panelConfig.modbus_TCP.mask0, panelConfig.modbus_TCP.mask1,panelConfig.modbus_TCP.mask2,panelConfig.modbus_TCP.mask3} ; 
 
-    // ipadr[0] = BOARD_IP_ADDR0; ipadr[1] = BOARD_IP_ADDR1; ipadr[2] = BOARD_IP_ADDR2; ipadr[3] = BOARD_IP_ADDR3;
-    // ipmas[0] = BOARD_NETMASK_ADDR0 ; ipmas[1] =BOARD_NETMASK_ADDR1 ;ipmas[2] = BOARD_NETMASK_ADDR2; ipmas[3] =BOARD_NETMASK_ADDR3;
+    ipadr[0] = BOARD_IP_ADDR0; ipadr[1] = BOARD_IP_ADDR1; ipadr[2] = BOARD_IP_ADDR2; ipadr[3] = BOARD_IP_ADDR3;
+    ipmas[0] = BOARD_NETMASK_ADDR0 ; ipmas[1] =BOARD_NETMASK_ADDR1 ;ipmas[2] = BOARD_NETMASK_ADDR2; ipmas[3] =BOARD_NETMASK_ADDR3;
 
     lwip_stack_init((uint8_t *) ipadr, (uint8_t *) ipmas);
 

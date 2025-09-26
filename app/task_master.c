@@ -28,7 +28,7 @@ TimerHandle_t xTimers_StartDelay[5];
 xSemaphoreHandle xDisplayMasterR485Semaphore;
 
 // Used for encode slave fault bits
-static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int mask, int16_t offset );
+static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int mask, int16_t offset);
 
 #define MASTER_TRANSPORT_CHECK_TIMEOUT( xstate ) {\
         master.master_wdg[slaveAdr] = (xstate) != MASTER_TRANSPORT_NOERROR; \
@@ -54,7 +54,7 @@ void vTimerAC_Callback(TimerHandle_t xTimer) {
             holding = GetHoldingByAdrFromTable(103, table);
             // Setup 
             uint16_t valACStart = *holding->pntr | 8U; // bit #3
-           if( master.start_req[slaveAdr] == true) 
+            if (master.start_req[slaveAdr] == true)
                 master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valACStart);
             // reset start request
             master.start_req[slaveAdr] = false;
@@ -76,9 +76,9 @@ void vTimerDC_Callback(TimerHandle_t xTimer) {
             TypeDef_MB_Table* table = &holdings_table[slaveAdr];
             master.start_req[slaveAdr] = false;
             //send start;
-            holding = GetHoldingByAdrFromTable(104, table);
-            uint16_t valStart = *holding->pntr | 0x2;
-            master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart);
+            // holding = GetHoldingByAdrFromTable(104, table);
+            // uint16_t valStart = *holding->pntr | 0x2;
+            // master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart);
         }
     }
     xSemaphoreGive(xDisplayMasterR485Semaphore);
@@ -175,8 +175,8 @@ void vTask_Master(__attribute__((unused)) void* argument)
                 fltcode += checkCode(holding, slaveAdr, 11, 16);
 
                 // Fault Reset
-                if(fltcode == 0){
-                    if(master.slaveStates[slaveAdr] == MASTER_STATE_onFAULT) {
+                if (fltcode == 0) {
+                    if (master.slaveStates[slaveAdr] == MASTER_STATE_onFAULT) {
                         master.slaveStates[slaveAdr] = MASTER_STATE_onREADY;
                         master.fault_source[slaveAdr] = false;
                         master.fault_code[slaveAdr] = 0;
@@ -193,34 +193,84 @@ void vTask_Master(__attribute__((unused)) void* argument)
                         uint16_t ac_slave_CR = *holding->pntr;
 
                     if (!master.master_wdg[slaveAdr]) { //Skip if onTimeout state
-            //AC onReady state
-                        if ((ac_slave_CR & 0x8)==0) {
-                            master.slaveStates[slaveAdr] = MASTER_STATE_onREADY;
-                            if (master.start_req[slaveAdr] == true) { // Start request
-                                if (xTimerIsTimerActive(xTimers_StartDelay[slaveAdr]) == pdFALSE)
-                                { // Timer not started
-                                    xTimerStart(xTimers_StartDelay[slaveAdr], 0);
-                                }
-                                else {
-                                    master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT;
-                                }
-                            }
-                        }
-                        else {
-            //AC onRun state
+                        //AC onReady state
+                        // if ((ac_slave_CR & 0x8) == 0) {
+                        //     master.slaveStates[slaveAdr] = MASTER_STATE_onREADY;
+                        //     if (master.start_req[slaveAdr] == true) { // Start request
+                        //         if (xTimerIsTimerActive(xTimers_StartDelay[slaveAdr]) == pdFALSE)
+                        //         { // Timer not started
+                        //             //Start timer for AC delay
+                        //             xTimerStart(xTimers_StartDelay[slaveAdr], 0);
+                        //             // send start
+                        //             holding = GetHoldingByAdrFromTable(104, table);
+                        //             uint16_t valStart = *holding->pntr | 0x2;
+                        //             master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart);
+                        //         }
+                        //         else {
+                        //             master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT;
+                        //         }
+                        //     }
+                        // }
+                        // else {
+                        //     //AC onRun state
+                        //     master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
+                        //     if (master.start_req[slaveAdr] == true) {
+                        //         // Stop request on run state
+                        //         master.start_req[slaveAdr] = false;
+                        //         uint16_t valStopACx = *holding->pntr ^ 8;
+                        //         MASTER_TRANSPORT_CHECK_TIMEOUT(
+                        //             master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStopACx)
+                        //         );
+                        //     }
+                        // }
+
+                        if (((ac_slave_CR & 0x8) == 1) && (xTimerIsTimerActive(xTimers_StartDelay[slaveAdr]) == pdFALSE)) {
+                            // Run state
+
                             master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
                             if (master.start_req[slaveAdr] == true) {
-                                // Stop request
+                                // Stop request on run state
                                 master.start_req[slaveAdr] = false;
-                                uint16_t valStopACx =  *holding->pntr ^ 8;
+                                uint16_t valStopACx = *holding->pntr ^ 8;
                                 MASTER_TRANSPORT_CHECK_TIMEOUT(
                                     master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStopACx)
                                 );
                             }
+
+                        }
+                        else {
+
+                            if (xTimerIsTimerActive(xTimers_StartDelay[slaveAdr]) == pdFALSE) {
+                                // Wait state
+                                master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT;
+                                if (master.start_req[slaveAdr] == true) {
+                                    // Stop request on wait state
+                                    master.start_req[slaveAdr] = false;
+                                    uint16_t valStopACx = *holding->pntr ^ 8;
+                                    // stop timer
+                                    xTimerStop(xTimers_StartDelay[slaveAdr], 0);
+                                    // send stop
+                                    MASTER_TRANSPORT_CHECK_TIMEOUT(
+                                        master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStopACx)
+                                    );
+                                }
+
+                            }
+                            else { //Start AC -> wait 10s -> enable RDO 
+                                // Ready state  
+                                //Start timer for RDO AC delay
+                                xTimerStart(xTimers_StartDelay[slaveAdr], 0);
+                                // send start
+                                holding = GetHoldingByAdrFromTable(104, table);
+                                uint16_t valStart = *holding->pntr | 0x2;
+                                master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart);
+
+                            }
+
                         }
                     }
                     else {
-            // AC slave onFAULT                        
+                        // AC slave onFAULT                        
                         master.start_req[slaveAdr] = false;
                     }
                 } //AC slave onTimeout state
@@ -238,7 +288,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
                 if (!master.master_wdg[slaveAdr]) {//Skip if onTimeout state 
 
                     if ((*holding->pntr & 0x4) != 0) {
-            // DC onFault state
+                        // DC onFault state
                         master.slaveStates[slaveAdr] = MASTER_STATE_onFAULT;
                         // Read Fault code register 
                         holding = GetHoldingByAdrFromTable(240, table);
@@ -254,7 +304,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
                     }
                     /* Handle DC start|stop req */
                     if ((*holding->pntr & 0x2) != 0) {
-            // DC onReady state
+                        // DC onReady state
                         master.slaveStates[slaveAdr] = MASTER_STATE_onREADY;
                         // SLAVE START REQUEST
                         if (master.start_req[slaveAdr] == true) {
@@ -269,7 +319,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
                     }
 
                     if ((*holding->pntr & 0x1) != 0) {
-            // DC onRun state
+                        // DC onRun state
                         master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
                         // SLAVE START STOP
                         if (master.start_req[slaveAdr] == true) {
@@ -279,7 +329,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
                             MASTER_TRANSPORT_CHECK_TIMEOUT(
                                 master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart)
                             )
-                            master.start_req[slaveAdr] = false;
+                                master.start_req[slaveAdr] = false;
                             vTaskDelay(300);
                         }
                     }
@@ -351,7 +401,7 @@ static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int 
                 master.slaveStates[slaveAdr] = MASTER_STATE_onFAULT;
                 master.fault_source[slaveAdr] = true;
                 master.fault_code[slaveAdr] = i + 1 + offset;
-                return  master.fault_code[slaveAdr]; 
+                return  master.fault_code[slaveAdr];
             }
         }
     }
@@ -405,7 +455,7 @@ void vTask_MasterHWstates(void* argument) {
                 break;
             case MASTER_STATE_onWAIT:
                 master_LEDonWaitState(i);
-            
+
             default:
                 break;
             }

@@ -173,6 +173,11 @@ void WH2004A_gpio_congig() {
     rcu_periph_clock_enable(RCU_GPIOE);
     GD32_CONGIG_PIN_AS_OUT(GPIOE, GPIO_PIN_1);
     gpio_bit_set(GPIOE, GPIO_PIN_1);
+
+    // BR pin
+    GD32_CONGIG_PIN_AS_OUT(GPIOG, GPIO_PIN_13);
+    gpio_bit_reset(GPIOG, GPIO_PIN_13);
+
 }
 
 

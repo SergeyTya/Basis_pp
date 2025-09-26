@@ -246,7 +246,7 @@ static void Page_Logo(void *arg)
     memset(pntr, 0, 80);
     vTaskDelay(1);
     // set static
-    int32_t t = (int32_t) temp_ext;
+    int32_t t = ((int32_t) (temp_ext*10.f))/10;
     snprintf(&pntr[0], sizeof(LG_NAME), LG_NAME);
     snprintf(&pntr[70], 10, "Temp= %2d" , t);
 

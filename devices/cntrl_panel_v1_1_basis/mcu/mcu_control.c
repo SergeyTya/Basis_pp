@@ -71,26 +71,33 @@ void hw_read_FLASH(uint32_t *dst, size_t size)
 
 uint8_t hw_get_revision(){
 
-   uint8_t ret_val = 
-    gpio_output_bit_get(GPIOC, GPIO_PIN_6)     + 
-   (gpio_output_bit_get(GPIOC, GPIO_PIN_7)<<1) +
-   (gpio_output_bit_get(GPIOC, GPIO_PIN_7)<<2);
+
+   volatile uint8_t bit1 = gpio_input_bit_get(GPIOG, GPIO_PIN_8); 
+   volatile uint8_t bit2 = gpio_input_bit_get(GPIOC, GPIO_PIN_7);
+   volatile uint8_t bit3 = gpio_input_bit_get(GPIOC, GPIO_PIN_8);
+
+   uint8_t ret_val =  bit1+(bit2<<1)+(bit3<<2);
 
    return ret_val;
 }
 
 uint16_t hw_read_AI(){
        /* ADC routine channel config */
-    adc_routine_channel_config(ADC0, 0U, ADC_CHANNEL_0, ADC_SAMPLETIME_15);
+    //adc_routine_channel_config(ADC, 0U, ADC_CHANNEL_0, ADC_SAMPLETIME_15);
+  
     /* ADC software trigger enable */
-    adc_software_trigger_enable(ADC0, ADC_ROUTINE_CHANNEL);
+   adc_software_trigger_enable(ADC, ADC_ROUTINE_CHANNEL);
 
     /* wait the end of conversion flag */
-    while(!adc_flag_get(ADC0, ADC_FLAG_EOC));
+    while(!adc_flag_get(ADC, ADC_FLAG_EOC));
     /* clear the end of conversion flag */
-    adc_flag_clear(ADC0, ADC_FLAG_EOC);
+    
     /* return regular channel sample value */
-    return (adc_routine_data_read(ADC0));
+    uint16_t ret_val =   adc_routine_data_read(ADC);
+
+    adc_flag_clear(ADC, ADC_FLAG_EOC);
+
+    return  ret_val;
 
 }
 

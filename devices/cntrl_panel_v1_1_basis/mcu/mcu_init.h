@@ -38,6 +38,8 @@
 #define HART_BIT_PIN3 GPIOG,GPIO_PIN_6
 #define HART_BIT_PIN4 GPIOG,GPIO_PIN_7
 
+#define ADC ADC0
+
 void hw_hbl_set(int led, uint8_t state);
 
 #endif 

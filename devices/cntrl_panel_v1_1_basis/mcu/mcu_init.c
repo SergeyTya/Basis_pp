@@ -32,40 +32,55 @@ void vMCU_init()
 
   // hw revision
   rcu_periph_clock_enable(RCU_GPIOC);
-  gpio_mode_set(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO_PIN_6);
+  rcu_periph_clock_enable(RCU_GPIOG);
+  gpio_mode_set(GPIOG, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO_PIN_8); 
   gpio_mode_set(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO_PIN_7);
   gpio_mode_set(GPIOC, GPIO_MODE_INPUT, GPIO_PUPD_NONE, GPIO_PIN_8);
 
 
-
-
-
   //Temp AI
   rcu_periph_clock_enable(RCU_ADC0);
+  rcu_periph_clock_enable(RCU_ADC2);
   /* config ADC clock */
-  adc_clock_config(ADC_ADCCK_PCLK2_DIV8);
+  adc_clock_config(ADC_ADCCK_PCLK2_DIV6);
+
   rcu_periph_clock_enable(RCU_GPIOA);
+  rcu_periph_clock_enable(RCU_GPIOF);
   gpio_mode_set(GPIOA, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO_PIN_0);
+  gpio_mode_set(GPIOF, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, GPIO_PIN_10);
+ 
+  
   adc_deinit();
   /* ADC mode config */
   adc_sync_mode_config(ADC_SYNC_MODE_INDEPENDENT);
   /* ADC contineous function disable */
-  adc_special_function_config(ADC0, ADC_CONTINUOUS_MODE, DISABLE);
+  adc_resolution_config(ADC, ADC_RESOLUTION_12B);
+  /* ADC contineous function disable */
+  adc_special_function_config(ADC, ADC_CONTINUOUS_MODE, DISABLE);
   /* ADC scan mode disable */
-  adc_special_function_config(ADC0, ADC_SCAN_MODE, DISABLE);
+  adc_special_function_config(ADC, ADC_SCAN_MODE, ENABLE);
   /* ADC data alignment config */
-  adc_data_alignment_config(ADC0, ADC_DATAALIGN_RIGHT);
+  adc_data_alignment_config(ADC, ADC_DATAALIGN_RIGHT);
   /* ADC channel length config */
-  adc_channel_length_config(ADC0, ADC_ROUTINE_CHANNEL, 1U);
+  adc_channel_length_config(ADC, ADC_ROUTINE_CHANNEL, 1U);
+
+  adc_routine_channel_config(ADC, 0U, ADC_CHANNEL_0, ADC_SAMPLETIME_3);
+    
 
   /* ADC trigger config */
-  adc_external_trigger_source_config(ADC0, ADC_ROUTINE_CHANNEL, ADC_EXTTRIG_ROUTINE_T0_CH0);
-  adc_external_trigger_config(ADC0, ADC_ROUTINE_CHANNEL, EXTERNAL_TRIGGER_DISABLE);
+  adc_external_trigger_source_config(ADC, ADC_ROUTINE_CHANNEL, ADC_EXTTRIG_ROUTINE_T0_CH0);
+  adc_external_trigger_config(ADC, ADC_ROUTINE_CHANNEL, EXTERNAL_TRIGGER_DISABLE);
 
   /* enable ADC interface */
-  adc_enable(ADC0);
+  adc_enable(ADC);
   /* ADC calibration and reset calibration */
-  adc_calibration_enable(ADC0);
+  adc_calibration_enable(ADC);
+for (size_t i = 0; i < 10000000; i++)
+{
+  /* code */;
+}
+
+
   __enable_irq();
 
   rcu_periph_clock_enable(RCU_GPIOE);
