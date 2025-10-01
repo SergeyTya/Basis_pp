@@ -52,7 +52,7 @@ void M204D08AA_UpdateDisplayFromBuffer(char buff[80]){
     // spilt by rows
     char (*pntr)[20]  = (char (*)[20])buff;
 
-    M204D08AA_WriteCmdAsync(248,1);   //Display clean
+  //  M204D08AA_WriteCmdAsync(248,1);   //Display clean
 
     for (size_t i = 0; i < 4; i++)
     {
