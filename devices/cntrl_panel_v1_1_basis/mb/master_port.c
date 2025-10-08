@@ -387,16 +387,9 @@ void master_LEDonTimeoutState() {
 *
 * @param dev Device modbus ID
 */
-static bool blinker = false;
-static uint16_t blinker_cntr = 0;
+extern bool blinker;
 void master_LEDonWaitState(int dev) {
-  if (blinker_cntr == 0) {
-    blinker_cntr = 3;
-    blinker = !blinker;
-  } else {
-    blinker_cntr--;
-    return;
-  }
+
 
   switch (dev)
   {

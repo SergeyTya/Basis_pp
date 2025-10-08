@@ -93,16 +93,17 @@ void vTask_Panel(__attribute__((unused)) void* argument)
                 }
                 break;
             case KEY_AC2:
-                if (panelConfig.enableAC2) {
-                    if (panelConfig.enableAC2) {
-                        if (current_page == Page_Ac2Indi) {
-                            master.start_req_rdo[CONFIG_SLAVE_AC2] = true;
-                        }
-                        else {
-                            current_page = Page_Ac2Indi;
-                        }
-                    }
-                }
+                // if (panelConfig.enableAC2) {
+                //     if (panelConfig.enableAC2) {
+                //         if (current_page == Page_Ac2Indi) {
+                //             master.start_req_rdo[CONFIG_SLAVE_AC2] = true;
+                //         }
+                //         else {
+                //             current_page = Page_Ac2Indi;
+                //         }
+                //     }
+                // }
+                 master.start_req_rdo[CONFIG_SLAVE_AC2] = true;
                 break;
             case KEY_DC1:
                 if (panelConfig.enableDC1){

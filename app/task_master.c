@@ -130,7 +130,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
          // xSemaphoreGive(xDisplayMasterR485Semaphore);
          // continue;
 
-        for (size_t j = 1; j < 5; j++) // Read all slaves from j (slave addr) = 1 to 4
+        for (size_t j = 1; j < 2; j++) // Read all slaves from j (slave addr) = 1 to 4
         {
             vTaskDelay(50); // dalay between slaves
             // Current slave address
@@ -197,6 +197,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
 
                             if((ac_slave_CR & 0x8) == 0){ // Ready state
                                 master.slaveStates[slaveAdr] = MASTER_STATE_onREADY;
+                                master.slaveStates[2] = MASTER_STATE_onREADY;
 
                                 master.start_req_rdo[slaveAdr] = false; // always reset rdo start req in ready state
                                 if(master.start_req_hw[slaveAdr]){
@@ -207,7 +208,10 @@ void vTask_Master(__attribute__((unused)) void* argument)
                                         master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valACStart)
                                     );
                                     master.start_req_hw[slaveAdr] = false;
+                                    master.start_req_hw[2] = false;
+                                    master.start_req_rdo[2] = false;
                                     master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT;
+                                    master.slaveStates[2]        = MASTER_STATE_onWAIT;
                                 }
                             }else{
                                 if(master.start_req_rdo[slaveAdr]){
@@ -219,6 +223,17 @@ void vTask_Master(__attribute__((unused)) void* argument)
                                              master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT;
                                         }
                                         master.start_req_rdo[slaveAdr] = false;
+                                }
+
+                                if(master.start_req_rdo[2]){
+                                        //enable RDO
+                                        if( master.slaveStates[2] == MASTER_STATE_onWAIT){
+                                            master.slaveStates[2] = MASTER_STATE_onRUN;
+
+                                        }else{
+                                             master.slaveStates[2] = MASTER_STATE_onWAIT;
+                                        }
+                                        master.start_req_rdo[2] = false;
                                 }
 
                                 if(master.start_req_hw[slaveAdr]){
@@ -235,8 +250,11 @@ void vTask_Master(__attribute__((unused)) void* argument)
                     
                 }else{
                         // AC slave onFAULT                        
-                        master.start_req_hw[slaveAdr] = false;
+                        master.start_req_hw[slaveAdr]  = false;
                         master.start_req_rdo[slaveAdr] = false;
+                        master.start_req_rdo[2] = false;
+                        master.start_req_hw[2] = false;
+                        master.slaveStates[2]          = MASTER_STATE_onFAULT;
                 }
 
             }
@@ -372,7 +390,8 @@ static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int 
     return 0;
 }
 
-
+bool blinker = false;
+static uint16_t blinker_cntr = 0;
 void vTask_MasterHWstates(void* argument) {
 
     bool onGlobalFault = false;
@@ -380,7 +399,15 @@ void vTask_MasterHWstates(void* argument) {
     bool onGlobalRUN = false;
     while (1) {
 
-        vTaskDelay(300);
+        if (blinker_cntr == 0) {
+        blinker_cntr = 3;
+        blinker = !blinker;
+    } else {
+        blinker_cntr--;
+    //return;
+    }
+
+        vTaskDelay(100);
 
         if (!onGlobalFault && !onGlobalTimeout) {
             master_LEDonFaultReset();
