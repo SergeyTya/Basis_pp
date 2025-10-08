@@ -16,8 +16,8 @@ int rx_cnt = 0;
 #define RSM_GPIO_TX_AF             GPIO_AF_7
 #define RSM_TX_PIN                 GPIO_PIN_6
 
-#define RSM_GPIO_RX_CLK            RCU_GPIOE
-#define RSM_GPIO_RX_PORT           GPIOE
+#define RSM_GPIO_RX_CLK            RCU_GPIOB
+#define RSM_GPIO_RX_PORT           GPIOB
 #define RSM_GPIO_RX_AF             GPIO_AF_7
 #define RSM_RX_PIN                 GPIO_PIN_7
 
@@ -306,19 +306,19 @@ void  master_LEDonRUNstate(int dev) {
   {
   case 1:
   keyboard_setAC1LedSate(true);
- // RSM_RDIO_OUT1_SET(1);
+  RSM_RDIO_OUT1_SET(1);
   break; 
   case 2:
   keyboard_setAC2LedSate(true);
- // RSM_RDIO_OUT2_SET(1);
+  RSM_RDIO_OUT2_SET(1);
   break;
   case 3:
   keyboard_setDC2LedSate(true);
- // RSM_RDIO_OUT3_SET(1);
+  RSM_RDIO_OUT3_SET(1);
   break;
   case 4:
   keyboard_setDC1LedSate(true); 
- // RSM_RDIO_OUT4_SET(1);
+  RSM_RDIO_OUT4_SET(1);
   break;
 
   default:

@@ -14,66 +14,66 @@
 Typedef_PanelConfig panelConfig;
 extern TypeDef_Master master;
 
-static void Page_Logo(void *arg);
-static void Page_Ac1Indi(void *arg);
-static void Page_Ac2Indi(void *arg);
-static void Page_Dc1Indi(void *arg);
-static void Page_Dc2Indi(void *arg);
-static void Page_Ac1Setup(void *arg);
-static void Page_Dc1Setup(void *arg);
-static void Page_Ac2Setup(void *arg);
-static void Page_Dc2Setup(void *arg);
-static void Page_Ac1AdvancedSetup(void *arg);
-static void Page_Ac2AdvancedSetup(void *arg);
-static void Page_Dc1AdvancedSetup(void *arg);
-static void Page_Dc2AdvancedSetup(void *arg);
-static void Page_Confirm(void *arg);
-static void Page_SaveWarning(void *arg);
-static void Page_Config(void *pntr);
-static void Page_MenuItemEdit(void *arg);
-static void Page_SlaveFault(char *pntr, const char *label, int code);
-static void flash_cursor(char *pntr, size_t pos);
+static void Page_Logo(void* arg);
+static void Page_Ac1Indi(void* arg);
+static void Page_Ac2Indi(void* arg);
+static void Page_Dc1Indi(void* arg);
+static void Page_Dc2Indi(void* arg);
+static void Page_Ac1Setup(void* arg);
+static void Page_Dc1Setup(void* arg);
+static void Page_Ac2Setup(void* arg);
+static void Page_Dc2Setup(void* arg);
+static void Page_Ac1AdvancedSetup(void* arg);
+static void Page_Ac2AdvancedSetup(void* arg);
+static void Page_Dc1AdvancedSetup(void* arg);
+static void Page_Dc2AdvancedSetup(void* arg);
+static void Page_Confirm(void* arg);
+static void Page_SaveWarning(void* arg);
+static void Page_Config(void* pntr);
+static void Page_MenuItemEdit(void* arg);
+static void Page_SlaveFault(char* pntr, const char* label, int code);
+static void flash_cursor(char* pntr, size_t pos);
 static void DisplayUpdater();
 
-static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum, void *arg);
-static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum, void *arg);
-static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr), int acnum, void *arg);
-static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr), int dcnum, void *arg);
+static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int acnum, void* arg);
+static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int dcnum, void* arg);
+static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr), int acnum, void* arg);
+static inline void Page_DcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr), int dcnum, void* arg);
 static inline void Page_AdvancedSetupTemplate(
-    TypeDef_MB_Holding *(*foo)(uint8_t adr),                     // function for searching holding by addr
-    void *arg,                                                   // display buffer pointer
+    TypeDef_MB_Holding* (*foo)(uint8_t adr),                     // function for searching holding by addr
+    void* arg,                                                   // display buffer pointer
     TypeDef_AdvancedMenuItem const (*menuStructureTemplate)[15], // menu item structure
     const char label[3],
-    void (*backPointer)(void *),
-    void (*indiPointer)(void *));
+    void (*backPointer)(void*),
+    void (*indiPointer)(void*));
 
-static inline void onError(void *pntr);
+static inline void onError(void* pntr);
 
 // pointer to current page to be displayed
-static void (*current_page)(void *arg) = Page_Logo; // Page_Config; // Page_Logo;//Page_MenuItemEdit; // Page_Config; // Page_Logo;
+static void (*current_page)(void* arg) = Page_Logo; // Page_Config; // Page_Logo;//Page_MenuItemEdit; // Page_Config; // Page_Logo;
 
-static char displayMemory[80] = {0};       // use it for load data to display
-static char shadowDisplayMemory[80] = {0}; // use it like buffer
+static char displayMemory[80] = { 0 };       // use it for load data to display
+static char shadowDisplayMemory[80] = { 0 }; // use it like buffer
 static bool displayUpdateHarBit = false;   // this is for symbol blinking
 
 volatile TypedefEnum_ButtonStates buttonState = KEY_NO; // put here button state
 xSemaphoreHandle xDisplayUpdaterSemaphore;              // display update semaphore. Lock display buffer while transfer it to display
 static size_t menu_cur_pos = 0;                         // Position of blinking cursor
 
-void vTask_Panel(__attribute__((unused)) void *argument)
+void vTask_Panel(__attribute__((unused)) void* argument)
 {
 
-   
+
     DisplayInit();
     memset(displayMemory, 80, 0);
     vSemaphoreCreateBinary(xDisplayUpdaterSemaphore);
 
     xTaskCreate(DisplayUpdater, "DisplayUpdater", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
-    bool faultTrigger[5] = {false};
+    bool faultTrigger[5] = { false };
 
     while (1)
     {
-        if(buttonState == KEY_LONGNO) buttonState = KEY_NO;
+        if (buttonState == KEY_LONGNO) buttonState = KEY_NO;
         // display page
         current_page(shadowDisplayMemory);
 
@@ -83,32 +83,68 @@ void vTask_Panel(__attribute__((unused)) void *argument)
             switch (buttonState)
             {
             case KEY_AC1:
-               if(panelConfig.enableAC1) current_page = Page_Ac1Indi;
+                if (panelConfig.enableAC1) {
+                    if (current_page == Page_Ac1Indi) {
+                        master.start_req_rdo[CONFIG_SLAVE_AC1] = true;
+                    }
+                    else {
+                        current_page = Page_Ac1Indi;
+                    }
+                }
                 break;
             case KEY_AC2:
-                if(panelConfig.enableAC2) current_page = Page_Ac2Indi;
+                if (panelConfig.enableAC2) {
+                    if (panelConfig.enableAC2) {
+                        if (current_page == Page_Ac2Indi) {
+                            master.start_req_rdo[CONFIG_SLAVE_AC2] = true;
+                        }
+                        else {
+                            current_page = Page_Ac2Indi;
+                        }
+                    }
+                }
                 break;
             case KEY_DC1:
-                 if(panelConfig.enableDC1) current_page = Page_Dc1Indi;
+                if (panelConfig.enableDC1){
+                    if (current_page == Page_Dc1Indi) {
+                        master.start_req_rdo[CONFIG_SLAVE_DC1] = true;
+                    }
+                    else {
+                        current_page = Page_Dc1Indi;
+                    }
+                }
                 break;
             case KEY_DC2:
-                 if(panelConfig.enableDC2) current_page = Page_Dc2Indi;
+                if (panelConfig.enableDC2){ 
+                    if (current_page == Page_Dc2Indi) {
+                        master.start_req_rdo[CONFIG_SLAVE_DC2] = true;
+                    }
+                    else {
+                        current_page = Page_Dc2Indi;
+                    }
+                }
                 break;
 
             case KEY_AC1LONG:
-                master.start_req[CONFIG_SLAVE_AC1] = true;
+                master.start_req_hw[CONFIG_SLAVE_AC1] = true;
                 break;
+            case KEY_AC2LONG:
+                master.start_req_hw[CONFIG_SLAVE_AC2] = true;
+            break;
             case KEY_DC1LONG:
-                master.start_req[CONFIG_SLAVE_DC1] = true;
+                master.start_req_hw[CONFIG_SLAVE_DC1] = true;
                 break;
+            case KEY_DC2LONG:
+                master.start_req_hw[CONFIG_SLAVE_DC2] = true;
+            break;
 
             case KEY_MENU:
-                 //current_page = Page_Config;
-            break;
+                //current_page = Page_Config;
+                break;
 
             case KEY_LOGO:
-                 current_page = Page_Logo;
-            break;
+                current_page = Page_Logo;
+                break;
 
             default:
                 break;
@@ -120,12 +156,12 @@ void vTask_Panel(__attribute__((unused)) void *argument)
 
         // fault triger
 
-        static void(*pages[])(void * arg) = {NULL,Page_Ac1Indi, Page_Ac2Indi, Page_Dc1Indi, Page_Dc2Indi}; 
+        static void(*pages[])(void* arg) = { NULL,Page_Ac1Indi, Page_Ac2Indi, Page_Dc1Indi, Page_Dc2Indi };
         for (size_t i = 1; i < 5; i++)
         {
             if (master.fault_source[i] == true)
             {
-                if (faultTrigger[i]==false)
+                if (faultTrigger[i] == false)
                 {
                     faultTrigger[i] = true;
                     current_page = pages[i];
@@ -157,102 +193,102 @@ void vTask_Panel(__attribute__((unused)) void *argument)
 /**
  *  @brief This RTOS task drives display
  */
-void DisplayUpdater(__attribute__((unused)) void *argument)
+void DisplayUpdater(__attribute__((unused)) void* argument)
 {
     vTaskDelay(500);
     while (1)
-    { 
+    {
         xSemaphoreTake(xDisplayUpdaterSemaphore, portMAX_DELAY);
         displayUpdateHarBit = !displayUpdateHarBit;
         DisplayUpdateFromBuffer(displayMemory);
         xSemaphoreGive(xDisplayUpdaterSemaphore);
-        vTaskDelay(28);    
+        vTaskDelay(28);
     }
 }
 
-static void Page_Ac1Indi(void *arg)
+static void Page_Ac1Indi(void* arg)
 {
     Page_AcIndiTemplate(GetHoldingPntrByAdrFromAC1, 1, arg);
     panelConfig.active_slave = CONFIG_SLAVE_AC1;
 }
 
-static void Page_Ac2Indi(void *arg)
+static void Page_Ac2Indi(void* arg)
 {
     Page_AcIndiTemplate(GetHoldingPntrByAdrFromAC2, 2, arg);
     panelConfig.active_slave = CONFIG_SLAVE_AC2;
 }
 
-static void Page_Dc1Indi(void *arg)
+static void Page_Dc1Indi(void* arg)
 {
     Page_DcIndiTemplate(GetHoldingPntrByAdrFromDC1, 1, arg);
     panelConfig.active_slave = CONFIG_SLAVE_DC1;
 }
 
-static void Page_Dc2Indi(void *arg)
+static void Page_Dc2Indi(void* arg)
 {
     Page_DcIndiTemplate(GetHoldingPntrByAdrFromDC2, 2, arg);
     panelConfig.active_slave = CONFIG_SLAVE_DC2;
 }
 
-static void Page_Ac1Setup(void *arg)
+static void Page_Ac1Setup(void* arg)
 {
     Page_AcSetupTemplate(GetHoldingByAdrFromAC1, 1, arg);
     panelConfig.active_slave = CONFIG_SLAVE_AC1;
 }
 
-static void Page_Ac2Setup(void *arg)
+static void Page_Ac2Setup(void* arg)
 {
     Page_AcSetupTemplate(GetHoldingByAdrFromAC2, 2, arg);
     panelConfig.active_slave = CONFIG_SLAVE_AC2;
 }
 
-static void Page_Dc1Setup(void *arg)
+static void Page_Dc1Setup(void* arg)
 {
     Page_DcSetupTemplate(GetHoldingByAdrFromDC1, 1, arg);
     panelConfig.active_slave = CONFIG_SLAVE_DC1;
 }
 
-static void Page_Dc2Setup(void *arg)
+static void Page_Dc2Setup(void* arg)
 {
     Page_DcSetupTemplate(GetHoldingByAdrFromDC2, 2, arg);
     panelConfig.active_slave = CONFIG_SLAVE_DC2;
 }
 
-static void Page_Ac1AdvancedSetup(void *arg)
+static void Page_Ac1AdvancedSetup(void* arg)
 {
     Page_AdvancedSetupTemplate(GetHoldingByAdrFromAC1, arg, acAdvancedMenu, LABEL_AC1, Page_Ac1Setup, Page_Ac1Indi);
     panelConfig.active_slave = CONFIG_SLAVE_AC1;
 }
 
-static void Page_Ac2AdvancedSetup(void *arg)
+static void Page_Ac2AdvancedSetup(void* arg)
 {
     Page_AdvancedSetupTemplate(GetHoldingByAdrFromAC2, arg, acAdvancedMenu, LABEL_AC2, Page_Ac2Setup, Page_Ac2Indi);
     panelConfig.active_slave = CONFIG_SLAVE_AC2;
 }
 
-static void Page_Dc1AdvancedSetup(void *arg)
+static void Page_Dc1AdvancedSetup(void* arg)
 {
     Page_AdvancedSetupTemplate(GetHoldingByAdrFromDC1, arg, dcAdvancedMenu, LABEL_DC1, Page_Dc1Setup, Page_Dc1Indi);
     panelConfig.active_slave = CONFIG_SLAVE_DC1;
 }
 
-static void Page_Dc2AdvancedSetup(void *arg)
+static void Page_Dc2AdvancedSetup(void* arg)
 {
     Page_AdvancedSetupTemplate(GetHoldingByAdrFromDC2, arg, dcAdvancedMenu, LABEL_DC2, Page_Dc2Setup, Page_Dc2Indi);
     panelConfig.active_slave = CONFIG_SLAVE_DC2;
 }
 
 extern float temp_ext;
-static void Page_Logo(void *arg)
+static void Page_Logo(void* arg)
 {
     // clear
-    char *pntr = (char *)arg;
+    char* pntr = (char*)arg;
     memset(pntr, 0, 80);
     vTaskDelay(1);
     // set static
-    int32_t t = ((int32_t) (temp_ext*10.f))/10;
+    int32_t t = ((int32_t)(temp_ext * 10.f)) / 10;
     snprintf(&pntr[0], sizeof(LG_NAME), LG_NAME);
-    snprintf(&pntr[70], 10, "Temp= %2d" , t);
+    snprintf(&pntr[70], 10, "Temp= %2d", t);
 
     if (buttonState == KEY_LONGENTER)
     {
@@ -261,7 +297,7 @@ static void Page_Logo(void *arg)
     panelConfig.active_slave = CONFIG_SLAVE_NONE;
 }
 
-void flash_cursor(char *pntr, size_t pos)
+void flash_cursor(char* pntr, size_t pos)
 {
     if (displayUpdateHarBit)
     {
@@ -277,18 +313,18 @@ void flash_cursor(char *pntr, size_t pos)
 }
 
 // Confirm message box
-static void (*pageConfirmedRetPoint)(void *arg) = NULL; // point we will return after confirm finished
+static void (*pageConfirmedRetPoint)(void* arg) = NULL; // point we will return after confirm finished
 static bool pageConfirmedRetVal = false;                // trye if OK button selected
 /**
  *  @brief Confirm message box function
  */
-static void Page_Confirm(void *arg)
+static void Page_Confirm(void* arg)
 {
-    static const uint8_t pageConfirmCursorPos[] = {52, 45};
-   
-    char *pntr = (char *)arg;
+    static const uint8_t pageConfirmCursorPos[] = { 52, 45 };
+
+    char* pntr = (char*)arg;
     memset(pntr, 0, 80);
-    snprintf(pntr, 80, 
+    snprintf(pntr, 80,
         "                        %s?           YES    NO  ",
         LABEL_9_SAVE
     );
@@ -320,19 +356,19 @@ static void Page_Confirm(void *arg)
     }
 }
 
-static void (*pageSaveWarningRetPoint)(void *arg) = NULL; // point we will return when exit
+static void (*pageSaveWarningRetPoint)(void* arg) = NULL; // point we will return when exit
 /**
  *  @brief Warning message box
  */
-static void Page_SaveWarning(void *arg)
+static void Page_SaveWarning(void* arg)
 {
-    char *pntr = (char *)arg;
+    char* pntr = (char*)arg;
 
     memset(pntr, 0, 80);
     snprintf(pntr, 80, "|     %s      ||    %s    ||   %s   ||        OK        | ",
         LABEL_9_WARNING,   //9  
         LABEL_11_PARAMETERS,     //11  
-        LABEL_13_NOTSAVED 
+        LABEL_13_NOTSAVED
     );
 
     flash_cursor(pntr, 69);
@@ -355,25 +391,25 @@ static void Page_SaveWarning(void *arg)
  *  @param  acnum {int} - AC Channel number  (1 or 2)
  *  @param  arg {void*} - Display buffer pointer (char *)
  */
-static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum, void *arg)
+static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int acnum, void* arg)
 {
-    char *pntr = (char *)arg;
+    char* pntr = (char*)arg;
 
-    uint16_t U[3] = {*foo(240) / 10, *foo(241) / 10U, *foo(242) / 10}; // 0.1V
+    uint16_t U[3] = { *foo(240) / 10, *foo(241) / 10U, *foo(242) / 10 }; // 0.1V
     for (size_t i = 0; i < 3; i++)
     {
         if (U[i] > 999U)
             U[i] = 999U;
     }
 
-    uint16_t I[3] = {*foo(243), *foo(244), *foo(245)}; // 0.1V
+    uint16_t I[3] = { *foo(243), *foo(244), *foo(245) }; // 0.1V
     for (size_t i = 0; i < 3; i++)
     {
         if (I[i] > 999U)
             I[i] = 999U;
     }
 
-    uint16_t F = *foo(101)/10;
+    uint16_t F = *foo(101) / 10;
     if (F > 999)
         F = 999U;
 
@@ -394,9 +430,9 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
         memset(pntr, 0, 80);
         snprintf(
             pntr, 80,
-            " AC%1d   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d", 
-            acnum, 
-            master.master_wdg[acnum]==true? "!":" ",
+            " AC%1d   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
+            acnum,
+            master.master_wdg[acnum] == true ? "!" : " ",
             LG_NAME,
             U[0], U[1], U[2],
             I[0], I[1], I[2],
@@ -404,13 +440,13 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
             90);
     }
 
-    if(master.master_wdg[acnum]==true){
-        flash_cursor(pntr,7);
+    if (master.master_wdg[acnum] == true) {
+        flash_cursor(pntr, 7);
     }
 
     menu_cur_pos = 0;
 
-    if(master.master_wdg[acnum]==true) return;
+    if (master.master_wdg[acnum] == true) return;
 
     switch (buttonState)
     {
@@ -437,9 +473,9 @@ static inline void Page_AcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int acnum,
  *  @param  dcnum {int} - DC Channel number (1 or 2)
  *  @param  arg {void*} - Display buffer pointer (char *)
  */
-static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum, void *arg)
+static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int dcnum, void* arg)
 {
-    char *pntr = (char *)arg;
+    char* pntr = (char*)arg;
     memset(pntr, 0, 80);
     uint16_t volt = *foo(211);
     uint16_t volt_d = volt / 10;
@@ -461,7 +497,7 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
     }
     else if (dcnum == 2 && master.fault_source[4] == true)
     {
-        
+
         Page_SlaveFault(pntr, LABEL_DC2, master.fault_code[4]);
     }
     // else if(master.master_wdg[dcnum+2]==true){
@@ -470,18 +506,18 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
     else
     {
         snprintf(pntr, 80,
-                 " DC%1d   %s  %s                    U,B  %2d,%1d  P,kBT 90 I,A  %4d", 
-                 dcnum, 
-                 master.master_wdg[dcnum+2]? "!": " ",
-                 LG_NAME,
-                 volt_d, volt_p, I);
+            " DC%1d   %s  %s                    U,B  %2d,%1d  P,kBT 90 I,A  %4d",
+            dcnum,
+            master.master_wdg[dcnum + 2] ? "!" : " ",
+            LG_NAME,
+            volt_d, volt_p, I);
     }
 
-    if(master.master_wdg[dcnum+2]==true){
-        flash_cursor(pntr,7);
+    if (master.master_wdg[dcnum + 2] == true) {
+        flash_cursor(pntr, 7);
     }
 
-    if(master.master_wdg[dcnum+2]==true) return;
+    if (master.master_wdg[dcnum + 2] == true) return;
 
     switch (buttonState)
     {
@@ -508,30 +544,30 @@ static inline void Page_DcIndiTemplate(uint16_t *(*foo)(uint8_t adr), int dcnum,
  *  @param  dcnum {int} - AC Channel number (1 or 2)
  *  @param  arg {void*} - Display buffer pointer (char *)
  */
-static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr), int acnum, void *arg)
+static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr), int acnum, void* arg)
 {
 
-    static const uint8_t pageAcTemplateCursorPos[] = {35, 33, 32, 31, 55, 53, 52, 51,  73, 72, 71};
-    static const uint16_t pageAcTemplateDlt[] = {1, 10, 100, 1000, 1, 10, 100, 1000,  1, 10, 100};
-    static TypeDef_MB_Holding *pageAcTemplateAdr[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    static const uint8_t pageAcTemplateCursorPos[] = { 35, 33, 32, 31, 55, 53, 52, 51,  73, 72, 71 };
+    static const uint16_t pageAcTemplateDlt[] = { 1, 10, 100, 1000, 1, 10, 100, 1000,  1, 10, 100 };
+    static TypeDef_MB_Holding* pageAcTemplateAdr[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     static bool pageAcSetupUnlocked;
     static bool pageAcTemplateIsOnConfirmWait;
 
-    char *pntr = (char *)arg;
+    char* pntr = (char*)arg;
 
     memset(pntr, 0, 80);
 
-    TypeDef_MB_Holding *Uref = foo(102);
+    TypeDef_MB_Holding* Uref = foo(102);
     for (size_t i = 0; i < 4; i++)
     {
         pageAcTemplateAdr[i] = Uref;
     }
-    TypeDef_MB_Holding *Fref = foo(101);
+    TypeDef_MB_Holding* Fref = foo(101);
     for (size_t i = 4; i < 8; i++)
     {
         pageAcTemplateAdr[i] = Fref;
     }
-    TypeDef_MB_Holding *Iref = foo(121);
+    TypeDef_MB_Holding* Iref = foo(121);
     for (size_t i = 8; i < 12; i++)
     {
         pageAcTemplateAdr[i] = Iref;
@@ -561,11 +597,11 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
         pageAcTemplateIsOnConfirmWait = false; // acknowledge wait
     }
 
-    uint16_t U[2] = {(*Uref->pntr / 10), *Uref->pntr - (*Uref->pntr / 10) * 10};
-    uint16_t F[2] = {(*Fref->pntr / 10), *Fref->pntr - (*Fref->pntr / 10) * 10};
-   // uint16_t I[2] = {(*Iref->pntr / 10), *Iref->pntr - (*Iref->pntr / 10) * 10};
+    uint16_t U[2] = { (*Uref->pntr / 10), *Uref->pntr - (*Uref->pntr / 10) * 10 };
+    uint16_t F[2] = { (*Fref->pntr / 10), *Fref->pntr - (*Fref->pntr / 10) * 10 };
+    // uint16_t I[2] = {(*Iref->pntr / 10), *Iref->pntr - (*Iref->pntr / 10) * 10};
 
-   uint16_t I[2] = { *Iref->pntr , 0};
+    uint16_t I[2] = { *Iref->pntr , 0 };
 
     if (U[0] > 999U)
         U[0] = 999U;
@@ -582,10 +618,10 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
         F[1] = 9U;
 
     snprintf(pntr, 80,
-             " AC%1d      %sS  U,B     %3d,%1d    E  F,Hz    %3d,%1d    T  LimI,A  %3d     ", acnum, LG_NAME,
-             U[0], U[1],
-             F[0], F[1],
-             I[0]);
+        " AC%1d      %sS  U,B     %3d,%1d    E  F,Hz    %3d,%1d    T  LimI,A  %3d     ", acnum, LG_NAME,
+        U[0], U[1],
+        F[0], F[1],
+        I[0]);
 
     if (menu_cur_pos >= sizeof(pageAcTemplateCursorPos))
         menu_cur_pos = 0;
@@ -594,7 +630,7 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
         flash_cursor(pntr, pageAcTemplateCursorPos[menu_cur_pos]);
     }
 
-    TypeDef_MB_Holding *selected = pageAcTemplateAdr[menu_cur_pos];
+    TypeDef_MB_Holding* selected = pageAcTemplateAdr[menu_cur_pos];
 
     switch (buttonState)
     {
@@ -712,23 +748,23 @@ AC_PARAM_EXIT:
     return;
 }
 
-static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr), int dcnum, void *arg)
+static inline void Page_DcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr), int dcnum, void* arg)
 {
-    char *pntr = (char *)arg;
-    static const uint8_t pageDcTemplateCursorPos[] = {56, 54, 53, 52, 76, 75, 74, 73}; // TODO select correct positions
-    static const uint16_t pageDcTemplateDlt[] = {1, 10, 100, 1000, 1, 10, 100, 1000};
-    static TypeDef_MB_Holding *pageDcTemplateAdr[] = {0, 0, 0, 0, 0, 0, 0, 0};
+    char* pntr = (char*)arg;
+    static const uint8_t pageDcTemplateCursorPos[] = { 56, 54, 53, 52, 76, 75, 74, 73 }; // TODO select correct positions
+    static const uint16_t pageDcTemplateDlt[] = { 1, 10, 100, 1000, 1, 10, 100, 1000 };
+    static TypeDef_MB_Holding* pageDcTemplateAdr[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
     static bool pageDcSetupUnlocked;
     static bool pageDcTemplateIsOnConfirmWait;
 
     memset(pntr, 0, 80);
 
-    TypeDef_MB_Holding *Uref = foo(102);
+    TypeDef_MB_Holding* Uref = foo(102);
     for (size_t i = 0; i < 4; i++)
     {
         pageDcTemplateAdr[i] = Uref;
     }
-    TypeDef_MB_Holding *Iref = foo(101);
+    TypeDef_MB_Holding* Iref = foo(101);
     for (size_t i = 4; i < 8; i++)
     {
         pageDcTemplateAdr[i] = Iref;
@@ -760,9 +796,9 @@ static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
     //          *Iref->pntr_base / 10, *Iref->pntr - (*Iref->pntr / 10) * 10);
 
     snprintf(pntr, 80,
-             " DC%1d      %sS                   E   U,B     %3d,%1d   T   LimI,A   %4d   ", dcnum, LG_NAME,
-             *Uref->pntr / 10, *Uref->pntr - (*Uref->pntr / 10) * 10,
-             *Iref->pntr_base );
+        " DC%1d      %sS                   E   U,B     %3d,%1d   T   LimI,A   %4d   ", dcnum, LG_NAME,
+        *Uref->pntr / 10, *Uref->pntr - (*Uref->pntr / 10) * 10,
+        *Iref->pntr_base);
 
     if (pageDcSetupUnlocked)
     {
@@ -771,7 +807,7 @@ static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
         flash_cursor(pntr, pageDcTemplateCursorPos[menu_cur_pos]);
     }
 
-    TypeDef_MB_Holding *selected = pageDcTemplateAdr[menu_cur_pos];
+    TypeDef_MB_Holding* selected = pageDcTemplateAdr[menu_cur_pos];
 
     switch (buttonState)
     {
@@ -833,7 +869,7 @@ static inline void Page_DcSetupTemplate(TypeDef_MB_Holding *(*foo)(uint8_t adr),
         if (!pageDcSetupUnlocked)
             break;
         // move cursor
-            menu_cur_pos++;
+        menu_cur_pos++;
         break;
 
     case KEY_RIGHT:
@@ -892,18 +928,18 @@ DC_PARAM_EXIT:
  *  @param indiPointer {void (*)()} Pointer to monitoring function
  */
 static inline void Page_AdvancedSetupTemplate(
-    TypeDef_MB_Holding *(*foo)(uint8_t),
-    void *arg,                                                   //
+    TypeDef_MB_Holding* (*foo)(uint8_t),
+    void* arg,                                                   //
     TypeDef_AdvancedMenuItem const (*menuStructureTemplate)[15], // menu item structure
     const char label[3],
     void (*backPointer)(),
     void (*indiPointer)())
 {
-    static const uint8_t pageAdvancedSetupTemplateCursorPos[] = {9, 29, 51, 44, 69, 37, 36, 35, 34, 33}; // active display positions
+    static const uint8_t pageAdvancedSetupTemplateCursorPos[] = { 9, 29, 51, 44, 69, 37, 36, 35, 34, 33 }; // active display positions
     // this is corresponding deltas we need to use to increment or decrement smthg
-    static const uint16_t pageAdvancedSetupTemplateDlt[] = {1, 1, 0, 0, 0, 1, 10, 100, 1000, 10000};
+    static const uint16_t pageAdvancedSetupTemplateDlt[] = { 1, 1, 0, 0, 0, 1, 10, 100, 1000, 10000 };
 
-    char *pntr = (char *)arg; // display buffer pointer
+    char* pntr = (char*)arg; // display buffer pointer
 
     TypeDef_AdvancedMenuItem const(*menuStructure)[15] = menuStructureTemplate;
 
@@ -915,14 +951,14 @@ static inline void Page_AdvancedSetupTemplate(
     // if(pageAdvancedSetupTemplateParam > sizeof(menuStructure)/sizeof(menuStructure[0])) pageAdvancedSetupTemplateParam = 0;
 
     // Pointer to selected menu item
-    TypeDef_AdvancedMenuItem const *menuItemSelected = &menuStructure[pageAdvancedSetupTemplateCat][pageAdvancedSetupTemplateParam];
+    TypeDef_AdvancedMenuItem const* menuItemSelected = &menuStructure[pageAdvancedSetupTemplateCat][pageAdvancedSetupTemplateParam];
     if (menuItemSelected->adr == 0)
     { // something is wrong and modbuss addres is 0, so return to initial position
         pageAdvancedSetupTemplateParam = 0;
         return;
     };
     // Get holding pointer
-    TypeDef_MB_Holding *holdingSelected = foo(menuItemSelected->adr);
+    TypeDef_MB_Holding* holdingSelected = foo(menuItemSelected->adr);
     // Null check
     if (IS_HOLDING_NULL_POINTER(holdingSelected))
     {
@@ -943,14 +979,14 @@ static inline void Page_AdvancedSetupTemplate(
     memset(pntr, 0, 80);
 
     snprintf(pntr, 80,
-             "%s  %1d|      %s%s %1d|  %5d  %s     |%s%s|          ",
-             LABEL_7_KATALOG, 
-             pageAdvancedSetupTemplateCat, 
-             label, 
-             LABEL_8_PARAMETR,
-             pageAdvancedSetupTemplateParam, displayedValue,
-             LABEL_5_NAZAD, LABEL_9_SAVE, LABEL_10_MONIT
-             );
+        "%s  %1d|      %s%s %1d|  %5d  %s     |%s%s|          ",
+        LABEL_7_KATALOG,
+        pageAdvancedSetupTemplateCat,
+        label,
+        LABEL_8_PARAMETR,
+        pageAdvancedSetupTemplateParam, displayedValue,
+        LABEL_5_NAZAD, LABEL_9_SAVE, LABEL_10_MONIT
+    );
 
     if (menu_cur_pos >= sizeof(pageAdvancedSetupTemplateCursorPos))
         menu_cur_pos = 0;
@@ -1047,19 +1083,19 @@ static inline void Page_AdvancedSetupTemplate(
     }
 }
 
-static inline void onError(void *pntr)
+static inline void onError(void* pntr)
 {
     memset(pntr, 0, 80);
     snprintf(pntr, 80,
-             "NULL POINTER ERROR");
+        "NULL POINTER ERROR");
 }
 
-static inline void menu2dCheckLimit(int *cursorHPos, int *cursorVPos, int *firstLinePos, size_t menuSize, int vCnt, int hCnt )
+static inline void menu2dCheckLimit(int* cursorHPos, int* cursorVPos, int* firstLinePos, size_t menuSize, int vCnt, int hCnt)
 {
     int vInd = vCnt - 1;
     int vhInd = hCnt - 1;
 
-    if(vhInd <= 0) return;
+    if (vhInd <= 0) return;
     if (*cursorHPos < 0)
         *cursorHPos = vhInd;
     if (*cursorHPos > vhInd)
@@ -1082,7 +1118,7 @@ static inline void menu2dCheckLimit(int *cursorHPos, int *cursorVPos, int *first
     }
 }
 
-static inline void menu2DrawCursor(int *cursorHPos, int *cursorVPos, char *p)
+static inline void menu2DrawCursor(int* cursorHPos, int* cursorVPos, char* p)
 {
     if (*cursorHPos == 0)
     {
@@ -1103,16 +1139,16 @@ static inline void menu2DrawCursor(int *cursorHPos, int *cursorVPos, char *p)
     }
 }
 
-static TypeDef_ConfigMenuItem *pageMenuItemEditItem = &nullMenuItem;
+static TypeDef_ConfigMenuItem* pageMenuItemEditItem = &nullMenuItem;
 static int pageConfigCursorVer = 0;
 static int pageConfigCursorHor = 0;
 static int pageConfigFirstLine = 0;
-static void Page_Config(void *arg)
+static void Page_Config(void* arg)
 {
-    char *pntr = (char *)arg;
+    char* pntr = (char*)arg;
 
 
-    static TypeDef_ConfigMenuItem *pageConfigMenuItemSelected;
+    static TypeDef_ConfigMenuItem* pageConfigMenuItemSelected;
 
     for (size_t i = 0; i < configMenuSize; i++)
     {
@@ -1127,16 +1163,16 @@ static void Page_Config(void *arg)
     memset(pntr, 0, 80);
 
     snprintf(pntr, 80,
-             " %10s%s  %5d  %10s%s  %5d  %10s%s %6d  Apply         Exit  ",
-             configMenu[pageConfigFirstLine + 0].label,
-             configMenu[pageConfigFirstLine + 0].modified ? "*" : " ",
-             configMenu[pageConfigFirstLine + 0].temVl,
-             configMenu[pageConfigFirstLine + 1].label,
-             configMenu[pageConfigFirstLine + 1].modified ? "*" : " ",
-             configMenu[pageConfigFirstLine + 1].temVl,
-             configMenu[pageConfigFirstLine + 2].label,
-             configMenu[pageConfigFirstLine + 2].modified ? "*" : " ",
-             configMenu[pageConfigFirstLine + 2].temVl);
+        " %10s%s  %5d  %10s%s  %5d  %10s%s %6d  Apply         Exit  ",
+        configMenu[pageConfigFirstLine + 0].label,
+        configMenu[pageConfigFirstLine + 0].modified ? "*" : " ",
+        configMenu[pageConfigFirstLine + 0].temVl,
+        configMenu[pageConfigFirstLine + 1].label,
+        configMenu[pageConfigFirstLine + 1].modified ? "*" : " ",
+        configMenu[pageConfigFirstLine + 1].temVl,
+        configMenu[pageConfigFirstLine + 2].label,
+        configMenu[pageConfigFirstLine + 2].modified ? "*" : " ",
+        configMenu[pageConfigFirstLine + 2].temVl);
 
     menu2DrawCursor(&pageConfigCursorHor, &pageConfigCursorVer, pntr);
 
@@ -1162,9 +1198,9 @@ static void Page_Config(void *arg)
     case KEY_ENTER:
         if (pageConfigCursorHor == 0)
         { // goto edit menu
-            if(pageConfigMenuItemSelected->disabled){
-                 pageConfigMenuItemSelected->itemChangedEvent();
-                 goto EXIT;
+            if (pageConfigMenuItemSelected->disabled) {
+                pageConfigMenuItemSelected->itemChangedEvent();
+                goto EXIT;
             }
             pageMenuItemEditItem = pageConfigMenuItemSelected;
             current_page = Page_MenuItemEdit;
@@ -1178,7 +1214,7 @@ static void Page_Config(void *arg)
                 {
                     configMenu[i].modified = false;
                     *configMenu[i].val = configMenu[i].temVl;
-                    if( configMenu[i].itemChangedEvent != NULL){
+                    if (configMenu[i].itemChangedEvent != NULL) {
                         configMenu[i].itemChangedEvent();
                     }
                     MenuItemGeneralChangedEvent();
@@ -1212,22 +1248,22 @@ static int pageMenuItemEditCursorVer = 0;
 static int pageMenuItemEditFirstLine = 0;
 static int pageMenuItemEditCursorHor = 0;
 
-static void Page_MenuItemEdit(void *arg)
+static void Page_MenuItemEdit(void* arg)
 {
-    char *pntr = (char *)arg;
-    TypeDef_ConfigMenuItem *itemSelected = pageMenuItemEditItem;
-  
- 
-    static const uint8_t pageMenuItemEditCursorPos[] = {36, 35, 34, 33, 32, 0}; // active display positions
-    static const int pageMenuItemEditDelta[] = {1, 10, 100, 1000, 10000, 0};    // active display positions
+    char* pntr = (char*)arg;
+    TypeDef_ConfigMenuItem* itemSelected = pageMenuItemEditItem;
+
+
+    static const uint8_t pageMenuItemEditCursorPos[] = { 36, 35, 34, 33, 32, 0 }; // active display positions
+    static const int pageMenuItemEditDelta[] = { 1, 10, 100, 1000, 10000, 0 };    // active display positions
     static uint8_t pageMenuItemEditCursorPosEdit = 0;
 
     menu2dCheckLimit(
-        &pageMenuItemEditCursorHor, 
-        &pageMenuItemEditCursorVer, 
-        &pageMenuItemEditFirstLine, 
-        itemSelected->options_len, 
-        2 , 2
+        &pageMenuItemEditCursorHor,
+        &pageMenuItemEditCursorVer,
+        &pageMenuItemEditFirstLine,
+        itemSelected->options_len,
+        2, 2
     );
 
 
@@ -1246,10 +1282,10 @@ static void Page_MenuItemEdit(void *arg)
 
     memset(pntr, 0, 80);
     snprintf(pntr, 20,
-             "    *%10s *    ", itemSelected->label);
+        "    *%10s *    ", itemSelected->label);
 
     snprintf(&pntr[60], 20,
-             " Exit  ");
+        " Exit  ");
 
     if (itemSelected->options_len != 0)
     {
@@ -1260,7 +1296,7 @@ static void Page_MenuItemEdit(void *arg)
     else
     {
         snprintf(&pntr[20], 20,
-                 "            %5d", itemSelected->temVl);
+            "            %5d", itemSelected->temVl);
 
         if (pageMenuItemEditCursorHor == 0)
             flash_cursor(pntr, pageMenuItemEditCursorPos[pageMenuItemEditCursorPosEdit]);
@@ -1371,7 +1407,7 @@ EXIT:
     return;
 }
 
-static void Page_SlaveFault(char *pntr, const char *label, int code)
+static void Page_SlaveFault(char* pntr, const char* label, int code)
 {
 
     memset(pntr, 0, 80);

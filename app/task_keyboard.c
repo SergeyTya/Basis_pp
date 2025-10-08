@@ -20,7 +20,7 @@ uint8_t state;
 int cnt = 0;
 
 extern TypedefEnum_ButtonStates buttonState;
-static uint16_t button_before = 0;
+static TypedefEnum_ButtonStates button_before = 0;
 
 static uint8_t leds = 0x2f;
 static uint8_t leds_val = 0;
@@ -52,18 +52,24 @@ void vTask_keyboard(void * arg){
 
        // leds = 0xff;
         if(cnt < leds_pwm){ leds = 0; }
-        uint16_t button_now =  keyboard_spi_hw_rw(leds);
-        if(button_now == button_before) { if(button_cntr<1100) button_cntr++;} else{button_cntr = 0;}
-        if(button_cntr == 100){
+        TypedefEnum_ButtonStates button_now =  keyboard_spi_hw_rw(leds);
+
+        if(button_now == button_before) {
+             if(button_cntr<1100) button_cntr++;
+        }else{
             
-            buttonState = button_now;
+            if(button_cntr > 10 &&  button_cntr < 300){
+               buttonState = button_before;
+            }
+
+            button_cntr = 0;
+
         }
 
-        if(button_cntr == 1000){
-            
-            buttonState = ~button_now; // long press
 
-           // button_cntr = 0;
+
+        if(button_cntr == 1000){
+            buttonState = ~button_now; // long press
         }
 
         button_before=button_now;

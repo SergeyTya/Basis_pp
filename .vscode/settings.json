@@ -114,7 +114,8 @@
         "task_keybord.h": "c",
         "idisplay.h": "c",
         "panelconfig.h": "c",
-        "main.h": "c"
+        "main.h": "c",
+        "mastertransport.h": "c"
     }, 
      "cmake.configureArgs": [
                "-DCMAKE_TOOLCHAIN_FILE=cmake/toolchain/arm-gcc-toolchain.cmake"

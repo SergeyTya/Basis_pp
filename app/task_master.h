@@ -25,7 +25,9 @@ typedef struct {
     bool     fault_source[5];
     uint32_t fault_code[5];
 
-    bool start_req[5];
+    bool start_req_hw[5];
+    bool start_req_rdo[5];
+
 
     bool master_wdg[5];
 
