@@ -11,7 +11,7 @@
 #define CONTROL_FASTLPF(in, out, time) { (out) =(out) + ((in) - (out)) * (time); }
 
 float tmp_sensor_calib_temp[] = {-999, -999.f, -40.f,  -30.f, -20.f, -10.f,   0.f,   10.f,   20.f,   30.f,   40.f,   50.f,   60.f,   70.f,   80.f,   90.f,  100.f,  110.f,  120.f,  130.f,  140.f,  150.f,  999.f,   999.f};
-float tmp_sensor_calib_adc[]  = {   0,   55.f,  54.f,  107.f, 199.f, 347.f, 569.f,  871.f, 1242.f, 1650.f, 2054.f, 2419.f, 2724.f, 2966.f, 3150.f, 3288.f, 3390.f, 3465.f, 3520.f, 3561.f, 3591.f, 3614.f, 3615.f,  5000.f};
+float tmp_sensor_calib_adc[]  = {   0,   55.f,  87.f,  172.f, 315.f,  537.f, 844.f,  1225.f, 1645.f, 2058.f, 2428.f, 2734.f, 2974.f, 3156.f, 3291.f, 3391.f, 3465.f, 3519.f, 3559.f, 3589.f, 3612.f, 3629.f, 3628.f,  5000.f};
 
 
 
@@ -49,14 +49,19 @@ float m_getCustomCurve(float arr_x[], float arr_y[], float curr_x, size_t len)
 volatile float temp_ext = 0;
 float temp_raw = 0;
 void vTask_TemperatureControl() {
+    int tcnt = 0;
 
     while (1)
     {
         uint16_t raw = hw_read_AI();
 
-        CONTROL_FASTLPF( ((float) raw), temp_raw, (0.001f*10.f) );
-        temp_ext = m_getCustomCurve(tmp_sensor_calib_adc, tmp_sensor_calib_temp, temp_raw, 24);
-        
+        CONTROL_FASTLPF( ((float) raw), temp_raw, (0.001f*100.f) );
+    
+        if(tcnt++>2000){
+            temp_ext = m_getCustomCurve(tmp_sensor_calib_adc, tmp_sensor_calib_temp, temp_raw, 24);
+            tcnt=0;
+        }
+
         vTaskDelay(1);
     }
     
