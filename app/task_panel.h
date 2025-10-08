@@ -49,6 +49,7 @@ typedef enum {
     KEY_DC1LONG = ~0x7c23,
     KEY_DC2LONG = ~0x7c13,
     KEY_MENU = 0x7c20,
+    KEY_LOGO = ~0x3433,// updown
 }TypedefEnum_ButtonStates;
 
 
@@ -71,7 +72,7 @@ typedef struct
     int limHi;
     int limLo;
     int temVl;
-    bool enable;
+    bool disabled;
     bool enableLim;
     bool modified;
 

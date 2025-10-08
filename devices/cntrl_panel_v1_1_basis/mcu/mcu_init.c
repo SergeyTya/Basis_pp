@@ -42,7 +42,7 @@ void vMCU_init()
   rcu_periph_clock_enable(RCU_ADC0);
   rcu_periph_clock_enable(RCU_ADC2);
   /* config ADC clock */
-  adc_clock_config(ADC_ADCCK_PCLK2_DIV6);
+  adc_clock_config(ADC_ADCCK_PCLK2_DIV8 );
 
   rcu_periph_clock_enable(RCU_GPIOA);
   rcu_periph_clock_enable(RCU_GPIOF);
@@ -62,10 +62,11 @@ void vMCU_init()
   /* ADC data alignment config */
   adc_data_alignment_config(ADC, ADC_DATAALIGN_RIGHT);
   /* ADC channel length config */
-  adc_channel_length_config(ADC, ADC_ROUTINE_CHANNEL, 1U);
+  adc_channel_length_config(ADC, ADC_ROUTINE_CHANNEL, 3U);
 
-  adc_routine_channel_config(ADC, 0U, ADC_CHANNEL_0, ADC_SAMPLETIME_3);
-    
+  adc_routine_channel_config(ADC, 0U, ADC_CHANNEL_0, ADC_SAMPLETIME_480);
+  adc_routine_channel_config(ADC, 1U, ADC_CHANNEL_0, ADC_SAMPLETIME_480);
+  adc_routine_channel_config(ADC, 2U, ADC_CHANNEL_0, ADC_SAMPLETIME_480);  
 
   /* ADC trigger config */
   adc_external_trigger_source_config(ADC, ADC_ROUTINE_CHANNEL, ADC_EXTTRIG_ROUTINE_T0_CH0);
@@ -74,11 +75,11 @@ void vMCU_init()
   /* enable ADC interface */
   adc_enable(ADC);
   /* ADC calibration and reset calibration */
-  adc_calibration_enable(ADC);
-for (size_t i = 0; i < 10000000; i++)
-{
+  //adc_calibration_enable(ADC);
+  for (size_t i = 0; i < 10000000; i++)
+  {
   /* code */;
-}
+ }
 
 
   __enable_irq();

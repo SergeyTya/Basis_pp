@@ -41,11 +41,11 @@ int rx_cnt = 0;
 /************/
 
 #define RSM_RDIO_PORT             GPIOE
-#define RSM_RDIO_OUT1_PIN         GPIO_PIN_2
-#define RSM_RDIO_OUT2_PIN         GPIO_PIN_3
-#define RSM_RDIO_OUT3_PIN         GPIO_PIN_4
+#define RSM_RDIO_OUT1_PIN         GPIO_PIN_3
+#define RSM_RDIO_OUT2_PIN         GPIO_PIN_2
+#define RSM_RDIO_OUT3_PIN         GPIO_PIN_6
 #define RSM_RDIO_OUT4_PIN         GPIO_PIN_5
-#define RSM_RDIO_OUT5_PIN         GPIO_PIN_6
+#define RSM_RDIO_OUT5_PIN         GPIO_PIN_4
 #define RSM_RDIO_DISABLE_ALL      gpio_bit_set(GPIOE, RSM_RDIO_OUT1_PIN|RSM_RDIO_OUT2_PIN|RSM_RDIO_OUT3_PIN|RSM_RDIO_OUT4_PIN|RSM_RDIO_OUT5_PIN )
 #define RSM_RDIO_SET_STATE(RDIO_GPIO_PIN, state) {if(state!=0) {gpio_bit_reset(RSM_RDIO_PORT, RDIO_GPIO_PIN);}else{ gpio_bit_set(RSM_RDIO_PORT,RDIO_GPIO_PIN);}}
 #define RSM_RDIO_OUT1_SET(state) RSM_RDIO_SET_STATE((RSM_RDIO_OUT1_PIN), state )
@@ -258,6 +258,42 @@ void master_LEDonFaultState() {
   RSM_RDIO_DISABLE_ALL;
 }
 
+
+/**
+* @brief Function for setup master HW Rdio to onRun state
+*
+* @param dev Device modbus ID
+*/
+void  master_RDIOonRUNstate(int dev) {
+
+  // TODO RDO ENABLE
+  switch (dev)
+  {
+  case 1:
+  RSM_RDIO_OUT1_SET(1);
+  break; 
+  case 2:
+  RSM_RDIO_OUT2_SET(1);
+  break;
+  case 3:
+  RSM_RDIO_OUT3_SET(1);
+  break;
+  case 4:
+  RSM_RDIO_OUT4_SET(1);
+  break;
+
+  default:
+    break;
+  }
+}
+
+bool master_ToggleHeaterState(){
+
+  gpio_bit_toggle(RSM_RDIO_PORT,RSM_RDIO_OUT5_PIN);
+  return (gpio_input_bit_get(RSM_RDIO_PORT,RSM_RDIO_OUT5_PIN) == 0 );
+}
+
+
 /**
 * @brief Function for setup master HW Leds to onFAULT state
 *
@@ -270,19 +306,19 @@ void  master_LEDonRUNstate(int dev) {
   {
   case 1:
   keyboard_setAC1LedSate(true);
-  RSM_RDIO_OUT1_SET(1);
+ // RSM_RDIO_OUT1_SET(1);
   break; 
   case 2:
   keyboard_setAC2LedSate(true);
-  RSM_RDIO_OUT2_SET(1);
+ // RSM_RDIO_OUT2_SET(1);
   break;
   case 3:
   keyboard_setDC2LedSate(true);
-  RSM_RDIO_OUT3_SET(1);
+ // RSM_RDIO_OUT3_SET(1);
   break;
   case 4:
   keyboard_setDC1LedSate(true); 
-  RSM_RDIO_OUT4_SET(1);
+ // RSM_RDIO_OUT4_SET(1);
   break;
 
   default:

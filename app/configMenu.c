@@ -6,14 +6,20 @@ const uint32_t speed_options[] = {9600, 38400, 115200, 230400};
 const uint32_t bright_options[] = {25, 50, 75, 100};
 const uint32_t onof_options[] = {/*OFF*/0, /*ON*/1};
 const uint32_t par_options[] = {/*NONE*/0 , /*ODD*/1, /*EVEN*/2};
+uint32_t no_val = 0;
+uint32_t  configmenu_heater_state = 0;
 
 
 void MenuItemBrightnessChangedEvent();
+void MenuItemRebootChangedEvent();
+void MenuItemHeaterEvent();
 
 const TypeDef_ConfigMenuItem nullMenuItem = {.label = "Null pointer"};
-const size_t configMenuSize = 18;
+const size_t configMenuSize = 20;
 TypeDef_ConfigMenuItem configMenu[] = {
 
+    {.label="Heater"      , .val=&configmenu_heater_state,  .disabled = true,  .itemChangedEvent = MenuItemHeaterEvent },
+    {.label="Reboot"      , .val=&no_val,  .disabled = true,  .itemChangedEvent = MenuItemRebootChangedEvent },
     {.label="AC1 enable"  , .val=&panelConfig.enableAC1, .options=onof_options, .options_len=2 },
     {.label="AC2 enable"  , .val=&panelConfig.enableAC2, .options=onof_options, .options_len=2  },
     {.label="DC1 enable"  , .val=&panelConfig.enableDC1, .options=onof_options, .options_len=2  },
@@ -32,6 +38,8 @@ TypeDef_ConfigMenuItem configMenu[] = {
     {.label="TCP MS[1]"   , .val=&panelConfig.modbus_TCP.mask1, .enableLim = true,  .limHi = 255, .limLo=0 },
     {.label="TCP MS[2]"   , .val=&panelConfig.modbus_TCP.mask2, .enableLim = true,  .limHi = 255, .limLo=0 },
     {.label="TCP MS[3]"   , .val=&panelConfig.modbus_TCP.mask3, .enableLim = true,  .limHi = 255, .limLo=0 },
+   
+    
 
 };
 
@@ -43,6 +51,16 @@ void MenuItemBrightnessChangedEvent(){
 void MenuItemGeneralChangedEvent(){
     ConfigMenuSaveAll();
     HW_REBOOT;
+}
+
+void MenuItemRebootChangedEvent(){
+    HW_REBOOT;
+}
+
+bool master_ToggleHeaterState();
+void MenuItemHeaterEvent(){
+    uint8_t val = master_ToggleHeaterState();
+    configmenu_heater_state = val;
 }
 
 void ConfigMenuSaveAll(){

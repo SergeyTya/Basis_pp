@@ -85,7 +85,11 @@ uint16_t hw_read_AI(){
        /* ADC routine channel config */
     //adc_routine_channel_config(ADC, 0U, ADC_CHANNEL_0, ADC_SAMPLETIME_15);
   
-    /* ADC software trigger enable */
+    uint32_t ret_val = 0;
+    int k = 10;
+    for(int i = 0; i < k; i++){
+
+       /* ADC software trigger enable */
    adc_software_trigger_enable(ADC, ADC_ROUTINE_CHANNEL);
 
     /* wait the end of conversion flag */
@@ -93,10 +97,15 @@ uint16_t hw_read_AI(){
     /* clear the end of conversion flag */
     
     /* return regular channel sample value */
-    uint16_t ret_val =   adc_routine_data_read(ADC);
+    ret_val +=   adc_routine_data_read(ADC);
 
     adc_flag_clear(ADC, ADC_FLAG_EOC);
 
+
+    }
+
+    ret_val /= k;
+   
     return  ret_val;
 
 }

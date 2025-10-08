@@ -23,8 +23,7 @@ void vTask_modbusRTU(__attribute__((unused)) void *argument)
 
     while (1)
     {
-     //   eMBPoll();
-
+        eMBPoll();
         uint16_t ToCounter = eMBGetTimeoutCounter();
         vTaskDelay(5);
     }

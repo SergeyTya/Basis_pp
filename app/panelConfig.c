@@ -24,4 +24,17 @@ void StructureInit_PanelConfig(Typedef_PanelConfig * panelConfig){
     panelConfig->modbus_RTU.speed  = 9600;
     panelConfig->modbus_RTU.bits = 8;
     panelConfig->modbus_RTU.parity = 0;
+
+    panelConfig->modbus_TCP.ip0 = 192;
+    panelConfig->modbus_TCP.ip1 = 168;
+    panelConfig->modbus_TCP.ip2 = 137;
+    panelConfig->modbus_TCP.ip3 =  30;
+
+    panelConfig->modbus_TCP.mask0 = 255;
+    panelConfig->modbus_TCP.mask1 = 255;
+    panelConfig->modbus_TCP.mask2 = 255;
+    panelConfig->modbus_TCP.mask3 = 0;
+    
+
+
 }

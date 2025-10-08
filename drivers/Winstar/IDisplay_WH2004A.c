@@ -96,8 +96,8 @@ void WH2004A_DisplayInit()
 uint8_t temp_buff[20];
 void WH2004A_DisplayUpdateFromBuffer(char buff[80]) {
 
-    WH2004A_WriteByte(CLEAR_DISPLAY, 0);
-    vTaskDelay(2);
+   // WH2004A_WriteByte(CLEAR_DISPLAY, 0);
+   // vTaskDelay(2);
     int start_address = 0x0;
     WH2004A_WriteByte((start_address |= SET_DDRAM_ADDRESS), 0);
 

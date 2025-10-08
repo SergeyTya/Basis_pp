@@ -103,7 +103,11 @@ void vTask_Panel(__attribute__((unused)) void *argument)
                 break;
 
             case KEY_MENU:
-                 current_page = Page_Config;
+                 //current_page = Page_Config;
+            break;
+
+            case KEY_LOGO:
+                 current_page = Page_Logo;
             break;
 
             default:
@@ -1158,6 +1162,10 @@ static void Page_Config(void *arg)
     case KEY_ENTER:
         if (pageConfigCursorHor == 0)
         { // goto edit menu
+            if(pageConfigMenuItemSelected->disabled){
+                 pageConfigMenuItemSelected->itemChangedEvent();
+                 goto EXIT;
+            }
             pageMenuItemEditItem = pageConfigMenuItemSelected;
             current_page = Page_MenuItemEdit;
         }

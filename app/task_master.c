@@ -20,6 +20,7 @@ extern void master_LEDonReadyState(int dev);
 extern void master_LEDonTimeoutState();
 extern void master_LEDonGlobRunState(bool state);
 
+extern void master_RDIOonRUNstate(int dev);
 
 //Timers used for 10 sec delay before start
 TimerHandle_t xTimers_StartDelay[5];
@@ -50,14 +51,9 @@ void vTimerAC_Callback(TimerHandle_t xTimer) {
         if (xTimer == xTimers_StartDelay[i]) {
             TypeDef_MB_Holding* holding;
             TypeDef_MB_Table* table = &holdings_table[slaveAdr];
-            // get control register pointer
-            holding = GetHoldingByAdrFromTable(103, table);
-            // Setup 
-            uint16_t valACStart = *holding->pntr | 8U; // bit #3
-            if (master.start_req[slaveAdr] == true)
-                master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valACStart);
-            // reset start request
-            master.start_req[slaveAdr] = false;
+            if(master.slaveStates[slaveAdr] == MASTER_STATE_onRUN) {
+                master_RDIOonRUNstate(slaveAdr);  // Enable output RDIO after start delay
+            }
             break;
         }
     }
@@ -76,9 +72,9 @@ void vTimerDC_Callback(TimerHandle_t xTimer) {
             TypeDef_MB_Table* table = &holdings_table[slaveAdr];
             master.start_req[slaveAdr] = false;
             //send start;
-            // holding = GetHoldingByAdrFromTable(104, table);
-            // uint16_t valStart = *holding->pntr | 0x2;
-            // master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart);
+            holding = GetHoldingByAdrFromTable(104, table);
+            uint16_t valStart = *holding->pntr | 0x2;
+            master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart);
         }
     }
     xSemaphoreGive(xDisplayMasterR485Semaphore);
@@ -224,7 +220,10 @@ void vTask_Master(__attribute__((unused)) void* argument)
                         //     }
                         // }
 
-                        if (((ac_slave_CR & 0x8) == 1) && (xTimerIsTimerActive(xTimers_StartDelay[slaveAdr]) == pdFALSE)) {
+                        if (
+                               ( ac_slave_CR & 0x8 ) 
+                            && (xTimerIsTimerActive(xTimers_StartDelay[slaveAdr]) == pdFALSE) 
+                        ) {
                             // Run state
 
                             master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
@@ -256,17 +255,19 @@ void vTask_Master(__attribute__((unused)) void* argument)
                                 }
 
                             }
-                            else { //Start AC -> wait 10s -> enable RDO 
+                            else { 
                                 // Ready state  
-                                //Start timer for RDO AC delay
-                                xTimerStart(xTimers_StartDelay[slaveAdr], 0);
-                                // send start
-                                holding = GetHoldingByAdrFromTable(104, table);
-                                uint16_t valStart = *holding->pntr | 0x2;
-                                master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart);
-
+                                master.slaveStates[slaveAdr] = MASTER_STATE_onREADY;
+                                if(master.start_req[slaveAdr]){
+                                    //Start AC -> wait 10s -> enable RDO 
+                                    xTimerStart(xTimers_StartDelay[slaveAdr], 0); //Start timer for RDO AC delay
+                                    // send start
+                                    holding = GetHoldingByAdrFromTable(103, table);
+                                    uint16_t valACStart = *holding->pntr | 8U; // bit #3
+                                    master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valACStart);
+                                    master.start_req[slaveAdr] = false;
+                                }
                             }
-
                         }
                     }
                     else {

@@ -42,7 +42,7 @@ OF SUCH DAMAGE.
 #include "task.h"
 
 const uint8_t gd32_str[] = {"\r\n ############ Welcome GigaDevice ############\r\n"};
-static __IO uint32_t enet_init_status = 0;
+__IO uint32_t enet_init_status = 0;
 static void enet_gpio_config(void);
 static void enet_mac_dma_config(void);
 #ifdef USE_ENET_INTERRUPT
