@@ -3,7 +3,7 @@
 const uint8_t acAdvancedMenuSize = 4;
 const TypeDef_AdvancedMenuItem acAdvancedMenu[4][15] = {
     {
-        {.adr = 110},
+        // Fix mistake in the menu
         {.adr = 102},
         {.adr = 103, .isBitfieldBit = true, .bitNumber = 0},
         {.adr = 103, .isBitfieldBit = true, .bitNumber = 1},

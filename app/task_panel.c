@@ -196,14 +196,23 @@ void vTask_Panel(__attribute__((unused)) void* argument)
  */
 void DisplayUpdater(__attribute__((unused)) void* argument)
 {
+    // can select parameter bug fixing 26/10/2025
+    int update_time = 28;
+    int counter_flash = 0; 
+    int flash_time =300;
+    int flash_counter_rst = flash_time/update_time;
     vTaskDelay(500);
     while (1)
     {
         xSemaphoreTake(xDisplayUpdaterSemaphore, portMAX_DELAY);
-        displayUpdateHarBit = !displayUpdateHarBit;
+        if(counter_flash++>flash_counter_rst){
+            counter_flash = 0;
+            displayUpdateHarBit = !displayUpdateHarBit;
+
+        };
         DisplayUpdateFromBuffer(displayMemory);
         xSemaphoreGive(xDisplayUpdaterSemaphore);
-        vTaskDelay(28);
+        vTaskDelay(update_time);
     }
 }
 
@@ -326,8 +335,8 @@ static void Page_Confirm(void* arg)
     char* pntr = (char*)arg;
     memset(pntr, 0, 80);
     snprintf(pntr, 80,
-        "                        %s?           YES    NO  ",
-        LABEL_9_SAVE
+        "                        %s?           %3s    %3s  ",
+        LABEL_9_SAVE, LABEL_YES, LABEL_NO
     );
 
     if (menu_cur_pos > 1) // there is only 2 options
@@ -414,6 +423,10 @@ static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int acnum,
     if (F > 999)
         F = 999U;
 
+        // ADD Power estimation (BUG fixing 26/10/2025)
+    uint16_t P = (U[0]*I[0]+U[1]*I[1]+U[2]*I[2])/1000;
+    if(P>99)P=99;
+
     // process slave error code
     if (acnum == 1 && master.fault_source[1] == true)
     {
@@ -431,14 +444,16 @@ static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int acnum,
         memset(pntr, 0, 80);
         snprintf(
             pntr, 80,
-            " AC%1d   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
-            acnum,
+          // Remove source number (BUG fixing 26/10/2025)
+          //  " AC%1d   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
+          //  acnum,
+            " AC   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
             master.master_wdg[acnum] == true ? "!" : " ",
             LG_NAME,
             U[0], U[1], U[2],
             I[0], I[1], I[2],
             F,
-            90);
+            P);
     }
 
     if (master.master_wdg[acnum] == true) {
@@ -619,7 +634,11 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr),
         F[1] = 9U;
 
     snprintf(pntr, 80,
-        " AC%1d      %sS  U,B     %3d,%1d    E  F,Hz    %3d,%1d    T  LimI,A  %3d     ", acnum, LG_NAME,
+      //  " AC%1d      %sS  U,B     %3d,%1d    E  F,Hz    %3d,%1d    T  LimI,A  %3d     ",
+      //  acnum, 
+      // Remove source number (BUG fixing 26/10/2025)
+        " AC       %sS  U,B     %3d,%1d    E  F,Hz    %3d,%1d    T  LimI,A  %3d     ",
+        LG_NAME,
         U[0], U[1],
         F[0], F[1],
         I[0]);
@@ -980,7 +999,8 @@ static inline void Page_AdvancedSetupTemplate(
     memset(pntr, 0, 80);
 
     snprintf(pntr, 80,
-        "%s  %1d|      %s%s %1d|  %5d  %s     |%s%s|          ",
+        // '|' symbol do not displayed at winstar display (BUG fixing 26/10/2025)
+        "%s  %1d       %s%s %1d   %5d  %s      %s%s           ",
         LABEL_7_KATALOG,
         pageAdvancedSetupTemplateCat,
         label,
@@ -1415,8 +1435,8 @@ static void Page_SlaveFault(char* pntr, const char* label, int code)
     snprintf(
         pntr,
         80,
-        " AVARIA %s %3d",
-        label, code);
+        " %6s %s %3d",
+       LABEL_AVARIA, label, code);
 }
 
 // https://radioaktiv.ru/custom_character_generator_for_hd44780.html

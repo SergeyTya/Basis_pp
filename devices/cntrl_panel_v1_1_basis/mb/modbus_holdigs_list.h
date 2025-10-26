@@ -44,7 +44,8 @@ HR_CREATE_UINT16_RO     (/*ADR=*/8, holdings[8],        "Curr W"            )   
 #define MB_SLAVE_AC1_PNTR_SHIFT    30U
 #define MB_SLAVE_AC2_PNTR_SHIFT    60U
 
-#define MB_SLAVE_AC_HOLDING_NREGS 27
+// Nul pointer at CAT2 PAR2 AC setup menu. Missed parametr (BUG fixing 26/10/2025)
+#define MB_SLAVE_AC_HOLDING_NREGS 28
 #define MB_SLAVE_AC_HOLDING(hld_sft,pntr_shft) {                                                                                     \
     HR_CREATE_UINT16_PARAM  (/*ADR=*/(hld_sft + 101U), holdings[pntr_shft+0],  "RefF" ,/*min=*/      0,/*max=*/      3, /*def=*/     3,  /*on_change=*/events_dummy),    \
     HR_CREATE_UINT16_PARAM  (/*ADR=*/(hld_sft + 102U), holdings[pntr_shft+1],  "RefU" ,/*min=*/      0,/*max=*/      4, /*def=*/     1,  /*on_change=*/events_dummy),      \
@@ -56,6 +57,7 @@ HR_CREATE_UINT16_RO     (/*ADR=*/8, holdings[8],        "Curr W"            )   
     HR_CREATE_UINT16_PARAM_NL  (/*ADR=*/(hld_sft + 114U), holdings[pntr_shft+7],  "" ,/*def=*/     0, /*on_change=*/events_dummy),                   /*112*/  \
     HR_CREATE_UINT16_PARAM_NL  (/*ADR=*/(hld_sft + 121U), holdings[pntr_shft+8],  "" ,/*def=*/     0, /*on_change=*/events_dummy),                 /*112*/  \
     HR_CREATE_UINT16_PARAM_NL  (/*ADR=*/(hld_sft + 122U), holdings[pntr_shft+9],  "" ,/*def=*/     0, /*on_change=*/events_dummy),              /*112*/  \
+    HR_CREATE_UINT16_PARAM_NL  (/*ADR=*/(hld_sft + 123U), holdings[pntr_shft+27], "" ,/*def=*/     0, /*on_change=*/events_dummy),               /*112*/  \
     HR_CREATE_UINT16_PARAM_NL  (/*ADR=*/(hld_sft + 124U), holdings[pntr_shft+10], "" ,/*def=*/     0, /*on_change=*/events_dummy),               /*112*/  \
     HR_CREATE_UINT16_PARAM_NL  (/*ADR=*/(hld_sft + 125U), holdings[pntr_shft+11], "" ,/*def=*/     0, /*on_change=*/events_dummy),               /*112*/  \
     HR_CREATE_UINT16_PARAM_NL  (/*ADR=*/(hld_sft + 126U), holdings[pntr_shft+12], "" ,/*def=*/     0, /*on_change=*/events_dummy),                /*112*/  \
