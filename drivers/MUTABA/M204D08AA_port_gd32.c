@@ -79,8 +79,8 @@ void M204D08AA_SPI_Config(void)
    GD25Q32_spi_struct.trans_mode = SPI_TRANSMODE_FULLDUPLEX;
    GD25Q32_spi_struct.device_mode = SPI_MASTER;
    GD25Q32_spi_struct.frame_size = SPI_FRAMESIZE_16BIT;
-   GD25Q32_spi_struct.clock_polarity_phase = SPI_CK_PL_HIGH_PH_2EDGE;
-   GD25Q32_spi_struct.prescale = SPI_PSC_128;
+   GD25Q32_spi_struct.clock_polarity_phase = SPI_CK_PL_LOW_PH_2EDGE;
+   GD25Q32_spi_struct.prescale = SPI_PSC_256;
    GD25Q32_spi_struct.nss = SPI_NSS_HARD;
    GD25Q32_spi_struct.endian = SPI_ENDIAN_MSB;
 

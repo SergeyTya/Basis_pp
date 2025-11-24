@@ -592,7 +592,7 @@ static void system_clock_168m_8m_hxtal(void)
     /* AHB = SYSCLK */
     RCU_CFG0 |= RCU_AHB_CKSYS_DIV1;
     /* APB2 = AHB/2 */
-    RCU_CFG0 |= RCU_APB2_CKAHB_DIV2;
+    RCU_CFG0 |= RCU_APB2_CKAHB_DIV4; // # Need to slowdown SPI BUS (Futaba bug)
     /* APB1 = AHB/4 */
     RCU_CFG0 |= RCU_APB1_CKAHB_DIV4;
 

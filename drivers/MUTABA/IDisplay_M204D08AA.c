@@ -9,14 +9,18 @@ static void PrintString(char *string,size_t len);
 void M204D08AA_WriteCmdAsync(uint8_t cmd, uint8_t data)
 {
     uint16_t tmp = cmd*256 + data;
-    M204D08AA_STB_SetState(true);
+    for (size_t i = 0; i < 50; i++) // need some delay?
+    {
+         M204D08AA_STB_SetState(true);  
+    }
     M204D08AA_STB_WriteWord(tmp);
     for (size_t i = 0; i < 100; i++) // need some delay?
     {
-        M204D08AA_STB_SetState(false);  
+        M204D08AA_STB_SetState(true);  
     }
-    
-    
+    for (size_t i = 0; i < 50; i++){
+       M204D08AA_STB_SetState(false);
+    }
 }
 
 //win1251 only!!!!!!!!!!
@@ -36,12 +40,14 @@ static void PrintString(char *string,size_t len )
     for (size_t i = 0; i < len; i++)
     {
         char c=string[i];
+         if (c == 0) { c = ' ';}
         if(c >= -64 && c< -32) {
             M204D08AA_WriteCmdAsync(250, Decode2Rus[64+c]);
         }
         else {
             M204D08AA_WriteCmdAsync(250,c);
         }
+
     }
 }   
 
@@ -49,35 +55,55 @@ void M204D08AA_UpdateDisplayFromBuffer(char buff[80]){
 
     uint8_t cmd[] = {128, 192, 148, 212};
 
+
     // spilt by rows
     char (*pntr)[20]  = (char (*)[20])buff;
-
-  //  M204D08AA_WriteCmdAsync(248,1);   //Display clean
-
     for (size_t i = 0; i < 4; i++)
     {
        
         M204D08AA_WriteCmdAsync(248,cmd[i]);
         PrintString(pntr[i],20);
     }
+   
 } 
 
 void M204D08AA_DisplayInit(){
     M204D08AA_HardInit(); 
-    vTaskDelay(30);
-    M204D08AA_WriteCmdAsync(248,12);   //Display enable
-    vTaskDelay(30);                  // Dispaly clean
-    M204D08AA_WriteCmdAsync(248,1);   //Display clean
-    vTaskDelay(30);
-    M204D08AA_WriteCmdAsync(248,63);  // Brightness 25%
-    vTaskDelay(30);
+    
+    M204D08AA_WriteCmdAsync(248,0b1000);   //Display disable
+    vTaskDelay(200);
+    M204D08AA_WriteCmdAsync(248,0b111);   //I
+    vTaskDelay(200);
+     M204D08AA_WriteCmdAsync(248,0b111011);   //I
+    //M204D08AA_WriteCmdAsync(248,63);  // Brightness 25%
+    vTaskDelay(200);
+    M204D08AA_WriteCmdAsync(248,0b1100);   //Display enable
+vTaskDelay(1200);
+    M204D08AA_WriteCmdAsync(248,0b1);   //Display disable
+vTaskDelay(1200);
+    for (int i = 0; i < 100; i++) {
+        M204D08AA_SetBrightnessLevel(100 - i);
+        vTaskDelay(3);
+    }
+
+    for (int i = 0; i < 100; i++) {
+        M204D08AA_SetBrightnessLevel(i);
+        vTaskDelay(3);
+    }
+    // vTaskDelay(30);
+    // M204D08AA_WriteCmdAsync(248,12);   //Display enable
+    // vTaskDelay(30);                  // Dispaly clean
+    // M204D08AA_WriteCmdAsync(248,1);   //Display clean
+    // vTaskDelay(30);
+    // M204D08AA_WriteCmdAsync(248,63);  // Brightness 25%
+    // vTaskDelay(30);
+
+
 }
     
 void M204D08AA_SetBrightnessLevel(int lvl){
 
-    M204D08AA_WriteCmdAsync(248,8) ;
-    vTaskDelay(100);
-    M204D08AA_WriteCmdAsync(248,1);
+    M204D08AA_WriteCmdAsync(250, '!');
     
     switch (lvl)
     {
@@ -102,8 +128,6 @@ void M204D08AA_SetBrightnessLevel(int lvl){
         break;
     }
 
-    vTaskDelay(100);
-    M204D08AA_WriteCmdAsync(248,12); 
 
 }
 
