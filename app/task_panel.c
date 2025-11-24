@@ -447,7 +447,7 @@ static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int acnum,
           // Remove source number (BUG fixing 26/10/2025)
           //  " AC%1d   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
           //  acnum,
-            " AC   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
+            " AC   %s  %s U,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
             master.master_wdg[acnum] == true ? "!" : " ",
             LG_NAME,
             U[0], U[1], U[2],
