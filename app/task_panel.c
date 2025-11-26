@@ -298,7 +298,7 @@ static void Page_Logo(void* arg)
     // set static
     int32_t t = ((int32_t)(temp_ext * 10.f)) / 10;
     snprintf(&pntr[0], sizeof(LG_NAME), LG_NAME);
-    snprintf(&pntr[70], 10, "Temp= %2d", t);
+   // snprintf(&pntr[70], 10, "Temp= %2d", t);
 
     if (buttonState == KEY_LONGENTER)
     {
@@ -563,8 +563,8 @@ static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int dcnum,
 static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr), int acnum, void* arg)
 {
 
-    static const uint8_t pageAcTemplateCursorPos[] = { 35, 33, 32, 31, 55, 53, 52, 51,  73, 72, 71 };
-    static const uint16_t pageAcTemplateDlt[] = { 1, 10, 100, 1000, 1, 10, 100, 1000,  1, 10, 100 };
+    static const uint8_t pageAcTemplateCursorPos[] = { 31,   32,  33, 35,  51,   52,  53, 55,   71 , 72, 73  };
+    static const uint16_t pageAcTemplateDlt[]      = { 1000, 100, 10, 1,   1000, 100, 10, 1 ,   100 , 20, 1  };
     static TypeDef_MB_Holding* pageAcTemplateAdr[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     static bool pageAcSetupUnlocked;
     static bool pageAcTemplateIsOnConfirmWait;
@@ -708,22 +708,33 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr),
     case KEY_NO:
         break;
 
-    case KEY_RIGHT:
+    case KEY_LEFT:
         if (!pageAcSetupUnlocked)
             break;
         // move cursor
-        if (menu_cur_pos != 0)
-            menu_cur_pos--;
+             if (menu_cur_pos == 0)
+                {menu_cur_pos = 7;}
+            else if (menu_cur_pos == 4)
+                {menu_cur_pos = 10;}
+            else if (menu_cur_pos == 8)
+                {menu_cur_pos = 3;}
+            else{ menu_cur_pos--;}
         break;
 
-    case KEY_LEFT:
+    case KEY_RIGHT:
         // move cursor
         if (!pageAcSetupUnlocked)
         {
             pageAcSetupUnlocked = true;
+            menu_cur_pos = 3; // move to last position
             break;
         }
-        menu_cur_pos++;
+        if (menu_cur_pos == 10){
+            menu_cur_pos = 0;
+        }  else {
+            menu_cur_pos++;
+        }
+        
         break;
 
     default: // AC1 //AC2 //DC1 //DC2
@@ -951,13 +962,14 @@ static inline void Page_AdvancedSetupTemplate(
     TypeDef_MB_Holding* (*foo)(uint8_t),
     void* arg,                                                   //
     TypeDef_AdvancedMenuItem const (*menuStructureTemplate)[15], // menu item structure
-    const char label[3],
+    const char label[3], 
     void (*backPointer)(),
     void (*indiPointer)())
 {
-    static const uint8_t pageAdvancedSetupTemplateCursorPos[] = { 9, 29, 51, 44, 69, 37, 36, 35, 34, 33 }; // active display positions
-    // this is corresponding deltas we need to use to increment or decrement smthg
-    static const uint16_t pageAdvancedSetupTemplateDlt[] = { 1, 1, 0, 0, 0, 1, 10, 100, 1000, 10000 };
+    static volatile bool  pageAcAdvancedSetupUnlocked = false;
+                                                            //    0  1   2   3   4   5   6   7      8       9
+    static const uint8_t pageAdvancedSetupTemplateCursorPos[] = { 9, 29,       33,   34,  35,  36, 37,  44, 51, 69,    }; // active display positions
+    static const uint16_t pageAdvancedSetupTemplateDlt[]      = { 1,  1,    10000, 1000, 100,  10,  1,   0,  0,  0,     };
 
     char* pntr = (char*)arg; // display buffer pointer
 
@@ -965,6 +977,11 @@ static inline void Page_AdvancedSetupTemplate(
 
     static uint16_t pageAdvancedSetupTemplateCat = 0;   // use this value to navigate catalog
     static uint16_t pageAdvancedSetupTemplateParam = 0; // use this value to set parameter
+
+        // lock state
+    if(!pageAcAdvancedSetupUnlocked){
+        menu_cur_pos = 7;
+    }
 
     if (pageAdvancedSetupTemplateCat >= acAdvancedMenuSize)
         pageAdvancedSetupTemplateCat = 0;
@@ -1013,15 +1030,54 @@ static inline void Page_AdvancedSetupTemplate(
         menu_cur_pos = 0;
     flash_cursor(pntr, pageAdvancedSetupTemplateCursorPos[menu_cur_pos]);
 
+/*
+
+       if (menu_cur_pos == 0)
+                {menu_cur_pos = 7;}
+            else if (menu_cur_pos == 4)
+                {menu_cur_pos = 10;}
+            else if (menu_cur_pos == 8)
+                {menu_cur_pos = 3;}
+            else{ menu_cur_pos--;}
+
+*/
+
+
     switch (buttonState)
     {
     case KEY_RIGHT:
-        if (menu_cur_pos != 0)
-            menu_cur_pos--;
+        if( !pageAcAdvancedSetupUnlocked ) {
+            pageAcAdvancedSetupUnlocked = true;
+            menu_cur_pos = 0;
+            break;
+        } 
+        if (menu_cur_pos == 9)
+            {menu_cur_pos = 0;}
+        else
+            {menu_cur_pos++;}
         break;
 
     case KEY_LEFT:
-        menu_cur_pos++;
+        if(!pageAcAdvancedSetupUnlocked) break;
+        //  if (menu_cur_pos == 0){
+        //     menu_cur_pos = 1;
+        //  } if(menu_cur_pos == 1){
+        //     menu_cur_pos = 5;
+        //  } if(menu_cur_pos == 2){
+        //     menu_cur_pos = 4;
+        //  }
+        //  else{
+        //     menu_cur_pos--;
+        //  }
+        
+        if(menu_cur_pos == 0) {menu_cur_pos = 6;}
+        else if (menu_cur_pos<=6  && menu_cur_pos > 2) {menu_cur_pos--;}
+        else if (menu_cur_pos == 2) {menu_cur_pos = 1;}
+        else if (menu_cur_pos == 1) {menu_cur_pos = 8;}
+        else if (menu_cur_pos == 8) {menu_cur_pos = 7;}
+        else if (menu_cur_pos == 7) {menu_cur_pos = 9;}
+        else{menu_cur_pos++;}
+
         break;
 
     case KEY_NO:
@@ -1030,6 +1086,7 @@ static inline void Page_AdvancedSetupTemplate(
     case KEY_ENTER:
         if (crntCursorPos == 51)
         { // save button position
+            if(!pageAcAdvancedSetupUnlocked) break;
             if (holdingSelected->lock)
                 holdingSelected->change_req = true; // mark holding to be sent to slave
         }
@@ -1040,6 +1097,7 @@ static inline void Page_AdvancedSetupTemplate(
                 holdingSelected->lock = false;
             }
             current_page = backPointer;
+            pageAcAdvancedSetupUnlocked = false;
         }
         if (crntCursorPos == 69)
         { // goto indicators button position
@@ -1048,11 +1106,14 @@ static inline void Page_AdvancedSetupTemplate(
                 holdingSelected->lock = false;
             }
             current_page = indiPointer;
+            pageAcAdvancedSetupUnlocked = false;
         }
         buttonState = KEY_NO;
+        
         break;
     case KEY_UP:
     case KEY_DOWN:
+        if (!pageAcAdvancedSetupUnlocked) break;
         if (crntDelta != 0) // just check if it number, not button
         {
             if (crntCursorPos == 9)
@@ -1095,6 +1156,7 @@ static inline void Page_AdvancedSetupTemplate(
     case KEY_AC2:
     case KEY_DC1:
     case KEY_DC2: // AC1 //AC2 //DC1 //DC2
+        pageAcAdvancedSetupUnlocked=false;
         if (!holdingSelected->change_req)
             holdingSelected->lock = false; // unlock not saved
         break;
