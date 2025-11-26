@@ -564,7 +564,7 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr),
 {
 
     static const uint8_t pageAcTemplateCursorPos[] = { 31,   32,  33, 35,  51,   52,  53, 55,   71 , 72, 73  };
-    static const uint16_t pageAcTemplateDlt[]      = { 1000, 100, 10, 1,   1000, 100, 10, 1 ,   100 , 20, 1  };
+    static const uint16_t pageAcTemplateDlt[]      = { 1000, 100, 10, 1,   1000, 100, 10, 1 ,   100, 10, 1  };
     static TypeDef_MB_Holding* pageAcTemplateAdr[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     static bool pageAcSetupUnlocked;
     static bool pageAcTemplateIsOnConfirmWait;
@@ -685,10 +685,7 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr),
         if (Uref->lock || Iref->lock || Fref->lock)
         {
             // move to confirm page
-            if (acnum == 1)
-                pageConfirmedRetPoint = Page_Ac1Setup;
-            if (acnum == 2)
-                pageConfirmedRetPoint = Page_Ac2Setup;
+            pageConfirmedRetPoint = current_page;
             pageConfirmedRetVal = false;
             pageAcTemplateIsOnConfirmWait = true;
             pageAcSetupUnlocked = false;
@@ -966,9 +963,10 @@ static inline void Page_AdvancedSetupTemplate(
     void (*backPointer)(),
     void (*indiPointer)())
 {
+    static volatile bool pageConfirmedRetValIsOnConfirmWait = false;
     static volatile bool  pageAcAdvancedSetupUnlocked = false;
                                                             //    0  1   2   3   4   5   6   7      8       9
-    static const uint8_t pageAdvancedSetupTemplateCursorPos[] = { 9, 29,       33,   34,  35,  36, 37,  44, 51, 69,    }; // active display positions
+    static const uint8_t pageAdvancedSetupTemplateCursorPos[] = { 9, 29,       33,   34,  35,  36, 37,  51, 44, 69,    }; // active display positions
     static const uint16_t pageAdvancedSetupTemplateDlt[]      = { 1,  1,    10000, 1000, 100,  10,  1,   0,  0,  0,     };
 
     char* pntr = (char*)arg; // display buffer pointer
@@ -978,9 +976,9 @@ static inline void Page_AdvancedSetupTemplate(
     static uint16_t pageAdvancedSetupTemplateCat = 0;   // use this value to navigate catalog
     static uint16_t pageAdvancedSetupTemplateParam = 0; // use this value to set parameter
 
-        // lock state
+    // lock state
     if(!pageAcAdvancedSetupUnlocked){
-        menu_cur_pos = 7;
+        menu_cur_pos = 8;
     }
 
     if (pageAdvancedSetupTemplateCat >= acAdvancedMenuSize)
@@ -1001,6 +999,19 @@ static inline void Page_AdvancedSetupTemplate(
     {
         onError(pntr);
         return;
+    }
+
+    // param save wait for confirm state
+    if(pageConfirmedRetValIsOnConfirmWait){
+
+        if (pageConfirmedRetVal)
+        {
+            if(holdingSelected->lock) holdingSelected->change_req = true; 
+        }else{
+            holdingSelected->change_req = false;
+            holdingSelected->lock = false;  
+        }
+        pageConfirmedRetValIsOnConfirmWait = false;
     }
 
     uint16_t crntCursorPos = pageAdvancedSetupTemplateCursorPos[menu_cur_pos];
@@ -1059,24 +1070,13 @@ static inline void Page_AdvancedSetupTemplate(
 
     case KEY_LEFT:
         if(!pageAcAdvancedSetupUnlocked) break;
-        //  if (menu_cur_pos == 0){
-        //     menu_cur_pos = 1;
-        //  } if(menu_cur_pos == 1){
-        //     menu_cur_pos = 5;
-        //  } if(menu_cur_pos == 2){
-        //     menu_cur_pos = 4;
-        //  }
-        //  else{
-        //     menu_cur_pos--;
-        //  }
         
-        if(menu_cur_pos == 0) {menu_cur_pos = 6;}
-        else if (menu_cur_pos<=6  && menu_cur_pos > 2) {menu_cur_pos--;}
-        else if (menu_cur_pos == 2) {menu_cur_pos = 1;}
-        else if (menu_cur_pos == 1) {menu_cur_pos = 8;}
-        else if (menu_cur_pos == 8) {menu_cur_pos = 7;}
-        else if (menu_cur_pos == 7) {menu_cur_pos = 9;}
-        else{menu_cur_pos++;}
+        if (menu_cur_pos == 0)
+            {menu_cur_pos = 9;}
+        else
+            {menu_cur_pos--;}
+        break;
+
 
         break;
 
@@ -1087,8 +1087,14 @@ static inline void Page_AdvancedSetupTemplate(
         if (crntCursorPos == 51)
         { // save button position
             if(!pageAcAdvancedSetupUnlocked) break;
-            if (holdingSelected->lock)
-                holdingSelected->change_req = true; // mark holding to be sent to slave
+            if (holdingSelected->lock){
+                pageConfirmedRetValIsOnConfirmWait = true;
+                pageAcAdvancedSetupUnlocked=false;
+                pageConfirmedRetPoint = current_page;
+                current_page = Page_Confirm;
+
+            }
+         //       holdingSelected->change_req = true; // mark holding to be sent to slave
         }
         if (crntCursorPos == 44)
         { // goto setup button position
@@ -1120,13 +1126,15 @@ static inline void Page_AdvancedSetupTemplate(
             { // catalog counter
                 if (!holdingSelected->change_req)
                     holdingSelected->lock = false; // disable lock when change menu item, so value does not saved
-                pageAdvancedSetupTemplateCat++;
+                if(buttonState==KEY_UP  ) pageAdvancedSetupTemplateCat++;
+                if(buttonState==KEY_DOWN) pageAdvancedSetupTemplateCat--;
             }
             else if (crntCursorPos == 29)
             { // parameter counter
                 if (!holdingSelected->change_req)
                     holdingSelected->lock = false; // disable lock when change menu item, so value does not saved
-                pageAdvancedSetupTemplateParam++;
+                if(buttonState==KEY_UP  )pageAdvancedSetupTemplateParam++;
+                if(buttonState==KEY_DOWN)pageAdvancedSetupTemplateParam--;
             }
             else
             {                                 // holding value

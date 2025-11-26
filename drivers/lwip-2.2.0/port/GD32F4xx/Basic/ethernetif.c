@@ -196,7 +196,14 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     
     /* copy frame from pbufs to driver buffers */
     for(q = p; q != NULL; q = q->next){ 
-        memcpy((uint8_t *)&buffer[framelength], q->payload, q->len);
+        //memcpy((uint8_t *)&buffer[framelength], q->payload, q->len);
+        
+        for (size_t i = 0; i < q->len; i++)
+        {
+            /* code */
+           buffer[framelength+i] = ((uint8_t *)q->payload)[i];
+        }
+        
         framelength = framelength + q->len;
     }
     
@@ -242,7 +249,14 @@ static struct pbuf * low_level_input(struct netif *netif)
     /* copy received frame to pbuf chain */
     if (p != NULL){
         for (q = p; q != NULL; q = q->next){ 
-            memcpy((uint8_t *)q->payload, (u8_t*)&buffer[l], q->len);
+            
+            //memcpy((uint8_t *)q->payload, (u8_t*)&buffer[l], q->len);
+            for (size_t i = 0; i < q->len; i++)
+            {
+                /* code */
+                ((uint8_t *)q->payload)[i] =(uint8_t) ((u8_t*)&buffer[l])[i];
+            }
+            
             l = l + q->len;
         }    
     }

@@ -333,6 +333,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
                 // vTaskDelay(10);
                 holding = &table->holdings[i];
 
+                // Write HR to slave
                 if (holding->lock && holding->change_req)
                 {
 
@@ -343,6 +344,21 @@ void vTask_Master(__attribute__((unused)) void* argument)
                     holding->lock = false;
                     holding->change_req = false;
                     vTaskDelay(10); // Delay after write
+                    
+                    // save to AC slave memory
+                    if(slaveAdr == CONFIG_SLAVE_AC1 || slaveAdr == CONFIG_SLAVE_AC2){
+                        uint16_t reg900CurVal = 0;
+                        // read save control HR adr=900
+                        MASTER_TRANSPORT_CHECK_TIMEOUT(
+                            master_readHoldingOs(slaveAdr, 900, &reg900CurVal)
+                        );
+                        // modify bit 1
+                        reg900CurVal |= (1<<0);
+                        // send back
+                        MASTER_TRANSPORT_CHECK_TIMEOUT(
+                            master_writeHoldingOs(slaveAdr, 900, reg900CurVal)
+                        );
+                    }
                 }
 
                 // read holding value to slave
