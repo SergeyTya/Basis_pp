@@ -35,12 +35,12 @@ static void Page_SlaveFault(char* pntr, const char* label, int code);
 static void flash_cursor(char* pntr, size_t pos);
 static void DisplayUpdater();
 
-static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int acnum, void* arg);
-static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int dcnum, void* arg);
-static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr), int acnum, void* arg);
-static inline void Page_DcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr), int dcnum, void* arg);
+static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int acnum, void* arg);
+static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int dcnum, void* arg);
+static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint16_t adr), int acnum, void* arg);
+static inline void Page_DcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint16_t adr), int dcnum, void* arg);
 static inline void Page_AdvancedSetupTemplate(
-    TypeDef_MB_Holding* (*foo)(uint8_t adr),                     // function for searching holding by addr
+    TypeDef_MB_Holding* (*foo)(uint16_t adr),                     // function for searching holding by addr
     void* arg,                                                   // display buffer pointer
     TypeDef_AdvancedMenuItem const (*menuStructureTemplate)[15], // menu item structure
     const char label[3],
@@ -401,7 +401,7 @@ static void Page_SaveWarning(void* arg)
  *  @param  acnum {int} - AC Channel number  (1 or 2)
  *  @param  arg {void*} - Display buffer pointer (char *)
  */
-static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int acnum, void* arg)
+static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int acnum, void* arg)
 {
     char* pntr = (char*)arg;
 
@@ -489,7 +489,7 @@ static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int acnum,
  *  @param  dcnum {int} - DC Channel number (1 or 2)
  *  @param  arg {void*} - Display buffer pointer (char *)
  */
-static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int dcnum, void* arg)
+static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int dcnum, void* arg)
 {
     char* pntr = (char*)arg;
     memset(pntr, 0, 80);
@@ -560,7 +560,7 @@ static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint8_t adr), int dcnum,
  *  @param  dcnum {int} - AC Channel number (1 or 2)
  *  @param  arg {void*} - Display buffer pointer (char *)
  */
-static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr), int acnum, void* arg)
+static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint16_t adr), int acnum, void* arg)
 {
 
     static const uint8_t pageAcTemplateCursorPos[] = { 31,   32,  33, 35,  51,   52,  53, 55,   71 , 72, 73  };
@@ -776,7 +776,7 @@ AC_PARAM_EXIT:
     return;
 }
 
-static inline void Page_DcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint8_t adr), int dcnum, void* arg)
+static inline void Page_DcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint16_t adr), int dcnum, void* arg)
 {
     char* pntr = (char*)arg;
     static const uint8_t pageDcTemplateCursorPos[] = { 56, 54, 53, 52, 76, 75, 74, 73 }; // TODO select correct positions
@@ -956,7 +956,7 @@ DC_PARAM_EXIT:
  *  @param indiPointer {void (*)()} Pointer to monitoring function
  */
 static inline void Page_AdvancedSetupTemplate(
-    TypeDef_MB_Holding* (*foo)(uint8_t),
+    TypeDef_MB_Holding* (*foo)(uint16_t),
     void* arg,                                                   //
     TypeDef_AdvancedMenuItem const (*menuStructureTemplate)[15], // menu item structure
     const char label[3], 
