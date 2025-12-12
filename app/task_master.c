@@ -214,21 +214,43 @@ void vTask_Master(__attribute__((unused)) void* argument)
                                     master.slaveStates[2]        = MASTER_STATE_onWAIT;
                                 }
                             }else{
-                                if(master.start_req_rdo[slaveAdr]){
-                                        //enable RDO
-                                        if( master.slaveStates[slaveAdr] == MASTER_STATE_onWAIT){
-                                            master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
+                                 // Here we check if output voltage reach reference
+                                bool reached = false;
 
+                                uint16_t* (*foo)(uint16_t adr) = slaveAdr == 1? GetHoldingPntrByAdrFromAC1: GetHoldingPntrByAdrFromAC2;
+
+
+                                uint16_t U[3] = {
+                                    *foo(240),
+                                    *foo(241),
+                                    *foo(242),
+                                };
+
+                                uint16_t ref = (uint16_t) ((uint32_t)*foo(102) *95U / 100U);
+
+                                reached = (U[0] >= ref) && (U[1] >= ref) &&  (U[2] >= ref);
+
+
+                                if(master.start_req_rdo[slaveAdr]){
+                                        if( master.slaveStates[slaveAdr] == MASTER_STATE_onWAIT){
+                                            // if output voltage is good
+                                            if(reached){
+                                                // Enable contactor RDO
+                                                 master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
+                                            }
+                                        
                                         }else{
+                                            // Enable PWM
                                              master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT;
                                         }
                                         master.start_req_rdo[slaveAdr] = false;
                                 }
-
+                                // Kotstyl'
                                 if(master.start_req_rdo[2]){
-                                        //enable RDO
                                         if( master.slaveStates[2] == MASTER_STATE_onWAIT){
-                                            master.slaveStates[2] = MASTER_STATE_onRUN;
+                                            if(reached) {
+                                                master.slaveStates[2] = MASTER_STATE_onRUN;
+                                            };
 
                                         }else{
                                              master.slaveStates[2] = MASTER_STATE_onWAIT;
