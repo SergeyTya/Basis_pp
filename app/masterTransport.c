@@ -52,7 +52,7 @@ TypedefEnum_MasterTransportSates master_writeHoldingOs(uint8_t slave, uint16_t a
                 return MASTER_TRANSPORT_NOERROR;
             }
             else {
-                return MASTERS_TRANSPORT_CRCERROR;
+                return MASTER_TRANSPORT_CRCERROR;
             }
         }
         else {
@@ -61,7 +61,7 @@ TypedefEnum_MasterTransportSates master_writeHoldingOs(uint8_t slave, uint16_t a
                 // master_hwRead(masterRxBuf, expectedSize);
                 master_hwClearRxTxBuf();
                 vTaskDelay(10);
-                return MASTERS_TRANSPORT_CRCERROR;
+                return MASTER_TRANSPORT_CRCERROR;
             }
             vTaskDelay(1);
         }
@@ -111,7 +111,7 @@ TypedefEnum_MasterTransportSates master_writeHoldings(uint8_t slave, uint16_t ad
                 return MASTER_TRANSPORT_NOERROR;
             }
             else {
-                return MASTERS_TRANSPORT_CRCERROR;
+                return MASTER_TRANSPORT_CRCERROR;
             }
         }
         else {
@@ -120,7 +120,7 @@ TypedefEnum_MasterTransportSates master_writeHoldings(uint8_t slave, uint16_t ad
                 // master_hwRead(masterRxBuf, expectedSize);
                 master_hwClearRxTxBuf();
                 vTaskDelay(10);
-                return MASTERS_TRANSPORT_CRCERROR;
+                return MASTER_TRANSPORT_CRCERROR;
             }
             vTaskDelay(1);
         }
@@ -189,7 +189,7 @@ TypedefEnum_MasterTransportSates master_readHoldingsOs(uint8_t slave, uint16_t a
                 master_hwClearRxTxBuf();
                 vTaskDelay(10);
                 crc_err[slave]++;
-                return MASTERS_TRANSPORT_CRCERROR;
+                return MASTER_TRANSPORT_CRCERROR;
             }
         }
         vTaskDelay(10);

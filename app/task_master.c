@@ -9,10 +9,14 @@
 
 #include "timers.h"
 
+#include "meter.h"
 
-extern Typedef_PanelConfig panelConfig;
+
+
 TypeDef_Master master;
 
+extern Typedef_PanelConfig panelConfig;
+extern Typedef_Meter meter;
 extern void master_LEDonFaultReset();
 extern void master_LEDonFaultState();
 extern void master_LEDonRUNstate(int dev);
@@ -404,6 +408,16 @@ void vTask_Master(__attribute__((unused)) void* argument)
             }
             // TODO MASTER ERROR HANDLER
         }
+
+
+        // Read Meter
+        if(meter.enable){
+            uint16_t meter_slv_adr = meter.adr;
+            if(meter_slv_adr >4 ) {
+                meter.read(&meter);  
+            }
+        }
+
         xSemaphoreGive(xDisplayMasterR485Semaphore);
     }
 }

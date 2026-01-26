@@ -2,6 +2,8 @@
 #define MASTERTRANSPORT_H
 
 #include <stdint.h>
+#include <stddef.h>
+
 
 typedef enum
 {
@@ -9,7 +11,7 @@ typedef enum
     MASTER_TRANSPORT_NOERROR = 0,
     MASTER_TRANSPORT_ERROR = 1,
     MASTER_TRANSPORT_TIMEOUT = 2,
-    MASTERS_TRANSPORT_CRCERROR = 3,
+    MASTER_TRANSPORT_CRCERROR = 3,
 
 } TypedefEnum_MasterTransportSates;
 

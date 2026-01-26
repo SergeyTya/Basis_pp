@@ -1,5 +1,6 @@
 /*
  * Refer to manuals/blok-cxema.doc
+ // https://radioaktiv.ru/custom_character_generator_for_hd44780.html
  */
 #include <stdbool.h>
 #include <string.h>
@@ -32,6 +33,7 @@ static void Page_SaveWarning(void* arg);
 static void Page_Config(void* pntr);
 static void Page_MenuItemEdit(void* arg);
 static void Page_SlaveFault(char* pntr, const char* label, int code);
+static void Page_EnergyMeter(void * arg);
 static void flash_cursor(char* pntr, size_t pos);
 static void DisplayUpdater();
 
@@ -288,22 +290,49 @@ static void Page_Dc2AdvancedSetup(void* arg)
     panelConfig.active_slave = CONFIG_SLAVE_DC2;
 }
 
-extern float temp_ext;
+
 static void Page_Logo(void* arg)
 {
+    static const uint8_t pageLogCursorPos[] = { 0, 75 };
     // clear
     char* pntr = (char*)arg;
     memset(pntr, 0, 80);
     vTaskDelay(1);
     // set static
-    int32_t t = ((int32_t)(temp_ext * 10.f)) / 10;
     snprintf(&pntr[0], sizeof(LG_NAME), LG_NAME);
-   // snprintf(&pntr[70], 10, "Temp= %2d", t);
+    snprintf(&pntr[75], 6, "Meter ");
+   // snprintf(&pntr[70], 1, "M");
 
-    if (buttonState == KEY_LONGENTER)
+   /* if(menu_cur_pos == 1)*/  flash_cursor(pntr, pageLogCursorPos[1]);
+    if (menu_cur_pos > 1) // there is only 2 options
     {
-        current_page = Page_Config;
+        menu_cur_pos = 1;
     }
+
+
+    switch (buttonState)
+    {
+    case KEY_LEFT: // navigate
+        menu_cur_pos = 1;
+        buttonState = KEY_NO;
+        break;
+    case KEY_RIGHT: // navigate
+        menu_cur_pos = 0;
+        buttonState = KEY_NO;
+        break;
+    case KEY_ENTER:
+      /*  if(menu_cur_pos==1) */ current_page = Page_EnergyMeter;    // SET NEW POINTER
+        menu_cur_pos=0;
+        buttonState = KEY_NO;
+        break;
+    case KEY_LONGENTER:
+        menu_cur_pos=0;
+        current_page = Page_Config;
+        break;
+    default:
+        break;
+    }
+
     panelConfig.active_slave = CONFIG_SLAVE_NONE;
 }
 
@@ -1509,4 +1538,53 @@ static void Page_SlaveFault(char* pntr, const char* label, int code)
        LABEL_AVARIA, label, code);
 }
 
-// https://radioaktiv.ru/custom_character_generator_for_hd44780.html
+#include "masterTransport.h"
+#include "meter.h"
+extern Typedef_Meter meter;
+extern float temp_ext;
+
+static void Page_EnergyMeter(void * arg)
+{
+
+    static int32_t meter_to_cnt = 0;
+    char* pntr = (char*)arg; // display buffer pointer
+    memset(pntr, 0, 80);
+
+    Typedef_Meter * m = &meter;
+
+    if(m->state == MASTER_TRANSPORT_NOERROR){
+       meter_to_cnt = 0;
+
+    }else{
+       meter_to_cnt++;
+    }
+
+    if(meter_to_cnt>=100){
+        meter_to_cnt = 100;
+        const char errmsg[]  = "    NOT CONNECTED   ";
+        const char errmsg1[] = "     PRESS ENTER    ";
+        snprintf(&pntr[20], sizeof(errmsg), errmsg); 
+        snprintf(&pntr[40], sizeof(errmsg1), errmsg1);
+
+    }else{
+        int16_t t = ((int32_t)(temp_ext * 10.f)) / 10;
+        uint16_t udc = (m->U[0].value_disp/10)*14;
+        snprintf(&pntr[ 0], 21, "P %3d Q %3d    [1/1]", (int) m->Power_re.value_disp, (int) m->Power_im.value_disp );
+        snprintf(&pntr[20], 20, "ULL,B  %3d %3d %3d",m->U[0].value_disp, m->U[1].value_disp, m->U[2].value_disp);
+        snprintf(&pntr[40], 20, "ILN,A  %3d %3d %3d",m->I[0].value_disp, m->I[1].value_disp, m->I[2].value_disp);
+        snprintf(&pntr[60], 20, "UDC,V %3d T,C %3d", udc, t);
+    }
+
+    
+    switch (buttonState)
+    {
+        case KEY_ENTER:
+            current_page = Page_Logo;    // SET NEW POINTER
+            buttonState = KEY_NO;
+        break;
+        default:
+        break;
+    }
+
+}
+

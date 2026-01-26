@@ -35,6 +35,8 @@ function(create_device target_name )
             ${APP_PATH}/devices/${TARGET_NAME}/*.c
             ${APP_PATH}/IDisplay.c
             ${APP_PATH}/task_tempmes.c
+            ${APP_PATH}/meter.c
+            ${APP_PATH}/meter_chint.c
             )
  
  
