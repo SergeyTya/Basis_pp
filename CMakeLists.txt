@@ -17,6 +17,7 @@ SET(APP_PATH ${CMAKE_CURRENT_SOURCE_DIR}/app)
     
  
 include_directories( 
+       ${CMAKE_CURRENT_SOURCE_DIR}/http
         ${APP_PATH}
         ${CMSIS_CORE_INC_PATH} 
         ${DEVICE_INC_PATH}

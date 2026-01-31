@@ -286,7 +286,7 @@ void ethernetif_input( void * pvParameters )
     struct pbuf *p;
     SYS_ARCH_DECL_PROTECT(sr);
 
-   // xTaskCreate(timeouts , "",  configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES , NULL);
+    xTaskCreate(timeouts , "",  configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES , NULL);
 
 
     while(1){

@@ -40,7 +40,7 @@ OF SUCH DAMAGE.
 
 #include "netconf.h"
 
-#define LWIP_TCPIP_TIMEOUT 0
+#define LWIP_TCPIP_TIMEOUT 1
 //#define LWIP_TIMERS
 
 #define LWIP_TCPIP_CORE_LOCKING 0
@@ -49,7 +49,7 @@ OF SUCH DAMAGE.
                                                             for certain critical regions during buffer allocation,
                                                             deallocation and memory allocation and deallocation */                                                            
 
-#define NO_SYS                  1                        /* NO_SYS==1: provides VERY minimal functionality. 
+#define NO_SYS                  0                        /* NO_SYS==1: provides VERY minimal functionality. 
                                                             Otherwise, use lwIP facilities */
 
 /*  memory options  */
@@ -57,16 +57,20 @@ OF SUCH DAMAGE.
                                                             is compiled. 4 byte alignment -> define MEM_ALIGNMENT 
                                                             to 4, 2 byte alignment -> define MEM_ALIGNMENT to 2 */
 
-#define MEM_SIZE                (20*1024)                /* the size of the heap memory, if the application will 
+#define MEM_SIZE                (15*1024)                /* the size of the heap memory, if the application will 
                                                             send a lot of data that needs to be copied, this should
                                                             be set high */
 
-#define MEMP_NUM_PBUF           5                       /* the number of memp struct pbufs. If the application
+#define MEM_LIBC_MALLOC 0
+#define MEMP_MEM_MALLOC 1
+
+#define MEMP_NUM_PBUF           10                       /* the number of memp struct pbufs. If the application
                                                             sends a lot of data out of ROM (or other static memory),
                                                             this should be set high */
 
 #define MEMP_NUM_UDP_PCB        6                        /* the number of UDP protocol control blocks, one
                                                             per active UDP "connection" */
+
 
 #define MEMP_NUM_TCP_PCB        10                       /* the number of simulatenously active TCP connections */
 
@@ -79,7 +83,7 @@ OF SUCH DAMAGE.
 #define MEMP_NUM_NETBUF         8                        /* the number of struct netbufs */
 
 /* Pbuf options */
-#define PBUF_POOL_SIZE          15                       /* the number of buffers in the pbuf pool */
+#define PBUF_POOL_SIZE          10                       /* the number of buffers in the pbuf pool */
 #define PBUF_POOL_BUFSIZE       1500                     /* the size of each pbuf in the pbuf pool */
 
 /* TCP options */
@@ -133,7 +137,7 @@ OF SUCH DAMAGE.
 /* socket options */
 #define LWIP_SOCKET             0                        /* set to 1 to enable socket API (require to use sockets.c) */
 
-#define LWIP_SO_RCVTIMEO        0                        /* set to 1 to enable receive timeout for sockets/netconns and
+#define LWIP_SO_RCVTIMEO        1                        /* set to 1 to enable receive timeout for sockets/netconns and
                                                             SO_RCVTIMEO processing */
                                                             
 /* Lwip debug options */

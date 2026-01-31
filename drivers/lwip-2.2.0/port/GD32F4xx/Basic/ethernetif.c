@@ -113,11 +113,11 @@ static void low_level_init(struct netif *netif)
     enet_ptp_enhanced_descriptors_chain_init(ENET_DMA_RX);
 #else
 
-    enet_descriptors_chain_init(ENET_DMA_TX);
-    enet_descriptors_chain_init(ENET_DMA_RX);
+ //  enet_descriptors_chain_init(ENET_DMA_TX);
+ //  enet_descriptors_chain_init(ENET_DMA_RX);
     
-//    enet_descriptors_ring_init(ENET_DMA_TX);
-//    enet_descriptors_ring_init(ENET_DMA_RX);
+   enet_descriptors_ring_init(ENET_DMA_TX);
+   enet_descriptors_ring_init(ENET_DMA_RX);
 
 #endif /* SELECT_DESCRIPTORS_ENHANCED_MODE */
 
@@ -140,7 +140,7 @@ static void low_level_init(struct netif *netif)
     /* enable MAC and DMA transmission and reception */
     enet_enable();
 
-     xTaskCreate(vTaskEthernet , "ETHERNET",  configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL);
+     xTaskCreate(vTaskEthernet , "ETHERNET",  configMINIMAL_STACK_SIZE*2, NULL, configMAX_PRIORITIES - 1, NULL);
 
 }
 
@@ -163,10 +163,10 @@ void vTaskEthernet(void * arg){
     }
 }
 
-u32_t  sys_now(void)
-{
-    return g_localtime;
-}
+// u32_t  sys_now(void)
+// {
+//     return g_localtime;
+// }
 
 /**
  * This function should do the actual transmission of the packet. The packet is
@@ -191,18 +191,19 @@ static err_t low_level_output(struct netif *netif, struct pbuf *p)
     uint8_t *buffer;
 
     while((uint32_t)RESET != (dma_current_txdesc->status & ENET_TDES0_DAV)){
+        //  vTaskDelay(5);
     }  
     buffer = (uint8_t *)(enet_desc_information_get(dma_current_txdesc, TXDESC_BUFFER_1_ADDR));
     
     /* copy frame from pbufs to driver buffers */
     for(q = p; q != NULL; q = q->next){ 
-        //memcpy((uint8_t *)&buffer[framelength], q->payload, q->len);
+        memcpy((uint8_t *)&buffer[framelength], q->payload, q->len);
         
-        for (size_t i = 0; i < q->len; i++)
-        {
-            /* code */
-           buffer[framelength+i] = ((uint8_t *)q->payload)[i];
-        }
+        // for (size_t i = 0; i < q->len; i++)
+        // {
+        //     /* code */
+        //    buffer[framelength+i] = ((uint8_t *)q->payload)[i];
+        // }
         
         framelength = framelength + q->len;
     }
@@ -250,12 +251,12 @@ static struct pbuf * low_level_input(struct netif *netif)
     if (p != NULL){
         for (q = p; q != NULL; q = q->next){ 
             
-            //memcpy((uint8_t *)q->payload, (u8_t*)&buffer[l], q->len);
-            for (size_t i = 0; i < q->len; i++)
-            {
-                /* code */
-                ((uint8_t *)q->payload)[i] =(uint8_t) ((u8_t*)&buffer[l])[i];
-            }
+            memcpy((uint8_t *)q->payload, (u8_t*)&buffer[l], q->len);
+            // for (size_t i = 0; i < q->len; i++)
+            // {
+            //     /* code */
+            //     ((uint8_t *)q->payload)[i] =(uint8_t) ((u8_t*)&buffer[l])[i];
+            // }
             
             l = l + q->len;
         }    

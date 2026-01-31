@@ -1451,7 +1451,7 @@ typedef struct
 #define ETH_WAKEUP_REGISTER_LENGTH                8U                                            /*!< remote wake-up frame register length */
 
 /* ENET frame size */ 
-#define ENET_MAX_FRAME_SIZE                       1024U                                         /*!< header + frame_extra + payload + CRC */    
+#define ENET_MAX_FRAME_SIZE                  1550  /*   1024U */                                         /*!< header + frame_extra + payload + CRC */    
 
 /* ENET delay timeout */
 #define ENET_DELAY_TO                             ((uint32_t)0x0004FFFFU)                       /*!< ENET delay timeout */
