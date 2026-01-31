@@ -125,9 +125,10 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "GNU")
 
     #firmware_size(${TARGET_NAME})
 
+    string(TIMESTAMP TODAY "%Y%m%d")
 #    #-- Custom commands ------------------------------------------------------------
     ADD_CUSTOM_COMMAND(TARGET ${TARGET_NAME} POST_BUILD
-            COMMAND ${CMAKE_OBJCOPY} "-Oihex" ${TARGET_NAME}.elf ${CMAKE_BINARY_DIR}/${TARGET_NAME}.hex
+            COMMAND ${CMAKE_OBJCOPY} "-Oihex" ${TARGET_NAME}.elf ${CMAKE_BINARY_DIR}/${TARGET_NAME}_${TODAY}.hex
             COMMAND ${CMAKE_OBJCOPY} "-Obinary" ${TARGET_NAME}.elf ${CMAKE_BINARY_DIR}/${TARGET_NAME}.bin
             COMMAND ${CMAKE_OBJDUMP} "-DS" ${TARGET_NAME}.elf > ${CMAKE_BINARY_DIR}/${TARGET_NAME}.dasm
             #COMMAND ${CMAKE_SIZE} ${PROJECT_NAME}.elf
