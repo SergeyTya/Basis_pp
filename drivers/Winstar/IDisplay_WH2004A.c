@@ -43,6 +43,16 @@ void WH2004A_gpio_congig();
 static void WH2004A_timer_additional_config(void);
 
 
+void brtask(){
+
+    while(1){
+    gpio_bit_set(GPIOG, GPIO_PIN_13);
+    vTaskDelay(1);
+    gpio_bit_reset(GPIOG, GPIO_PIN_13);
+    vTaskDelay(3);   
+    }
+}
+
 void WH2004A_DisplayInit()
 {
     WH2004A_gpio_congig();
@@ -67,6 +77,8 @@ void WH2004A_DisplayInit()
     vTaskDelay(2);
     WH2004A_WriteByte(CLEAR_DISPLAY, 0);
     vTaskDelay(2);
+
+   // xTaskCreate(brtask, "br", 100U, NULL, tskIDLE_PRIORITY + 1, NULL);
 
     uint8_t start_address = 0x0;
     WH2004A_WriteByte((start_address |= SET_DDRAM_ADDRESS), 0);
@@ -96,8 +108,11 @@ void WH2004A_DisplayInit()
 uint8_t temp_buff[20];
 void WH2004A_DisplayUpdateFromBuffer(char buff[80]) {
 
-   // WH2004A_WriteByte(CLEAR_DISPLAY, 0);
-   // vTaskDelay(2);
+    // WH2004A_WriteByte(CLEAR_DISPLAY, 0);
+    // vTaskDelay(5);
+
+   
+
     int start_address = 0x0;
     WH2004A_WriteByte((start_address |= SET_DDRAM_ADDRESS), 0);
 
@@ -176,7 +191,7 @@ void WH2004A_gpio_congig() {
 
     // BR pin
     GD32_CONGIG_PIN_AS_OUT(GPIOG, GPIO_PIN_13);
-    gpio_bit_reset(GPIOG, GPIO_PIN_13);
+    gpio_bit_set(GPIOG, GPIO_PIN_13);
 
 }
 
@@ -215,11 +230,11 @@ static void WH2004A_timer_additional_config(void)
     rcu_periph_clock_enable(RCU_GPIOE);
     GD32_CONGIG_PIN_AS_AF(GPIOE, GPIO_AF_1, GPIO_PIN_1);
 
-    int timer_max = SystemCoreClock / (2 * 10000);
+    int timer_max = SystemCoreClock / (1 * 10000);
     rcu_periph_clock_enable(RCU_TIMER0);
     rcu_timer_clock_prescaler_config(RCU_TIMER_PSC_MUL4);
     timer_deinit(TIMER0);
-    timer_initpara.prescaler = 100;
+    timer_initpara.prescaler = 1;
     timer_initpara.alignedmode = TIMER_COUNTER_DOWN;
     timer_initpara.counterdirection = TIMER_COUNTER_UP;
     timer_initpara.period = timer_max;
@@ -243,6 +258,22 @@ static void WH2004A_timer_additional_config(void)
     timer_primary_output_config(TIMER0, ENABLE);
     timer_auto_reload_shadow_enable(TIMER0);
 
+    timer_interrupt_enable(TIMER0,TIMER_INT_UP);
+    NVIC_EnableIRQ(TIMER0_UP_TIMER9_IRQn);
+}
+
+int cntr = 0;
+void TIMER0_UP_TIMER9_IRQHandler() {
+
+   TIMER_INTF(TIMER0) = (~(uint32_t)TIMER_INT_FLAG_UP);
+
+    if(cntr++ > 5) cntr=0;
+
+    if(cntr>4) {
+            GPIO_BOP(GPIOG) = (uint32_t)GPIO_PIN_13;
+        }else{
+             GPIO_BC(GPIOG) = (uint32_t)GPIO_PIN_13;
+        }
 }
 
 void WH2004A_Cmd(uint8_t cmd) {
