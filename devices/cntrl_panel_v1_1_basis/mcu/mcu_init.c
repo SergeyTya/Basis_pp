@@ -15,16 +15,26 @@
 
 void vMCU_init()
 {
+
+  //RDO 1-5
+  rcu_periph_clock_enable(RCU_GPIOE);
+  gpio_mode_set(GPIOE, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLDOWN, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6);
+  gpio_output_options_set(GPIOE, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6);
+  // all RDO disabled
+  gpio_bit_set(GPIOE, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6);
+
+
+ 
   __disable_irq();
 
   rcu_periph_clock_enable(RCU_GPIOG);
 
+  
   //LEDS
   GD32_CONGIG_PIN_AS_OUT(GPIOG, GPIO_PIN_4);
   GD32_CONGIG_PIN_AS_OUT(GPIOG, GPIO_PIN_5);
   GD32_CONGIG_PIN_AS_OUT(GPIOG, GPIO_PIN_6);
   GD32_CONGIG_PIN_AS_OUT(GPIOG, GPIO_PIN_7);
-
   gpio_bit_set(GPIOG, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7);
 
 
@@ -79,19 +89,8 @@ void vMCU_init()
   for (size_t i = 0; i < 10000000; i++)
   {
   /* code */;
- }
-
-
+  }
   __enable_irq();
-
-  rcu_periph_clock_enable(RCU_GPIOE);
-  //RDO 1-5
-  gpio_mode_set(GPIOE, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLDOWN, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6);
-  gpio_output_options_set(GPIOE, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6);
-
-  // all RDO disabled
-  gpio_bit_set(GPIOE, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6);
-
 }
 
 
