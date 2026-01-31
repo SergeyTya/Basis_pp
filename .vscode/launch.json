@@ -70,6 +70,37 @@
             //"device": "STM32F407ZE",
             "svdFile": "${workspaceFolder}/drivers/GD32F4xx_Firmware_Library_V3.0.2/GD32F4xx.svd",
             
+        },
+
+        {
+            "type": "cortex-debug",
+            "request": "launch",
+            "name": "GD_nix",
+            "cwd": "${workspaceFolder}",
+          
+            "serverArgs": [],
+            "servertype": "jlink",
+            "interface": "swd",
+            "runToEntryPoint": "main",
+            
+           
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 1
+            },
+
+            "gdbPath": "gdb-multiarch",
+            "serverpath": "/opt/SEGGER/JLink/JLinkGDBServerCLExe",
+            "armToolchainPath": "/usr/bin/",
+
+            // "gdbPath": "C:/WORK/ThirdParty/arm-none-eabi/bin/arm-none-eabi-gdb.exe",
+            // "serverpath": "C:/Program Files (x86)/SEGGER/JLink_V682g/JLinkGDBServerCL.exe",
+
+            "executable": "${workspaceFolder}/build/cntrl_panel_v1_1_basis.elf",
+            "device": "GD32F450ZI",
+            //"device": "STM32F407ZE",
+            "svdFile": "${workspaceFolder}/drivers/GD32F4xx_Firmware_Library_V3.0.2/GD32F4xx.svd",
+            
         }
     ]
 }
