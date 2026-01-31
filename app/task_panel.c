@@ -1559,18 +1559,21 @@ static void Page_EnergyMeter(void * arg)
        meter_to_cnt++;
     }
 
+    int16_t t = ((int32_t)(temp_ext * 10.f)) / 10;
+    uint16_t udc = ((uint32_t) m->U[0].value_disp*244U)/100U;
+
     if(meter_to_cnt>=100){
         meter_to_cnt = 100;
         const char errmsg[]  = "    NOT CONNECTED   ";
         const char errmsg1[] = "     PRESS ENTER    ";
         snprintf(&pntr[20], sizeof(errmsg), errmsg); 
         snprintf(&pntr[40], sizeof(errmsg1), errmsg1);
+        snprintf(&pntr[60], 20, "       T,C %3d",  t);
 
     }else{
-        int16_t t = ((int32_t)(temp_ext * 10.f)) / 10;
-        uint16_t udc = (m->U[0].value_disp/10)*14;
-        snprintf(&pntr[ 0], 21, "P %3d Q %3d    [1/1]", (int) m->Power_re.value_disp, (int) m->Power_im.value_disp );
-        snprintf(&pntr[20], 20, "ULL,B  %3d %3d %3d",m->U[0].value_disp, m->U[1].value_disp, m->U[2].value_disp);
+
+        snprintf(&pntr[ 0], 20, "S,kBA  %3d         ", (int) m->Power_s.value_disp);
+        snprintf(&pntr[20], 20, "ULN,B  %3d %3d %3d",m->U[0].value_disp, m->U[1].value_disp, m->U[2].value_disp);
         snprintf(&pntr[40], 20, "ILN,A  %3d %3d %3d",m->I[0].value_disp, m->I[1].value_disp, m->I[2].value_disp);
         snprintf(&pntr[60], 20, "UDC,V %3d T,C %3d", udc, t);
     }

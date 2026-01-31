@@ -5,8 +5,14 @@
 #include "masterTransport.h"
 #include "meter.h"
 
-uint16_t meter_chint_buff[0x20];
-float meter_chint_val[0x10];
+#define CHINT_HR_CNT 20
+
+uint16_t meter_chint_buff[CHINT_HR_CNT];
+float meter_chint_val[CHINT_HR_CNT/2];
+
+//IrAr = 750
+//UrAr = 1
+
 
 void meter_read(void *mtr)
 {
@@ -24,26 +30,27 @@ void meter_read(void *mtr)
     usart_baudrate_set(USART0, 19200);
 
     // Read voltage
-    m->state = master_readHoldingsOs(m->adr, 0x2000, 0x20, meter_chint_buff);
+    m->state = master_readHoldingsOs(m->adr, 0x2000, CHINT_HR_CNT, meter_chint_buff);
 
     size_t j =0;
-    for (size_t i = 0; i < 10; i++)
+    for (size_t i = 0; i < CHINT_HR_CNT/2; i++)
     {
         fv.u16[1] = meter_chint_buff[j++];
         fv.u16[0] = meter_chint_buff[j++];
         meter_chint_val[i] = fv.f;
     }
 
-    m->Power_re.value_disp = 0;
-    m->Power_im.value_disp = 0;
+    float St = 0;
     for (size_t i = 0; i < 3; i++)
     {
-        m->U[i].value_disp = (uint16_t) meter_chint_val[i+0]/10; 
-        m->I[i].value_disp = (uint16_t) meter_chint_val[i+6]/10;
-        
-        m->Power_re.value_disp += (uint16_t) meter_chint_val[i+9]/10; 
-        m->Power_im.value_disp += (uint16_t) meter_chint_val[i+12]/10; 
+        float Uf = meter_chint_val[i+0]*0.1f;
+        float If = meter_chint_val[i+6]*0.75f;
+        m->U[i].value_disp = (uint16_t) Uf; 
+        m->I[i].value_disp = (uint16_t) If;
+        St += Uf*If;
     }
+
+    m->Power_s.value_disp = (uint16_t) ( St/1000.f);
 
     usart_word_length_set(USART0, USART_WL_9BIT);
     usart_parity_check_coherence_config(USART0, USART_PCM_EN);

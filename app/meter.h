@@ -22,6 +22,7 @@ typedef struct
     
     Typedef_MeterEntry Power_re;
     Typedef_MeterEntry Power_im;
+    Typedef_MeterEntry Power_s;
     Typedef_MeterEntry U[3];
     Typedef_MeterEntry I[3];
 
