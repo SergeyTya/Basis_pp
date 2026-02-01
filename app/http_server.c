@@ -42,12 +42,32 @@ err_t http_sent(void *arg, struct tcp_pcb *pcb, u16_t len)
    u16_t http_sent_mss ;
    u16_t http_sent_len;
 
-   // char *data = (char *)mem_malloc(1460);
-  //  if(data ==  NULL) return ERR_MEM;
-
-  //  while (hs->file_offset < hs->content_len - 1)
-
+   while (hs->content_len !=0)
+   {
+    /* code */
+   
     size_t content_sz = 1460;
+   
+
+    if(hs->file_offset == 0){
+            size_t ofst = 0;
+            for (size_t i = 0; i < 20; i++){
+
+            ofst += snprintf(&http_dyndata[ofst], 73,
+                        "<tr>"
+                        "<td>%5d</td>"
+                        "<td>%3d</td> "
+                        "<td>%3d</td>"
+                        "<td>%3d</td>"
+                        "<td>%3d</td>"
+                        "</tr>"
+                        ,
+            65000, 100, 101, 100+hs->content_len, 100+i);
+                /* code */
+        }
+    }
+
+
 
     while (hs->file_offset < content_sz - 1) {
         http_sent_mss = tcp_mss(pcb);
@@ -70,8 +90,12 @@ err_t http_sent(void *arg, struct tcp_pcb *pcb, u16_t len)
         }
     }
 
+        hs->content_len --;
+        hs->file_offset = 0;
+    }
+
     
-   // tcp_write(pcb, html_end, strlen(html_end), TCP_WRITE_FLAG_COPY);
+    tcp_write(pcb, html_end, strlen(html_end), TCP_WRITE_FLAG_COPY);
 
     tcp_sent(pcb, NULL);
     //tcp_recv(pcb, http_close);
@@ -87,72 +111,38 @@ static err_t http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err
 {
       struct http_state *hs = (struct http_state *)arg;
 
-    if (err != ERR_OK)
-    {
-        return err;
-    }
-
-    if (p != NULL)
-    {
-        // Send HTTP response
-
-        // Освобождаем полученные данные (нам не нужно их читать)
-        pbuf_free(p);
-
-        hs->content_len = 1;
-        // Генерируем заголовок
-        int content_len = 1460*hs->content_len + strlen(html_head) + strlen(html_end);
-
-        // Формируем заголовок
-        int offset = 0;
-        offset += sprintf(&http_header[offset], "HTTP/1.1 200 OK\r\n");
-        offset += sprintf(&http_header[offset], "Content-Type: text/html\r\n");
-        offset += sprintf(&http_header[offset], "Content-Length: %d\r\n", content_len);
-        offset += sprintf(&http_header[offset], "Connection: Close\r\n");
-        offset += sprintf(&http_header[offset], "\r\n");
-
-        // Отправляем заголовок
-        err_t err1 = tcp_write(pcb, http_header, strlen(http_header), TCP_WRITE_FLAG_COPY);
-        if (err1 == ERR_OK)
-        {
-            err_t err1 = tcp_write(pcb, html_head, strlen(html_head), TCP_WRITE_FLAG_COPY);
-            if (err1 == ERR_OK){
-                hs->sent_header = 1;
-
-
-            for (size_t i = 0; i < 20; i++){
-
-                snprintf(&http_dyndata[i*73], 73,
-                        "<tr >"
-                        "<td>%5d</td>"
-                        "<td>%3d</td> "
-                        "<td>%3d</td>"
-                        "<td>%3d</td>"
-                        "<td>%3d</td>"
-                        "< /tr>"
-                        ,
-                65000, 100, 101, i, hs->content_len
-                );
-                /* code */
-            }
-
-                tcp_sent(pcb, http_sent); // Устанавливаем callback для отправки тела
-                http_sent(arg, pcb, 0);   // Начинаем отправку
-            }
-
-        }
-    }
-    else
-    {
-        // End of stream
+    if (p == NULL) {
+        // Соединение закрыто клиентом
+        tcp_sent(pcb, NULL);
+        http_state_free(hs);
         tcp_close(pcb);
         return ERR_OK;
     }
 
-    // Free received buffer
-    if (p != NULL)
-    {
-        pbuf_free(p);
+    // Освобождаем полученные данные (нам не нужно их читать)
+    pbuf_free(p);
+
+
+    hs->content_len  = 500;
+    int content_len = 1460*hs->content_len + strlen(html_head) + strlen(html_end);
+
+    // Формируем заголовок
+    int offset = 0;
+    offset += sprintf(&http_header[offset], "HTTP/1.1 200 OK\r\n");
+    offset += sprintf(&http_header[offset], "Content-Type: text/html\r\n");
+    offset += sprintf(&http_header[offset], "Content-Length: %d\r\n", content_len);
+    offset += sprintf(&http_header[offset], "Connection: Close\r\n");
+    offset += sprintf(&http_header[offset], "\r\n");
+
+    // Отправляем заголовок
+    err_t err1 = tcp_write(pcb, http_header, strlen(http_header), TCP_WRITE_FLAG_COPY);
+    if (err1 == ERR_OK) {
+        err1 = tcp_write(pcb, html_head, strlen(html_head), TCP_WRITE_FLAG_COPY);
+        if (err1 == ERR_OK) {
+            hs->sent_header = 1;
+            tcp_sent(pcb, http_sent);     // Устанавливаем callback для отправки тела
+            http_sent(arg, pcb, 0);       // Начинаем отправку
+        }
     }
     return ERR_OK;
 }

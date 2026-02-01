@@ -30,16 +30,16 @@ function(create_device target_name )
             ${APP_PATH}/task_scope.c
             ${APP_PATH}/task_ethercat.c
             ${APP_PATH}/mbsupport.c
-         #   ${APP_PATH}/http_server.c
-         #   ${APP_PATH}/http_data.c
+            ${APP_PATH}/http_server.c
+            ${APP_PATH}/http_data.c
             ${APP_PATH}/devices/${TARGET_NAME}/*.c
             ${APP_PATH}/IDisplay.c
             ${APP_PATH}/task_tempmes.c
             ${APP_PATH}/meter.c
             ${APP_PATH}/meter_chint.c
 
-            ${CMAKE_CURRENT_SOURCE_DIR}/http/http_server.c
-            ${CMAKE_CURRENT_SOURCE_DIR}/http/http_data.c
+         #   ${CMAKE_CURRENT_SOURCE_DIR}/http/http_server.c
+         #   ${CMAKE_CURRENT_SOURCE_DIR}/http/http_data.c
             )
  
  

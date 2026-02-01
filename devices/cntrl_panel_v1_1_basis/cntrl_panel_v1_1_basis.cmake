@@ -57,9 +57,9 @@ target_sources(${TARGET_NAME}  PUBLIC
  ${lwipcore4_SRCS}
  ${lwipapi_SRCS} 
  ${lwipnetif_SRCS} 
- ${LWIP_DIR}/port/GD32F4xx/FreeRTOS/ethernetif.c
+ #${LWIP_DIR}/port/GD32F4xx/FreeRTOS/ethernetif.c
  ${LWIP_DIR}/port/GD32F4xx/FreeRTOS/sys_arch.c
- #${LWIP_DIR}/port/GD32F4xx/Basic/ethernetif.c
+ ${LWIP_DIR}/port/GD32F4xx/Basic/ethernetif.c
  ${LWIP_DIR}/port/GD32F4xx/hw/gd32f4xx_enet_init.c
  ${LWIP_DIR}/port/GD32F4xx/app/netconf.c
  
