@@ -5,7 +5,6 @@ const char * html_head =
     "<div style='text-align:center'>"
     "<a href='https://bazisaero.ru/' target='_blank' style='display:inline-block;padding:10px 20px;background:#ff6f61;color:white;border-radius:8px;text-decoration:none'>"
     "Visit our website</a></div>"
-    "<footer style='text-align:center;margin-top:20px;font-size:0.8em;opacity:0.7'>©<a href='https://bazisaero.ru/' target='_blank' style='color:#ffdd57'>Bazis Aero 2023</a></footer>"
     "<p style='text-align:center;margin:20px'>Power source embedded log</p>"
     "<table border='1' cellspacing='0' cellpadding='5' width='500' align='center' style='border: 1px solid #553'>"
     "<tr bgcolor='#645104ff'>"

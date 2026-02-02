@@ -14,7 +14,7 @@
 
 #include "gd32f4xx_libopt.h"
 
-#include "GD25Q32E.h"
+#include "GD25Q32E_port.h"
 
 uint8_t GD25Q32_spi_send_array[GD25Q32_BUF_SZ] = {0};
 uint8_t GD25Q32_spi_receive_array[GD25Q32_BUF_SZ] = {0};
@@ -40,7 +40,9 @@ static void GD25Q32_DMA_enable(int32_t cnt);
 static void GD25Q32_DMA_enable(int32_t cnt)
 {
     // memset(GD25Q32_spi_receive_array, 0, GD25Q32_BUF_SZ);
+    
     gpio_bit_reset(GD25Q32_SPI_NSS_PORT, GD25Q32_SPI_NSS_PIN);
+    spi_enable(GD25Q32_SPI);
 
     dma_transfer_number_config(GD25Q32_SPI_TX_DMA, cnt); // setup dma max transfers
     dma_transfer_number_config(GD25Q32_SPI_RX_DMA, cnt);
@@ -53,12 +55,10 @@ static void GD25Q32_DMA_enable(int32_t cnt)
 
     dma_channel_enable(GD25Q32_SPI_RX_DMA);
     dma_channel_enable(GD25Q32_SPI_TX_DMA);
-    spi_i2s_interrupt_enable(GD25Q32_SPI, SPI_I2S_INT_TBE);
 }
 
 void GD25Q32_DMA_disable()
 {
-    spi_i2s_interrupt_disable(GD25Q32_SPI, SPI_I2S_INT_TBE);
     gpio_bit_set(GD25Q32_SPI_NSS_PORT, GD25Q32_SPI_NSS_PIN);
 
     spi_dma_disable(GD25Q32_SPI, SPI_DMA_RECEIVE);
@@ -69,6 +69,8 @@ void GD25Q32_DMA_disable()
 
     dma_flag_clear(GD25Q32_SPI_TX_DMA, DMA_FLAG_FTF); // clean dma transfer finishing flag
     dma_flag_clear(GD25Q32_SPI_RX_DMA, DMA_FLAG_FTF);
+
+    spi_disable(GD25Q32_SPI);
 }
 
 /**
@@ -98,14 +100,16 @@ void GD25Q32_hard_init()
     GD25Q32_spi_struct.device_mode = SPI_MASTER;
     GD25Q32_spi_struct.frame_size = SPI_FRAMESIZE_8BIT;
     GD25Q32_spi_struct.clock_polarity_phase = SPI_CK_PL_HIGH_PH_2EDGE;
-    GD25Q32_spi_struct.prescale = SPI_PSC_32;
+    GD25Q32_spi_struct.prescale = SPI_PSC_128  ;
     GD25Q32_spi_struct.nss = SPI_NSS_HARD;
     GD25Q32_spi_struct.endian = SPI_ENDIAN_MSB;
+    
 
     spi_init(GD25Q32_SPI, &GD25Q32_spi_struct);
     spi_nss_output_enable(GD25Q32_SPI);
-
     spi_enable(GD25Q32_SPI);
+
+
     //nvic_irq_enable(GD25Q32_SPI_IRQn, 5, 1);
 
     dma_single_data_para_struct_init(&dma_init_struct);
@@ -131,7 +135,7 @@ void GD25Q32_hard_init()
     dma_init_struct.direction = DMA_PERIPH_TO_MEMORY;
     dma_init_struct.priority = DMA_PRIORITY_ULTRA_HIGH;
     dma_single_data_mode_init(GD25Q32_SPI_RX_DMA, &dma_init_struct);
-    dma_channel_subperipheral_select(GD25Q32_SPI_TX_DMA, GD25Q32_SPI_DMA_SUBPERI);
+    dma_channel_subperipheral_select(GD25Q32_SPI_RX_DMA, GD25Q32_SPI_DMA_SUBPERI);
     /* configure DMA mode */
     dma_circulation_disable(GD25Q32_SPI_RX_DMA);
 
@@ -170,15 +174,6 @@ void GD25Q32_GetDataFromRxBuff(uint8_t *dst, size_t offset, size_t size)
     }
 }
 
-// void GD25Q32_SPI_IRQHandler()
-// {
-
-//     if (GD25Q32_await_transaction_end() == true)
-//     {
-//         spi_i2s_interrupt_disable(GD25Q32_SPI, SPI_I2S_INT_TBE);
-//         GD25Q32_DMA_disable();
-//     }
-// }
 
 /**
  * @brief Read transaction end flag, if done reset NSS pin

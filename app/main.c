@@ -27,6 +27,8 @@
 
 #include "task_tempmes.h"
 
+#include "task_logger.h"
+
 
 
 uint16_t holdings[256];
@@ -68,6 +70,8 @@ int main() {
   xTaskCreate(TaskLive, "Hartbeat", 100U, NULL, tskIDLE_PRIORITY + 8, NULL);
   xTaskCreate(vTask_TemperatureControl, "Tempmes", 100U, NULL, tskIDLE_PRIORITY + 1, NULL);
 
+  xTaskCreate(vTask_logger_writer, "logger_writer", 100U, NULL, tskIDLE_PRIORITY + 1, NULL);
+  
   vTaskStartScheduler();
   return 0;
 }

@@ -12,11 +12,8 @@
 #include "stdbool.h"
 #include "string.h"
 
-#include "gd32f4xx_libopt.h"
-
 #include "GD25Q32E.h"
 #include "GD25Q32_os.h"
-#include "hoursCounter.h"
 
 #include "FreeRTOS.h"
 #include "task.h"

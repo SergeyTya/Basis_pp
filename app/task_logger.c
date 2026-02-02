@@ -18,7 +18,7 @@
 #include "task_logger.h"
 
 #define MOTOR_HOUR_COUNTER_TIME_STEP_SEC 5U
-#define MOTOR_HOUR_COUNTER_SECTORS_SIZE  100U
+#define MOTOR_HOUR_COUNTER_SECTORS_SIZE  0U
 
 extern uint8_t page_gd25_tx[256];
 extern uint8_t page_gd25_rx[256];
@@ -42,25 +42,30 @@ volatile uint32_t adr_cnt    = 0;
 volatile uint32_t adr_rx = 0;
 
 static uint16_t crc16(uint8_t *data, int len);
-void vTask_LoggerReader();
+
 void Logger_ErrorHandler();
 void Logger_search_valid_record();
 bool Logger_checkRecordCRC16(Typedef_LoggerRecord * rec);
 
 // use block 1 as work hour counter
-void vTask_MotorHoursCounter(){
+void vTask_logger_writer(){
   semaphore_MHC = xSemaphoreCreateBinary();
   xSemaphoreGive(semaphore_MHC);
 
+  bool check_mem_id = true;
+  
   memset(page_gd25_tx, 0xFF, 256);
   vTaskDelay(1);
   vGD25HardWareInit();
   vGD25WriteEnableAsync();
   vGD25ReadIDAsync(GD25_ID);
   vGD25ReadRDIDAsync(GD25_RDID);
-  vGD25PageReadAsync(4096*(MOTOR_HOUR_COUNTER_SECTORS_SIZE + 1), page_gd25_rx);
+  vGD25PageReadAsync((MOTOR_HOUR_COUNTER_SECTORS_SIZE), page_gd25_rx);
 
-  bool check_mem_id = true;
+  vTaskDelay(1);
+  vGD25PageReadAsync((MOTOR_HOUR_COUNTER_SECTORS_SIZE), page_gd25_rx);
+
+  
   for (size_t i = 0; i < 16; i++)
   {
     if(GD25_ID[i] != page_gd25_rx[i]){
@@ -68,18 +73,21 @@ void vTask_MotorHoursCounter(){
       break;
     }
   }
-  
+
   if(check_mem_id == false){
     vGD25SectorErase(0);
-    vGD25SectorErase(MOTOR_HOUR_COUNTER_SECTORS_SIZE + 1);
+    //vGD25SectorErase(MOTOR_HOUR_COUNTER_SECTORS_SIZE + 1);
     memset(page_gd25_tx, 0xFF, sizeof(page_gd25_tx));
     memcpy(page_gd25_tx, GD25_ID, 16);
-    vGD25PageProgramAsync(MOTOR_HOUR_COUNTER_SECTORS_SIZE + 1, page_gd25_tx);
+    vGD25PageProgramAsync(MOTOR_HOUR_COUNTER_SECTORS_SIZE, page_gd25_tx);
+    memset(page_gd25_rx, 0xFF, 256);
+    vGD25PageReadAsync((MOTOR_HOUR_COUNTER_SECTORS_SIZE), page_gd25_rx);
+   // vGD25SectorErase(0x1000U*1); // erase sector
   }else{
     Logger_search_valid_record();
   }
 
-  xTaskCreate(vTask_LoggerReader, "", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY+1, NULL);
+  xTaskCreate(vTask_logger_reader, "", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY+1, NULL);
   
   while(1){
 
@@ -132,7 +140,7 @@ void vTask_MotorHoursCounter(){
   vTaskDelete(NULL);
 }
 
-void vTask_LoggerReader(){
+void vTask_logger_reader(){
   vTaskDelay(1000);
   while(1){
 
@@ -175,7 +183,7 @@ void Logger_search_valid_record(){
               }
               vGD25PageReadAsync(tmp_adr, page_gd25_rx);
               i = 3;
-              if(MHC_checkRecordCRC16(&(tmp_records[i])) == false){
+              if(Logger_checkRecordCRC16(&(tmp_records[i])) == false){
                 Logger_ErrorHandler();
               }
           }else{
@@ -184,7 +192,7 @@ void Logger_search_valid_record(){
           time_glob = tmp_records[i];
           return;
       }
-      if(MHC_checkRecordCRC16(&(tmp_records[i])) == false){
+      if(Logger_checkRecordCRC16(&(tmp_records[i])) == false){
         Logger_ErrorHandler();
       }
       record_cnt++;
@@ -222,7 +230,7 @@ static uint16_t crc16(uint8_t *data, int len) {
     return crc;
 }
 
-void MHC_ErrorHandler(){
+void Logger_ErrorHandler(){
   while (1)
   {
     vTaskDelay(1000);

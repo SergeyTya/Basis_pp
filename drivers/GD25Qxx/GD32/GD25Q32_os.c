@@ -13,9 +13,9 @@
 #include "stdbool.h"
 #include "string.h"
 
-#include "gd32f4xx_libopt.h"
 
 #include "GD25Q32E.h"
+#include "GD25Q32E_port.h"
 #include "GD25Q32_os.h"
 
 #include "FreeRTOS.h"
@@ -24,24 +24,13 @@
 extern uint8_t flashID[16];
 
 static uint8_t ui8GD25ReadRDSRAsync(uint8_t num);
+void gd32_send_await(uint8_t* req, Typedef_gd25q32Cmd* cmd);
 
 #define GD23Q32_STATUS_BYTE1 1
 #define GD23Q32_STATUS_BYTE2 2
 #define GD23Q32_STATUS_BYTE3 3
-
-#define GD25Q32_SEND_AWAIT(REQ, CMD)      \
-   {                                      \
-      GD25Q32_SEND(REQ, CMD);             \
-      while (1)                           \
-      {                                   \
-         if (GD25Q32_IS_TRANSACTION_DONE) \
-         {                                \
-            GD25Q32_TRANSACTION_CLOSE;    \
-            break;                        \
-         }                                \
-          vTaskDelay(1);                  \
-      }                                   \
-   }
+\
+#define GD25Q32_SEND_AWAIT(REQ, CMD) gd32_send_await(&REQ, &CMD);
 
 #define GD25Q32_FLAG_AWAIT_RESET(READ_FLAG_ASYNC) \
    {                                              \
@@ -57,10 +46,18 @@ static uint8_t ui8GD25ReadRDSRAsync(uint8_t num);
          ;                                      \
       }                                         \
    }
-   
+
+void gd32_send_await(uint8_t* req, Typedef_gd25q32Cmd* cmd) {
+   GD25Q32_sendData(req, cmd->req_sz, cmd->res_sz);
+   while ( !GD25Q32_IS_TRANSACTION_RX_DONE ) {
+      vTaskDelay(1);
+   }
+   GD25Q32_DMA_disable();
+}
+
 /**
  * MCU Hardware init
- */   
+ */
 void vGD25HardWareInit()
 {
    GD25Q32_hard_init();
@@ -73,33 +70,33 @@ void vGD25HardWareInit()
 void vGD25ReadIDAsync(uint8_t id[16])
 {
    Typedef_gd25q32Cmd cmd = GD25Q32_COMMAND_READ_ID;
-   uint8_t req[5] = {cmd.id, 0, 0, 0, 0};
+   uint8_t req[5] = { cmd.id, 0, 0, 0, 0 };
    GD25Q32_SEND_AWAIT(req, cmd);
    GD25Q32_READ_BUFF(id, cmd.req_sz, cmd.res_sz);
 }
 /**
  * Read Identification (RDID) (9FH)
- * 
+ *
  * Manufacture ID/Memory type/Memory capacity
- * 
+ *
  * C8/40/16 for GD25Q32
- * 
+ *
  * @param {uint8_t * id[2]}  - pointer to dest array
  */
 void vGD25ReadRDIDAsync(uint8_t id[3])
 {
    Typedef_gd25q32Cmd cmd = GD25Q32_COMMAND_READ_RDID;
-   uint8_t req[1] = {cmd.id};
+   uint8_t req[1] = { cmd.id };
    GD25Q32_SEND_AWAIT(req, cmd);
    GD25Q32_READ_BUFF(id, cmd.req_sz, cmd.res_sz);
 }
 /**
  * Write enable (06H)
  */
-void vGD25WriteEnableAsync()
+void  vGD25WriteEnableAsync()
 {
    Typedef_gd25q32Cmd cmd = GD25Q32_COMMAND_WREN;
-   uint8_t req[1] = {cmd.id};
+   uint8_t req[1] = { cmd.id };
    GD25Q32_SEND_AWAIT(req, cmd);
 }
 /**
@@ -108,12 +105,12 @@ void vGD25WriteEnableAsync()
 void vGD25WriteDisableAsync()
 {
    Typedef_gd25q32Cmd cmd = GD25Q32_COMMAND_WRDI;
-   uint8_t req[1] = {cmd.id};
+   uint8_t req[1] = { cmd.id };
    GD25Q32_SEND_AWAIT(req, cmd);
 }
 
 /**
- * Read status flag byte 
+ * Read status flag byte
  * @param  {uint8_t num} options:
  * @param  GD23Q32_STATUS_BYTE1
  * @param  GD23Q32_STATUS_BYTE2
@@ -135,7 +132,7 @@ static uint8_t ui8GD25ReadRDSRAsync(uint8_t num)
    default:
       break;
    }
-   uint8_t req[2] = {cmd.id, 0};
+   uint8_t req[2] = { cmd.id, 0 };
    GD25Q32_SEND_AWAIT(req, cmd);
    uint8_t res = 0;
    GD25Q32_READ_BUFF(&res, 1, 1);
@@ -143,7 +140,7 @@ static uint8_t ui8GD25ReadRDSRAsync(uint8_t num)
 }
 /**
  * Read "Write in Progress" flag
- * 
+ *
  * @retval {bool} flag status
  */
 bool blGD25ReadWIPFlagAsync()
@@ -155,7 +152,7 @@ bool blGD25ReadWIPFlagAsync()
 
 /**
  * Read Write Enable Latch flag
- * 
+ *
  * @retval {bool} flag status
  */
 bool blGD25ReadWELFlagAsync()
@@ -168,7 +165,7 @@ bool blGD25ReadWELFlagAsync()
 /**
  * Program 256 byte  (write/disable included)
  * @param  {uint32_t adr}  24-bit address
- * @param  {uint8_t* } pointer to 256 byte data 
+ * @param  {uint8_t* } pointer to 256 byte data
  */
 void vGD25PageProgramAsync(uint32_t adr, uint8_t page[256])
 {
@@ -177,9 +174,9 @@ void vGD25PageProgramAsync(uint32_t adr, uint8_t page[256])
 
    Typedef_gd25q32Cmd cmd = GD25Q32_COMMAND_PW;
    GD25Q32_TX_BUF[0] = cmd.id;
-   GD25Q32_TX_BUF[1] = ((uint8_t *)&adr)[2];
-   GD25Q32_TX_BUF[2] = ((uint8_t *)&adr)[1];
-   GD25Q32_TX_BUF[3] = ((uint8_t *)&adr)[0];
+   GD25Q32_TX_BUF[1] = ((uint8_t*)&adr)[2];
+   GD25Q32_TX_BUF[2] = ((uint8_t*)&adr)[1];
+   GD25Q32_TX_BUF[3] = ((uint8_t*)&adr)[0];
    memcpy(&GD25Q32_TX_BUF[4], page, 256);
    GD25Q32_SEND_AWAIT(GD25Q32_TX_BUF, cmd);
 
@@ -191,18 +188,18 @@ void vGD25PageProgramAsync(uint32_t adr, uint8_t page[256])
  *
  * @param  {uint32_t adr }  24-bit address
  * @param  {uint8_t* page } pointer to data page
- * 
+ *
  */
 void vGD25PageReadAsync(uint32_t adr, uint8_t page[256])
 {
    Typedef_gd25q32Cmd cmd = GD25Q32_COMMAND_PR;
 
    GD25Q32_TX_BUF[0] = cmd.id;
-   GD25Q32_TX_BUF[1] = ((uint8_t *)&adr)[2];
-   GD25Q32_TX_BUF[2] = ((uint8_t *)&adr)[1];
-   GD25Q32_TX_BUF[3] = ((uint8_t *)&adr)[0];
+   GD25Q32_TX_BUF[1] = ((uint8_t*)&adr)[2];
+   GD25Q32_TX_BUF[2] = ((uint8_t*)&adr)[1];
+   GD25Q32_TX_BUF[3] = ((uint8_t*)&adr)[0];
    GD25Q32_SEND_AWAIT(GD25Q32_TX_BUF, cmd);
-   GD25Q32_READ_BUFF(page, 4, 256);  
+   GD25Q32_READ_BUFF(page, 4, 256);
 }
 /**
  * Erase 4096 byte sector
@@ -216,9 +213,9 @@ void vGD25SectorErase(uint32_t adr)
    Typedef_gd25q32Cmd cmd = GD25Q32_COMMAND_SE;
 
    GD25Q32_TX_BUF[0] = cmd.id;
-   GD25Q32_TX_BUF[1] = ((uint8_t *)&adr)[2];
-   GD25Q32_TX_BUF[2] = ((uint8_t *)&adr)[1];
-   GD25Q32_TX_BUF[3] = ((uint8_t *)&adr)[0];
+   GD25Q32_TX_BUF[1] = ((uint8_t*)&adr)[2];
+   GD25Q32_TX_BUF[2] = ((uint8_t*)&adr)[1];
+   GD25Q32_TX_BUF[3] = ((uint8_t*)&adr)[0];
 
    GD25Q32_SEND_AWAIT(GD25Q32_TX_BUF, cmd);
 
@@ -226,4 +223,4 @@ void vGD25SectorErase(uint32_t adr)
    vGD25WriteDisableAsync();
 }
 
-  
+

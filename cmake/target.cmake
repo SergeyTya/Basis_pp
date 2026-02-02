@@ -37,6 +37,7 @@ function(create_device target_name )
             ${APP_PATH}/task_tempmes.c
             ${APP_PATH}/meter.c
             ${APP_PATH}/meter_chint.c
+            ${APP_PATH}/task_logger.c
 
          #   ${CMAKE_CURRENT_SOURCE_DIR}/http/http_server.c
          #   ${CMAKE_CURRENT_SOURCE_DIR}/http/http_data.c
