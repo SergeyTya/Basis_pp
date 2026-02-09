@@ -2,6 +2,7 @@
 #define TASK_LOGGER_H_
 
 #include "stdint.h"
+#include "stdbool.h"
 
 typedef struct
 {
@@ -25,11 +26,22 @@ typedef struct{
     uint32_t state[2];
     uint32_t spare[5];
     uint16_t crc16;
-}Typedef_LoggerRecord;
+}Typedef_LoggerRecord;  // 64 byte size
+
+typedef struct
+{
+    uint16_t record_cnt ; // 64 byte record
+    uint32_t page_cnt   ; // 4 records per page  (256  byte page)
+    uint32_t sector_cnt ; // 52 records per sector (4096 byte sector, 16 pages)
+    uint32_t adr_cnt    ;
+}Typedef_Logger;
+
 
 
 void vTask_logger_writer();
 void vTask_logger_reader();
+
+bool Logger_checkRecordCRC16(Typedef_LoggerRecord * rec);
 
 
 #endif
