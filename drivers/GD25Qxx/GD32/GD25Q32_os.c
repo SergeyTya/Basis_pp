@@ -50,7 +50,7 @@ void gd32_send_await(uint8_t* req, Typedef_gd25q32Cmd* cmd);
 void gd32_send_await(uint8_t* req, Typedef_gd25q32Cmd* cmd) {
    GD25Q32_sendData(req, cmd->req_sz, cmd->res_sz);
    while ( !GD25Q32_IS_TRANSACTION_RX_DONE ) {
-      vTaskDelay(1);
+      vTaskDelay(2);
    }
    GD25Q32_DMA_disable();
 }
@@ -221,6 +221,8 @@ void vGD25SectorErase(uint32_t adr)
 
    GD25Q32_FLAG_AWAIT_RESET(blGD25ReadWIPFlagAsync());
    vGD25WriteDisableAsync();
+
+   vTaskDelay(10);
 }
 
 

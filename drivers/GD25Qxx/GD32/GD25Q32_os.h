@@ -18,15 +18,16 @@
 #include "croutine.h"
 
 
-void vGD25HardWareInit();
-void vGD25ReadIDAsync(uint8_t id[16]);
+void vGD25HardWareInit(); // Init hardware
+void vGD25ReadIDAsync(uint8_t id[16]); 
 void vGD25ReadRDIDAsync(uint8_t id[3]);
 void vGD25WriteEnableAsync();
 void vGD25WriteDisableAsync();
 bool blGD25ReadWIPFlagAsync();
 bool blGD25ReadWELFlagAsync();
-void vGD25PageProgramAsync(uint32_t adr, uint8_t page[256]);
-void vGD25PageReadAsync(uint32_t adr, uint8_t page[256]);
-void vGD25SectorErase(uint32_t adr);
+// Flash read write interface
+void vGD25PageProgramAsync(uint32_t adr, uint8_t page[256]); // programm  256 byte page
+void vGD25PageReadAsync(uint32_t adr, uint8_t page[256]); // read 256 byte page
+void vGD25SectorErase(uint32_t adr); // erase sector 4096 b sector
 
 #endif

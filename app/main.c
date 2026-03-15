@@ -57,21 +57,23 @@ int main() {
   }
 
   xTaskCreate(vTask_ethernet_start, "Estart", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL);
-  xTaskCreate(        vTask_Master, "Master", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
-  xTaskCreate(         vTask_Panel,  "Panel", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 4, NULL);
+  xTaskCreate(        vTask_Master, "Master", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 3, NULL);
+  xTaskCreate(         vTask_Panel,  "Panel", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 4, NULL);
   hw_hbl_set(2, 0);
-  xTaskCreate(vTask_keyboard, "Keyboard", 100U, NULL, tskIDLE_PRIORITY + 6, NULL);
+  xTaskCreate(vTask_keyboard, "Keyboard", 100U, NULL, tskIDLE_PRIORITY+ 6, NULL);
 
   if (panelConfig.ethercat.enable == 1) {
-    xTaskCreate(vTask_ethercat, "EtherCAT", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 8, NULL);
+    xTaskCreate(vTask_ethercat, "EtherCAT", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 7, NULL);
   }
 
   hw_hbl_set(3, 0);
   xTaskCreate(TaskLive, "Hartbeat", 100U, NULL, tskIDLE_PRIORITY + 8, NULL);
   xTaskCreate(vTask_TemperatureControl, "Tempmes", 100U, NULL, tskIDLE_PRIORITY + 1, NULL);
 
-  xTaskCreate(vTask_logger_writer, "logger_writer", 100U, NULL, tskIDLE_PRIORITY + 1, NULL);
-  
+ // xTaskCreate(vTask_logger_writer, "logger_writer", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
+  xTaskCreate(vTask_logger, "Logger", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 2, NULL);
+ 
+
   vTaskStartScheduler();
   return 0;
 }
@@ -99,7 +101,7 @@ void vTask_ethernet_start() {
   hw_hbl_set(1, 0);
 
   lwip_stack_init((uint8_t*)ipadr, (uint8_t*)ipmas);
-  http_server_init();
+  //http_server_init();
 
   if (panelConfig.modbus_RTU.enable == false) {
     xTaskCreate(vTask_modbusTCP, "ModbusSlaveTCP", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, NULL);

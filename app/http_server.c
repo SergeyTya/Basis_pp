@@ -50,7 +50,7 @@ extern uint8_t GD25_RDID[3];
 extern uint8_t logger_RxBuf[256];
 extern Typedef_LoggerRecord * logger_records_rx;
 
-extern Typedef_Logger logger;
+//extern Typedef_Logger logger;
 
 extern volatile uint32_t logger_adr_rx;
 
@@ -288,7 +288,7 @@ static err_t http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err
     hs->sent_header = 0;
     hs->content_len = 0;
     hs->done = 0;
-    logger_adr_rx = logger.adr_cnt;
+   // logger_adr_rx = logger.adr_cnt;
 
     if (p == NULL) {
         // Соединение закрыто клиентом

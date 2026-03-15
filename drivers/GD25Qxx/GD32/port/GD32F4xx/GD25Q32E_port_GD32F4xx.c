@@ -100,7 +100,7 @@ void GD25Q32_hard_init()
     GD25Q32_spi_struct.device_mode = SPI_MASTER;
     GD25Q32_spi_struct.frame_size = SPI_FRAMESIZE_8BIT;
     GD25Q32_spi_struct.clock_polarity_phase = SPI_CK_PL_HIGH_PH_2EDGE;
-    GD25Q32_spi_struct.prescale = SPI_PSC_128  ;
+    GD25Q32_spi_struct.prescale = SPI_PSC_32  ;
     GD25Q32_spi_struct.nss = SPI_NSS_HARD;
     GD25Q32_spi_struct.endian = SPI_ENDIAN_MSB;
     

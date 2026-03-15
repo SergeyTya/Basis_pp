@@ -12,6 +12,7 @@ function(create_device target_name )
             ${PROJECT_BINARY_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}
             ${CMAKE_CURRENT_SOURCE_DIR}/devices/${TARGET_NAME}
+            ${CMAKE_CURRENT_SOURCE_DIR}/../fifo_buffer
         )
 
     
@@ -37,7 +38,12 @@ function(create_device target_name )
             ${APP_PATH}/task_tempmes.c
             ${APP_PATH}/meter.c
             ${APP_PATH}/meter_chint.c
-            ${APP_PATH}/task_logger.c
+            ${APP_PATH}/task_loggerQ.c
+            ${APP_PATH}/clock.c
+            ${APP_PATH}/clock_oven.c
+            ${APP_PATH}/../fifo_buffer/fifo_buffer.c
+            ${APP_PATH}/../fifo_buffer/sma.c
+            ${APP_PATH}/crc16.c
 
          #   ${CMAKE_CURRENT_SOURCE_DIR}/http/http_server.c
          #   ${CMAKE_CURRENT_SOURCE_DIR}/http/http_data.c

@@ -10,6 +10,7 @@
 #include "timers.h"
 
 #include "meter.h"
+#include "clock.h"
 
 
 
@@ -17,6 +18,7 @@ TypeDef_Master master;
 
 extern Typedef_PanelConfig panelConfig;
 extern Typedef_Meter meter;
+extern Typedef_Clock clock;
 extern void master_LEDonFaultReset();
 extern void master_LEDonFaultState();
 extern void master_LEDonRUNstate(int dev);
@@ -36,11 +38,13 @@ xSemaphoreHandle xDisplayMasterR485Semaphore;
 static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int mask, int16_t offset);
 
 #define MASTER_TRANSPORT_CHECK_TIMEOUT( xstate ) {\
-        master.master_wdg[slaveAdr] = (xstate) != MASTER_TRANSPORT_NOERROR; \
+        TypedefEnum_MasterTransportSates res = (xstate) ; \
+       master.master_wdg[slaveAdr] = (res == MASTER_TRANSPORT_TIMEOUT); \
         if( master.master_wdg[slaveAdr] ){ \
             master.slaveStates[slaveAdr] = MASTER_STATE_onTIMEOUT; \
         } \
 };
+
 
 void vTask_MasterHWstates(void* argument);
 
@@ -69,18 +73,18 @@ void vTimerDC_Callback(TimerHandle_t xTimer) {
 
     xSemaphoreTake(xDisplayMasterR485Semaphore, portMAX_DELAY);
 
-    for (size_t i = 1; i < 5; i++) {
-        uint16_t slaveAdr = i;
-        if (xTimer == xTimers_StartDelay[i]) {
-            TypeDef_MB_Holding* holding;
-            TypeDef_MB_Table* table = &holdings_table[slaveAdr];
-            master.start_req_hw[slaveAdr] = false;
-            //send start;
-            holding = GetHoldingByAdrFromTable(104, table);
-            uint16_t valStart = *holding->pntr | 0x2;
-            master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart);
-        }
-    }
+    // for (size_t i = 1; i < 5; i++) {
+    //     uint16_t slaveAdr = i;
+    //     if (xTimer == xTimers_StartDelay[i]) {
+    //         TypeDef_MB_Holding* holding;
+    //         TypeDef_MB_Table* table = &holdings_table[slaveAdr];
+    //         master.start_req_hw[slaveAdr] = false;
+    //         //send start;
+    //         holding = GetHoldingByAdrFromTable(104, table);
+    //         uint16_t valStart = *holding->pntr | 0x2;
+    //         master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart);
+    //     }
+    // }
     xSemaphoreGive(xDisplayMasterR485Semaphore);
 }
 
@@ -116,7 +120,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
 
         TypeDef_MB_Holding* holding;
 
-        // master_LEDonWaitState(1);
+        // master_LEDonWaitForAcOkState(1);
 
          // /// test
          // xSemaphoreTake(xDisplayMasterR485Semaphore, portMAX_DELAY);
@@ -134,9 +138,9 @@ void vTask_Master(__attribute__((unused)) void* argument)
          // xSemaphoreGive(xDisplayMasterR485Semaphore);
          // continue;
 
-        for (size_t j = 1; j < 2; j++) // Read all slaves from j (slave addr) = 1 to 4
+        for (size_t j = 1; j < 5; j++) // Read all slaves from j (slave addr) = 1 to 4
         {
-            vTaskDelay(50); // dalay between slaves
+            vTaskDelay(10); // dalay between slaves
             // Current slave address
             uint16_t slaveAdr = j;
 
@@ -155,10 +159,16 @@ void vTask_Master(__attribute__((unused)) void* argument)
                 continue;
             }
 
+            // Reset start req if TO
+            if( master.slaveStates[slaveAdr] == MASTER_STATE_onTIMEOUT){
+                master.start_req_hw[slaveAdr]  = false;
+            }
+
             /* 3. Check slave states and handle start|stop req */
             if (slaveAdr == CONFIG_SLAVE_AC1 || slaveAdr == CONFIG_SLAVE_AC2)
             {
 
+        
                 // read AC slaves status
                 holding = GetHoldingByAdrFromTable(270, table);
                 MASTER_TRANSPORT_CHECK_TIMEOUT(
@@ -212,55 +222,85 @@ void vTask_Master(__attribute__((unused)) void* argument)
                                         master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valACStart)
                                     );
                                     master.start_req_hw[slaveAdr] = false;
-                                    master.start_req_hw[2] = false;
-                                    master.start_req_rdo[2] = false;
-                                    master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT;
-                                    master.slaveStates[2]        = MASTER_STATE_onWAIT;
+
+                                    /* Use this to control two channel by dc1 buttons */
+                                    // master.start_req_hw[2] = false;
+                                    // master.start_req_rdo[2] = false;
+                                    // master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT_FOR_AC_OK;
+                                    // master.slaveStates[2]        = MASTER_STATE_onWAIT_FOR_AC_OK;
+
+                                    master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT_FOR_AC_OK;
                                 }
                             }else{
                                  // Here we check if output voltage reach reference
-                                bool reached = false;
-
-                                uint16_t* (*foo)(uint16_t adr) = slaveAdr == 1? GetHoldingPntrByAdrFromAC1: GetHoldingPntrByAdrFromAC2;
-
-
-                                uint16_t U[3] = {
-                                    *foo(240),
-                                    *foo(241),
-                                    *foo(242),
-                                };
-
-                                uint16_t ref = (uint16_t) ((uint32_t)*foo(102) *95U / 100U);
-
-                                reached = (U[0] >= ref) && (U[1] >= ref) &&  (U[2] >= ref);
-
 
                                 if(master.start_req_rdo[slaveAdr]){
-                                        if( master.slaveStates[slaveAdr] == MASTER_STATE_onWAIT){
+                                        if( master.slaveStates[slaveAdr] == MASTER_STATE_onWAIT_FOR_AC_OK){
+
+                                             uint16_t Uacr[3]; uint16_t ref_ra;
+
+                                            master_readHoldingOs(slaveAdr, 240, &Uacr[0]);
+                                            master_readHoldingOs(slaveAdr, 241, &Uacr[1]);
+                                            master_readHoldingOs(slaveAdr, 242, &Uacr[2]);
+                                            master_readHoldingOs(slaveAdr, 102, &ref_ra);
+
+                                            bool reached = (Uacr[0] >= ref_ra) && (Uacr[1] >= ref_ra) &&  (Uacr[2] >= ref_ra);
+
                                             // if output voltage is good
                                             if(reached){
                                                 // Enable contactor RDO
-                                                 master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
+                                                 master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT_FOR_MAIN_RELAY;
                                             }
-                                        
-                                        }else{
-                                            // Enable PWM
-                                             master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT;
                                         }
+
                                         master.start_req_rdo[slaveAdr] = false;
                                 }
-                                // Kotstyl'
-                                if(master.start_req_rdo[2]){
-                                        if( master.slaveStates[2] == MASTER_STATE_onWAIT){
-                                            if(reached) {
-                                                master.slaveStates[2] = MASTER_STATE_onRUN;
-                                            };
 
-                                        }else{
-                                             master.slaveStates[2] = MASTER_STATE_onWAIT;
-                                        }
-                                        master.start_req_rdo[2] = false;
+                                // check main contactor feedback
+                                if(master.slaveStates[slaveAdr] == MASTER_STATE_onWAIT_FOR_MAIN_RELAY){
+                                    //read HR 220
+                                    uint16_t acreg220 = 0;
+                                    MASTER_TRANSPORT_CHECK_TIMEOUT(
+                                        master_readHoldingOs(slaveAdr, 220, &acreg220)
+                                    );
+
+                                    if((acreg220 & 0x2) != 0){
+                                         master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
+                                    }
                                 }
+
+                                if( // Timeout state
+                                        (master.slaveStates[slaveAdr]  == MASTER_STATE_onTIMEOUT)
+                                ){
+                                     uint16_t acreg220_2 = 0;
+                                    // Return after timeout
+                                    MASTER_TRANSPORT_CHECK_TIMEOUT(
+                                        master_readHoldingOs(slaveAdr, 220, &acreg220_2)
+                                    );
+
+                                    if((acreg220_2 & 0x2) != 0){
+                                        master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
+                                    }else{
+                                        master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT_FOR_AC_OK;
+                                    }
+
+                                }
+                                
+
+                                // Сделать обратный порядок выключения  краткое нажатие - контактор, длинное инвертор
+
+                                /* Use this to control two channel by dc1 buttons */
+                                // if(master.start_req_rdo[slaveAdr]){
+                                //         if( master.slaveStates[slaveAdr] == MASTER_STATE_onWAIT_FOR_STOP){
+                                //             if(reached) {
+                                //                 master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
+                                //             };
+
+                                //         }else{
+                                //              master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT_FOR_AC_OK;
+                                //         }
+                                //         master.start_req_rdo[2] = false;
+                                // }
 
                                 if(master.start_req_hw[slaveAdr]){
                                         //stop inverter (long press)
@@ -271,6 +311,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
                                         master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStopACx)
                                     );
                                 }
+
                             }
                     } //AC slave onTimeout state
                     
@@ -278,9 +319,11 @@ void vTask_Master(__attribute__((unused)) void* argument)
                         // AC slave onFAULT                        
                         master.start_req_hw[slaveAdr]  = false;
                         master.start_req_rdo[slaveAdr] = false;
-                        master.start_req_rdo[2] = false;
-                        master.start_req_hw[2] = false;
-                        master.slaveStates[2]          = MASTER_STATE_onFAULT;
+                        
+                        /* Use this to control two channel by dc1 buttons */
+                        // master.start_req_rdo[2] = false;
+                        // master.start_req_hw[2] = false;
+                        // master.slaveStates[2]          = MASTER_STATE_onFAULT;
                 }
 
             }
@@ -290,7 +333,7 @@ void vTask_Master(__attribute__((unused)) void* argument)
                 // Read status register
                 holding = GetHoldingByAdrFromTable(220, table);
                 MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr)
+                    master_readHoldingOs(slaveAdr,  220, holding->pntr)
                 );
 
                 if (!master.master_wdg[slaveAdr]) {//Skip if onTimeout state 
@@ -307,44 +350,86 @@ void vTask_Master(__attribute__((unused)) void* argument)
                         // stops active start requests
                         master.start_req_hw[slaveAdr] = false;
                     }
-                    else {
-                        master.fault_source[slaveAdr] = false;
-                    }
+                    else 
+                    if ((*holding->pntr & 0x1) != 0) { //DC RUN STATE (in RUN state bow bit RUN and RDY are 1)
+
+                        if(master.slaveStates[slaveAdr] == MASTER_STATE_onWAIT_FOR_AC_OK){
+                            // wait for output good
+
+                            uint16_t Uo = 0;
+                            uint16_t Ur = 0;
+
+                            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                                master_readHoldingOs(slaveAdr, 211, &Uo)
+                            );
+
+
+                            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                                master_readHoldingOs(slaveAdr, 102, &Ur)
+                            );
+
+                            if(Uo>Ur*8/10) {
+                                master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
+                            }
+                            
+                        }
+                        
+                        // Timeout state
+                        if (master.slaveStates[slaveAdr]  == MASTER_STATE_onTIMEOUT){
+                            master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT_FOR_AC_OK;
+                        }
+
+
+                      //  master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
+                        // DC onRun state
+                       
+                        // SLAVE START STOP
+                        if (master.start_req_hw[slaveAdr] == true) {
+                            //send stop;
+                            uint16_t valStop = 0;
+
+                            master_readHoldingOs(slaveAdr, 104, &valStop);
+
+                            valStop = valStop & ~(1U << 1); 
+                            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                                master_writeHoldingOs(slaveAdr, 104, valStop)
+                            );
+                            master.start_req_hw[slaveAdr] = false;
+
+                            vTaskDelay(10);
+                        }
+                    } else
+
                     /* Handle DC start|stop req */
-                    if ((*holding->pntr & 0x2) != 0) {
+                    if ((*holding->pntr & 0x2) != 0) { //DC READY STATE
+
+                        master.fault_source[slaveAdr] = false;
                         // DC onReady state
                         master.slaveStates[slaveAdr] = MASTER_STATE_onREADY;
                         // SLAVE START REQUEST
                         if (master.start_req_hw[slaveAdr] == true) {
-                            if (xTimerIsTimerActive(xTimers_StartDelay[slaveAdr]) == pdFALSE)
-                            { // Timer not started
-                                xTimerStart(xTimers_StartDelay[slaveAdr], 0);
-                            }
-                            else {
-                                master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT;
-                            }
-                        }
-                    }
+                               /**
+                                Нажимаем в течение 3-4 секунд кнопку DC, 
+                                светодиод DC начинает моргать и продолжает так делать, 
+                                пока выходное напряжение не будет равно заданному. 
+                                После этого постоянно светит и также в этот момент загорается светодиод ВКЛ.
+                            */
 
-                    if ((*holding->pntr & 0x1) != 0) {
-                        // DC onRun state
-                        master.slaveStates[slaveAdr] = MASTER_STATE_onRUN;
-                        // SLAVE START STOP
-                        if (master.start_req_hw[slaveAdr] == true) {
-                            //send stop;
-                            holding = GetHoldingByAdrFromTable(104, table);
-                            uint16_t valStart = *holding->pntr ^ 0x2U;
+                            uint16_t valStart = 0;     
                             MASTER_TRANSPORT_CHECK_TIMEOUT(
-                                master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStart)
-                            )
-                                master.start_req_hw[slaveAdr] = false;
-                            vTaskDelay(300);
+                                master_readHoldingOs(slaveAdr, 104, &valStart)
+                            );
+
+                            valStart =  valStart | 0x2;  
+                            master_writeHoldingOs(slaveAdr, 104, valStart);
+                            master.slaveStates[slaveAdr] = MASTER_STATE_onWAIT_FOR_AC_OK;
+                            master.start_req_hw[slaveAdr] = false;
+                            vTaskDelay(100);
                         }
                     }
-
-
+                    
+                   
                 }
-
             }
 
             /*  4. Check slave displayed */
@@ -385,6 +470,21 @@ void vTask_Master(__attribute__((unused)) void* argument)
                             master_writeHoldingOs(slaveAdr, 900, reg900CurVal)
                         );
                     }
+
+                    // save to DC slave memory
+                    if(slaveAdr == CONFIG_SLAVE_DC1 || slaveAdr == CONFIG_SLAVE_DC2){
+                        uint16_t reg170CurVal = 0;
+                        // read save control HR adr=900
+                        MASTER_TRANSPORT_CHECK_TIMEOUT(
+                            master_readHoldingOs(slaveAdr, 170, &reg170CurVal)
+                        );
+                        // modify bit 1
+                        reg170CurVal |= (1<<0);
+                        // send back
+                        MASTER_TRANSPORT_CHECK_TIMEOUT(
+                            master_writeHoldingOs(slaveAdr, 170, reg170CurVal)
+                        );
+                    }
                 }
 
                 // read holding value to slave
@@ -412,11 +512,14 @@ void vTask_Master(__attribute__((unused)) void* argument)
 
         // Read Meter
         if(meter.enable){
-            uint16_t meter_slv_adr = meter.adr;
-            if(meter_slv_adr >4 ) {
-                meter.read(&meter);  
-            }
+            meter.read(&meter); 
         }
+
+         // Read Clock
+        if(clock.enable){
+             clock.read(&clock);  
+        }
+
 
         xSemaphoreGive(xDisplayMasterR485Semaphore);
     }
@@ -496,8 +599,12 @@ void vTask_MasterHWstates(void* argument) {
                 master_LEDonRUNstate(i);
 
                 break;
-            case MASTER_STATE_onWAIT:
-                master_LEDonWaitState(i);
+            case MASTER_STATE_onWAIT_FOR_AC_OK:
+                master_LEDonWaitForAcOkState(i);
+                break;
+            case MASTER_STATE_onWAIT_FOR_MAIN_RELAY:
+                master_LEDonWaitForMainRelayState(i);
+                break;
 
             default:
                 break;

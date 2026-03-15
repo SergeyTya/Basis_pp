@@ -38,7 +38,7 @@ const TypeDef_AdvancedMenuItem acAdvancedMenu[4][15] = {
 };
 
 const uint8_t adAdvancedMenuSize = 14;
-const TypeDef_AdvancedMenuItem dcAdvancedMenu[14][15] = {
+const TypeDef_AdvancedMenuItem dcAdvancedMenu[15][15] = {
     {
         {.adr = 100},
         {.adr = 101},

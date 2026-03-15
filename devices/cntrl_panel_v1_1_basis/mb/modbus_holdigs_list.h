@@ -88,15 +88,15 @@ HR_CREATE_UINT16_PARAM      (/*ADR=*/hld_sft+101, holdings[pntr_shft+2],  "Idref
 HR_CREATE_UINT16_PARAM      (/*ADR=*/hld_sft+102, holdings[pntr_shft+3],  "Udref"  ,/*min=*/      0,/*max=*/      100, /*def=*/     0,  /*on_change=*/events_dummy),                  \
 HR_CREATE_UINT16_PARAM      (/*ADR=*/hld_sft+103, holdings[pntr_shft+4],  "Fwd"    ,/*min=*/      0,/*max=*/        1, /*def=*/     0,  /*on_change=*/events_dummy),                  \
 HR_CREATE_UINT16_PARAM_NL   (/*ADR=*/hld_sft+104, holdings[pntr_shft+5],  "Control",                                   /*def=*/     1,  /*on_change=*/events_dummy),                  \
-HR_CREATE_UINT16_RO  (/*ADR=*/hld_sft+110, holdings[pntr_shft+6],  "Id 0"   ),                  \
-HR_CREATE_UINT16_RO  (/*ADR=*/hld_sft+111, holdings[pntr_shft+7],  "Ud 0"   ),                  \
-HR_CREATE_UINT16_RO  (/*ADR=*/hld_sft+112, holdings[pntr_shft+8],  "AIN2"   ),                  \
-HR_CREATE_UINT16_RO  (/*ADR=*/hld_sft+113, holdings[pntr_shft+9],  "Id K"   ),                  \
-HR_CREATE_UINT16_RO  (/*ADR=*/hld_sft+114, holdings[pntr_shft+10], "Ud K"   ),                  \
-HR_CREATE_UINT16_RO  (/*ADR=*/hld_sft+115, holdings[pntr_shft+11], "Ain2 K" ),                  \
-HR_CREATE_UINT16_RO  (/*ADR=*/hld_sft+120, holdings[pntr_shft+12], "Idlim"  ),                  \
-HR_CREATE_UINT16_RO  (/*ADR=*/hld_sft+121, holdings[pntr_shft+13], "UDlim"  ),                  \
-HR_CREATE_UINT16_RO  (/*ADR=*/hld_sft+122, holdings[pntr_shft+14], "Idflt"  ),                  \
+HR_CREATE_UINT16_PARAM_NL   (/*ADR=*/hld_sft+110, holdings[pntr_shft+6],  "Id 0"   , /*def=*/    0,  /*on_change=*/events_dummy),                  \
+HR_CREATE_UINT16_PARAM_NL   (/*ADR=*/hld_sft+111, holdings[pntr_shft+7],  "Ud 0"   , /*def=*/    0,  /*on_change=*/events_dummy),                  \
+HR_CREATE_UINT16_PARAM_NL   (/*ADR=*/hld_sft+112, holdings[pntr_shft+8],  "AIN2"   , /*def=*/    0,  /*on_change=*/events_dummy),                  \
+HR_CREATE_UINT16_PARAM_NL   (/*ADR=*/hld_sft+113, holdings[pntr_shft+9],  "Id K"   , /*def=*/    0,  /*on_change=*/events_dummy),                  \
+HR_CREATE_UINT16_PARAM_NL   (/*ADR=*/hld_sft+114, holdings[pntr_shft+10], "Ud K"   ,/*def=*/     0,  /*on_change=*/events_dummy ),                  \
+HR_CREATE_UINT16_PARAM_NL   (/*ADR=*/hld_sft+115, holdings[pntr_shft+11], "Ain2 K" ,/*def=*/     0,  /*on_change=*/events_dummy ),                  \
+HR_CREATE_UINT16_PARAM_NL   (/*ADR=*/hld_sft+120, holdings[pntr_shft+12], "Idlim"  , /*def=*/    0,  /*on_change=*/events_dummy),                  \
+HR_CREATE_UINT16_PARAM_NL   (/*ADR=*/hld_sft+121, holdings[pntr_shft+13], "UDlim"  ,/*def=*/     0,  /*on_change=*/events_dummy ),                  \
+HR_CREATE_UINT16_PARAM_NL   (/*ADR=*/hld_sft+122, holdings[pntr_shft+14], "Idflt"  , /*def=*/    0,  /*on_change=*/events_dummy),                  \
 HR_CREATE_UINT16_PARAM  (/*ADR=*/hld_sft+123, holdings[pntr_shft+15], "PWMmax" ,/*min=*/   0,/*max=*/      1800, /*def=*/     1750,  /*on_change=*/events_dummy),                  \
 HR_CREATE_UINT16_PARAM  (/*ADR=*/hld_sft+124, holdings[pntr_shft+16], "Udp"    ,/*min=*/      0,/*max=*/         2, /*def=*/        1,  /*on_change=*/events_dummy),                  \
 HR_CREATE_UINT16_PARAM  (/*ADR=*/hld_sft+125, holdings[pntr_shft+17], "Idp"    ,/*min=*/      0,/*max=*/         2, /*def=*/        0,  /*on_change=*/events_dummy),                  \

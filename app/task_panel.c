@@ -10,6 +10,15 @@
 #include "mbsupport.h"
 #include "panelConfig.h"
 #include "task_master.h"
+#include "clock.h"
+#include "meter.h"
+#include "../fifo_buffer/fifo_buffer.h"
+#include "task_logger.h"
+
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#endif
 
 
 Typedef_PanelConfig panelConfig;
@@ -33,7 +42,10 @@ static void Page_SaveWarning(void* arg);
 static void Page_Config(void* pntr);
 static void Page_MenuItemEdit(void* arg);
 static void Page_SlaveFault(char* pntr, const char* label, int code);
+static void Page_HVIL_flt(char* pntr, const char* label);
+
 static void Page_EnergyMeter(void * arg);
+static void Page_Logger(void * arg);
 static void flash_cursor(char* pntr, size_t pos);
 static void DisplayUpdater();
 
@@ -61,13 +73,21 @@ static bool displayUpdateHarBit = false;   // this is for symbol blinking
 volatile TypedefEnum_ButtonStates buttonState = KEY_NO; // put here button state
 xSemaphoreHandle xDisplayUpdaterSemaphore;              // display update semaphore. Lock display buffer while transfer it to display
 static size_t menu_cur_pos = 0;                         // Position of blinking cursor
+extern uint8_t GD25_RDID[3];
+extern  Typedef_Clock clock;
+extern  Typedef_Meter meter;
+extern  FIFO_Buffer fifo;
+extern volatile uint8_t log_fifo_rx_pointer;
+extern Typedef_LoggerRecord rec_disp;
+
+
 
 void vTask_Panel(__attribute__((unused)) void* argument)
 {
 
 
     DisplayInit();
-    memset(displayMemory, 80, 0);
+    memset(displayMemory, 0, 80);
     vSemaphoreCreateBinary(xDisplayUpdaterSemaphore);
 
     xTaskCreate(DisplayUpdater, "DisplayUpdater", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
@@ -95,16 +115,16 @@ void vTask_Panel(__attribute__((unused)) void* argument)
                 }
                 break;
             case KEY_AC2:
-                // if (panelConfig.enableAC2) {
-                //     if (panelConfig.enableAC2) {
-                //         if (current_page == Page_Ac2Indi) {
-                //             master.start_req_rdo[CONFIG_SLAVE_AC2] = true;
-                //         }
-                //         else {
-                //             current_page = Page_Ac2Indi;
-                //         }
-                //     }
-                // }
+                if (panelConfig.enableAC2) {
+                    if (panelConfig.enableAC2) {
+                        if (current_page == Page_Ac2Indi) {
+                            master.start_req_rdo[CONFIG_SLAVE_AC2] = true;
+                        }
+                        else {
+                            current_page = Page_Ac2Indi;
+                        }
+                    }
+                }
                  master.start_req_rdo[CONFIG_SLAVE_AC2] = true;
                 break;
             case KEY_DC1:
@@ -158,8 +178,9 @@ void vTask_Panel(__attribute__((unused)) void* argument)
         buttonState = KEY_NO;
 
         // fault triger
-
         static void(*pages[])(void* arg) = { NULL,Page_Ac1Indi, Page_Ac2Indi, Page_Dc1Indi, Page_Dc2Indi };
+
+    
         for (size_t i = 1; i < 5; i++)
         {
             if (master.fault_source[i] == true)
@@ -178,10 +199,19 @@ void vTask_Panel(__attribute__((unused)) void* argument)
         }
 
         // charge master wdg
-        for (size_t i = 1; i < 5; i++)
-        {
-            master.master_wdg[5] = true;
+        // No needs we check it every transaction
+
+        // FLASH MEM DIAG
+        if(
+               (GD25_RDID[0]!= 200)
+            || (GD25_RDID[1]!= 64 )
+            || (GD25_RDID[2]!= 22 )
+        
+        ){
+            memset(shadowDisplayMemory, 0, 80);
+            snprintf(&shadowDisplayMemory[20], 21, " FLASH MEMORY FAULT");
         }
+
 
         // copy display data
         xSemaphoreTake(xDisplayUpdaterSemaphore, portMAX_DELAY);
@@ -293,35 +323,49 @@ static void Page_Dc2AdvancedSetup(void* arg)
 
 static void Page_Logo(void* arg)
 {
-    static const uint8_t pageLogCursorPos[] = { 0, 75 };
+    static const uint8_t pageLogCursorPos[] = { 70, 75 };
     // clear
     char* pntr = (char*)arg;
     memset(pntr, 0, 80);
     vTaskDelay(1);
     // set static
-    snprintf(&pntr[0], sizeof(LG_NAME), LG_NAME);
-    snprintf(&pntr[75], 6, "Meter ");
+    if(clock.enable){
+        snprintf(&pntr[0], 21, "%s    %02d:%02d",
+             LG_NAME, 
+             clock.time.timestamp_hour, clock.time.timestamp_minute);
+
+        snprintf(&pntr[70], 6, "%s", LOGGER_LOG);
+    }else{
+        snprintf(&pntr[0], ARRAY_SIZE(LG_NAME), LG_NAME);
+    }
+        
+    if(meter.enable) snprintf(&pntr[75], 6, "%s", METER_METER);
    // snprintf(&pntr[70], 1, "M");
 
-   /* if(menu_cur_pos == 1)*/  flash_cursor(pntr, pageLogCursorPos[1]);
+   /* if(menu_cur_pos == 1)*/ 
     if (menu_cur_pos > 1) // there is only 2 options
     {
         menu_cur_pos = 1;
     }
 
+    if(meter.enable || clock.enable) flash_cursor(pntr, pageLogCursorPos[menu_cur_pos]);
 
     switch (buttonState)
     {
     case KEY_LEFT: // navigate
-        menu_cur_pos = 1;
+        if(clock.enable)menu_cur_pos = 0;
         buttonState = KEY_NO;
         break;
     case KEY_RIGHT: // navigate
-        menu_cur_pos = 0;
+        if(meter.enable)menu_cur_pos = 1;
         buttonState = KEY_NO;
         break;
     case KEY_ENTER:
-      /*  if(menu_cur_pos==1) */ current_page = Page_EnergyMeter;    // SET NEW POINTER
+        if(menu_cur_pos==0) if(clock.enable){ 
+            log_fifo_rx_pointer = FIFO_last_indx(&fifo)>=0?FIFO_last_indx(&fifo):0;
+            current_page = Page_Logger;
+        }    
+        if(menu_cur_pos==1) if(meter.enable) current_page = Page_EnergyMeter; 
         menu_cur_pos=0;
         buttonState = KEY_NO;
         break;
@@ -453,7 +497,8 @@ static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int acnum
         F = 999U;
 
         // ADD Power estimation (BUG fixing 26/10/2025)
-    uint16_t P = (U[0]*I[0]+U[1]*I[1]+U[2]*I[2])/1000;
+    uint32_t power_sum = (uint32_t)U[0]*I[0] + (uint32_t)U[1]*I[1] + (uint32_t)U[2]*I[2];
+    uint16_t P = (power_sum / 1000);
     if(P>99)P=99;
 
     // process slave error code
@@ -474,9 +519,9 @@ static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int acnum
         snprintf(
             pntr, 80,
           // Remove source number (BUG fixing 26/10/2025)
-          //  " AC%1d   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
-          //  acnum,
-            " AC   %s  %s U,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
+           " AC%1d   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
+           acnum,
+            // " AC   %s  %s U,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
             master.master_wdg[acnum] == true ? "!" : " ",
             LG_NAME,
             U[0], U[1], U[2],
@@ -523,6 +568,11 @@ static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int dcnum
     char* pntr = (char*)arg;
     memset(pntr, 0, 80);
     uint16_t volt = *foo(211);
+    uint16_t I = *foo(210);
+
+    uint16_t P = ((uint32_t)volt*I)/1000;
+    if(P>99) P=99;
+
     uint16_t volt_d = volt / 10;
     if (volt_d > 99U)
         volt_d = 99U;
@@ -530,39 +580,44 @@ static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int dcnum
     if (volt_p > 9)
         volt_p = 9;
 
-    uint16_t I = *foo(210);
+
     if (I > 9000U)
         I = 9000U;
 
     menu_cur_pos = 0;
 
-    if (dcnum == 1 && master.fault_source[3] == true)
+    bool to = master.master_wdg[dcnum+2];
+
+    if (dcnum == 1 && master.HVIL[3] == true){
+       Page_HVIL_flt(pntr, LABEL_DC1);
+    } else if(dcnum == 2 && master.HVIL[4] == true){
+       Page_HVIL_flt(pntr, LABEL_DC2);
+    }else  if (dcnum == 1 && master.fault_source[3] == true)
     {
         Page_SlaveFault(pntr, LABEL_DC1, master.fault_code[3]);
     }
     else if (dcnum == 2 && master.fault_source[4] == true)
     {
-
         Page_SlaveFault(pntr, LABEL_DC2, master.fault_code[4]);
     }
-    // else if(master.master_wdg[dcnum+2]==true){
+    // else if(){
     //     Page_SlaveFault(pntr, "CFL", 666);
     // }
     else
     {
         snprintf(pntr, 80,
-            " DC%1d   %s  %s                    U,B  %2d,%1d  P,kBT 90 I,A  %4d",
+            " DC%1d   %s  %s                    U,B  %2d,%1d  P,kBT %2d I,A  %4d",
             dcnum,
-            master.master_wdg[dcnum + 2] ? "!" : " ",
+            to ? "!" : " ",
             LG_NAME,
-            volt_d, volt_p, I);
+            volt_d, volt_p, P, I);
     }
 
-    if (master.master_wdg[dcnum + 2] == true) {
+    if (to) {
         flash_cursor(pntr, 7);
     }
 
-    if (master.master_wdg[dcnum + 2] == true) return;
+    if (to) return;
 
     switch (buttonState)
     {
@@ -672,7 +727,7 @@ static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint16_t adr)
         F[0], F[1],
         I[0]);
 
-    if (menu_cur_pos >= sizeof(pageAcTemplateCursorPos))
+    if (menu_cur_pos >= ARRAY_SIZE(pageAcTemplateCursorPos))
         menu_cur_pos = 0;
     if (pageAcSetupUnlocked)
     {
@@ -859,7 +914,7 @@ static inline void Page_DcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint16_t adr)
 
     if (pageDcSetupUnlocked)
     {
-        if (menu_cur_pos >= sizeof(pageDcTemplateCursorPos))
+        if (menu_cur_pos >= ARRAY_SIZE(pageDcTemplateCursorPos))
             menu_cur_pos = 0;
         flash_cursor(pntr, pageDcTemplateCursorPos[menu_cur_pos]);
     }
@@ -1066,7 +1121,7 @@ static inline void Page_AdvancedSetupTemplate(
         LABEL_5_NAZAD, LABEL_9_SAVE, LABEL_10_MONIT
     );
 
-    if (menu_cur_pos >= sizeof(pageAdvancedSetupTemplateCursorPos))
+    if (menu_cur_pos >= ARRAY_SIZE(pageAdvancedSetupTemplateCursorPos))
         menu_cur_pos = 0;
     flash_cursor(pntr, pageAdvancedSetupTemplateCursorPos[menu_cur_pos]);
 
@@ -1327,6 +1382,7 @@ static void Page_Config(void* arg)
         }
         else if (pageConfigCursorHor == 2)
         { // save
+             bool mdfd = false;
             for (size_t i = 0; i < configMenuSize; i++)
             {
                 // change value
@@ -1337,9 +1393,13 @@ static void Page_Config(void* arg)
                     if (configMenu[i].itemChangedEvent != NULL) {
                         configMenu[i].itemChangedEvent();
                     }
+                    mdfd = true;
+                }
+            }
+
+            if(mdfd){
                     MenuItemGeneralChangedEvent();
                     goto EXIT;
-                }
             }
         }
         else if (pageConfigCursorHor == 1)
@@ -1564,11 +1624,11 @@ static void Page_EnergyMeter(void * arg)
 
     if(meter_to_cnt>=100){
         meter_to_cnt = 100;
-        const char errmsg[]  = "    NOT CONNECTED   ";
-        const char errmsg1[] = "     PRESS ENTER    ";
-        snprintf(&pntr[20], sizeof(errmsg), errmsg); 
-        snprintf(&pntr[40], sizeof(errmsg1), errmsg1);
-        snprintf(&pntr[60], 20, "       T,C %3d",  t);
+      //  const char errmsg[]  = "    NOT CONNECTED   ";
+      //  const char errmsg1[] = "     PRESS ENTER    ";
+      //  snprintf(&pntr[20], ARRAY_SIZE(errmsg), errmsg); 
+      //  snprintf(&pntr[40], ARRAY_SIZE(errmsg1), errmsg1);
+        snprintf(&pntr[40], 20, "       T,C %3d",  t);
 
     }else{
 
@@ -1588,6 +1648,86 @@ static void Page_EnergyMeter(void * arg)
         default:
         break;
     }
+
+}
+
+static void Page_Logger(void * arg)
+{
+    
+    /*
+       DD.MM.YY        HH:MM  HH:SS  (дата , время старта, время остановки)
+       Тип канала  (АС1/АС2/DC1/DC2)
+       200B 100A 400HZ (средние значения за сессию)
+       Ошибка (КОД)
+    
+    */
+
+        // we need 20 records
+        char* pntr = (char*)arg; // display buffer pointer
+
+        memset(pntr, 0, 80);
+
+        if(FIFO_check_crc(&rec_disp))
+        {
+
+            snprintf(&pntr[ 0], 21, "%02d.%02d.%02d %02d:%02d %02d:%02d" ,
+                rec_disp.timeStart.timestamp_day, rec_disp.timeStart.timestamp_month,rec_disp.timeStart.timestamp_year,
+                rec_disp.timeStart.timestamp_hour,rec_disp.timeStart.timestamp_minute,
+                rec_disp.timeStop.timestamp_hour,rec_disp.timeStop.timestamp_minute
+            );
+
+        
+
+            snprintf(&pntr[20], 21, "%s %s    #%2d" , LOGGER_CH_TYPE, rec_disp.type ,  log_fifo_rx_pointer );
+
+            if(rec_disp.type[0]=='A'){
+                
+                snprintf(&pntr[40], 21, "% 3dV %3dA % 3dHz" , rec_disp.U, rec_disp.I, rec_disp.F  );
+    
+            }else{
+                snprintf(&pntr[40], 21, "% 3dV %3dA % 3dAmax" , rec_disp.U, rec_disp.I, rec_disp.Im  );
+            }
+
+            snprintf(&pntr[60], 21, "%s %d" , LOGGER_CH_ERROR, rec_disp.code  );
+
+        }else{
+            snprintf(&pntr[ 0], 21, "                 #%2d",  log_fifo_rx_pointer);
+            snprintf(&pntr[40], 21, "     %s", LOGGER_NO_DATA );
+        }
+    
+          int8_t ck = log_fifo_rx_pointer; 
+        switch (buttonState)
+        {
+        case KEY_ENTER:
+            current_page = Page_Logo;    // SET NEW POINTER
+            buttonState = KEY_NO;
+        break;
+        case KEY_UP:
+            ck++;
+            if(ck>=FIFO_Count(&fifo))ck=0;
+            log_fifo_rx_pointer=ck;
+        break;
+        case KEY_DOWN:
+            ck--;
+            if(ck<0)ck= FIFO_last_indx(&fifo)>=0?FIFO_last_indx(&fifo):0;
+            log_fifo_rx_pointer=ck;
+        break;
+        default:
+        break;
+        }
+
+}
+
+
+static void Page_HVIL_flt(char* pntr, const char* label)
+{
+
+    memset(pntr, 0, 80);
+    
+    snprintf(&pntr[0],  21, "%s", LOGGER_CH_HVIL_LINE1 ); //rec_disp.type   );
+    snprintf(&pntr[20], 21, "%s", LOGGER_CH_HVIL_LINE2 ); //rec_disp.type   );
+    snprintf(&pntr[40], 21, "%s", LOGGER_CH_HVIL_LINE3 ); //rec_disp.type   );
+    snprintf(&pntr[60], 21, "    %s    ", label ); //rec_disp.type   );
 
 }
 

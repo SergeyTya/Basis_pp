@@ -22,6 +22,19 @@
     #define LABEL_AVARIA        "юбюпхъ"
     #define LABEL_YES           "дю "
     #define LABEL_NO            "мер"
+    #define LOGGER_CH_TYPE      "йюмюк  "
+    #define LOGGER_CH_ERROR     "йнд ньхайх"
+
+    #define LOGGER_CH_HVIL_LINE2      "  меонкмши йнмрюйр"
+    #define LOGGER_CH_HVIL_LINE1      "   "
+    #define LOGGER_CH_HVIL_LINE3      " анпрнбнцн пюгэелю"
+    #define LOGGER_CH_HVIL_LINE4      "   "
+
+    #define LOGGER_NO_DATA            "мер дюммшу"
+    #define LOGGER_LOG                "кнц"
+    #define METER_METER               "лереп"
+
+
 #endif
 
 
@@ -35,10 +48,13 @@
     #define LABEL_9_WARNING     "WARNING  "
     #define LABEL_11_PARAMETERS "PARAMETERS"
     #define LABEL_13_NOTSAVED   "NOT SAVED    "
-    #define LABEL_AVARIA   "FAULT "
+    #define LABEL_AVARIA        "FAULT "
     #define LABEL_YES           "YES"
     #define LABEL_NO            "NO "
+    #define LOGGER_CH_TYPE      "CHANNEL"
+    #define LOGGER_CH_ERROR     "ERROR CODE"
 #endif
+ 
 
 #ifdef LOCALE_TRANS
     #define LG_NAME "BAZIS AERO" // 10
@@ -53,6 +69,8 @@
     #define LABEL_AVARIA   "AVARIA"
     #define LABEL_YES           "Dю "
     #define LABEL_NO            "HET"
+    #define LOGGER_CH_TYPE      "KANAL  "
+    #define LOGGER_CH_ERROR     "KOD OSIBKI"
 #endif
 
 

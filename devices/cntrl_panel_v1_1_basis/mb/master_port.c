@@ -279,7 +279,7 @@ void  master_RDIOonRUNstate(int dev) {
   RSM_RDIO_OUT3_SET(1);
   break;
   case 4:
-  RSM_RDIO_OUT4_SET(1);
+  //RSM_RDIO_OUT4_SET(1);
   break;
 
   default:
@@ -313,12 +313,12 @@ void  master_LEDonRUNstate(int dev) {
   RSM_RDIO_OUT2_SET(1);
   break;
   case 3:
-  keyboard_setDC2LedSate(true);
-  RSM_RDIO_OUT3_SET(1);
+  keyboard_setDC1LedSate(true);
+  //RSM_RDIO_OUT3_SET(1);
   break;
   case 4:
-  keyboard_setDC1LedSate(true); 
-  RSM_RDIO_OUT4_SET(1);
+  keyboard_setDC2LedSate(true); 
+  //RSM_RDIO_OUT4_SET(1); // using for HVIL control
   break;
 
   default:
@@ -330,6 +330,11 @@ void  master_LEDonGlobRunState(bool state) {
 
   // TODO RDO ENABLE
   keyboard_setOnLedSate(state);
+}
+
+
+void  master_RDO4_setstate(bool state) {
+  RSM_RDIO_OUT4_SET(state);
 }
 
 /**
@@ -350,12 +355,12 @@ void master_LEDonReadyState(int dev) {
   RSM_RDIO_OUT2_SET(0);
   break;
   case 3:
-  keyboard_setDC2LedSate(false);
+  keyboard_setDC1LedSate(false);
   RSM_RDIO_OUT3_SET(0);
   break;
   case 4:
-  keyboard_setDC1LedSate(false); 
-  RSM_RDIO_OUT4_SET(0);
+  keyboard_setDC2LedSate(false); 
+  //RSM_RDIO_OUT4_SET(0);
   break;
 
   default:
@@ -388,7 +393,7 @@ void master_LEDonTimeoutState() {
 * @param dev Device modbus ID
 */
 extern bool blinker;
-void master_LEDonWaitState(int dev) {
+void master_LEDonWaitForAcOkState(int dev) {
 
 
   switch (dev)
@@ -403,11 +408,38 @@ void master_LEDonWaitState(int dev) {
    break;   
   case 3: 
     keyboard_setDC1LedSate(blinker);
-    RSM_RDIO_OUT3_SET(0);
+    // RSM_RDIO_OUT3_SET(0);
     break;
   case 4:
     keyboard_setDC2LedSate(blinker);
-    RSM_RDIO_OUT4_SET(0);
+   // RSM_RDIO_OUT4_SET(0);
+    break;
+
+  default:
+    break;
+  }
+}
+
+void master_LEDonWaitForMainRelayState(int dev) {
+
+
+  switch (dev)
+  {
+  case 1: 
+    keyboard_setAC1LedSate(blinker);
+    RSM_RDIO_OUT1_SET(1);
+     break;
+  case 2:
+    keyboard_setAC2LedSate(blinker);
+    RSM_RDIO_OUT2_SET(1);
+   break;   
+  case 3: 
+    keyboard_setDC1LedSate(blinker);
+   // RSM_RDIO_OUT3_SET(0);
+    break;
+  case 4:
+    keyboard_setDC2LedSate(blinker);
+   // RSM_RDIO_OUT4_SET(0);
     break;
 
   default:

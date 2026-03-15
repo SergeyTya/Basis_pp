@@ -125,5 +125,16 @@
     ],
     "cortex-debug.variableUseNaturalFormat": false,
 
+     "editor.quickSuggestions": {
+        "other": false,
+        "comments": false,
+        "strings": true
+    },
+    "editor.suggestOnTriggerCharacters": true,
+    "editor.acceptSuggestionOnCommitCharacter": false,
+    "gigachat.inlineSuggest.enable": false,
+    "gigachat.completion.enable": false,
+    "editor.inlineSuggest.enabled": false
+
     
 }

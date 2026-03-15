@@ -16,7 +16,7 @@ typedef struct
 {
 
     uint16_t adr;
-    uint16_t enable;
+    uint32_t enable;
 
     TypedefEnum_MasterTransportSates state;
     

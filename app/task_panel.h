@@ -85,7 +85,7 @@ typedef struct
 
 extern const uint8_t acAdvancedMenuSize;
 extern const TypeDef_AdvancedMenuItem acAdvancedMenu[ 4][15];
-extern const TypeDef_AdvancedMenuItem dcAdvancedMenu[14][15];
+extern const TypeDef_AdvancedMenuItem dcAdvancedMenu[15][15];
 extern Typedef_PanelConfig panelConfig;
 extern const size_t configMenuSize;
 extern TypeDef_ConfigMenuItem configMenu[];

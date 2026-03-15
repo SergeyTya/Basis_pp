@@ -1,24 +1,44 @@
 
-OpenDocument="main.c", FilePath="D:/Projects/Basis_pp/app/main.c", Line=5
-OpenDocument="tasks.c", FilePath="D:/Projects/Basis_pp/drivers/RTOS/tasks.c", Line=3418
+
+Breakpoint=/home/sergey/repo/basis_cp/app/task_master.c:404:21, State=BP_STATE_DISABLED
+OpenDocument="startup_GD32F470ZGTxx.s", FilePath="/home/sergey/repo/basis_cp/startup/GNU/startup_GD32F470ZGTxx.s", Line=43
+OpenDocument="task_master.c", FilePath="/home/sergey/repo/basis_cp/app/task_master.c", Line=334
+OpenDocument="masterTransport.c", FilePath="/home/sergey/repo/basis_cp/app/masterTransport.c", Line=71
+OpenDocument="main.c", FilePath="/home/sergey/repo/basis_cp/app/main.c", Line=32
+OpenDocument="mcu_control.c", FilePath="/home/sergey/repo/basis_cp/devices/cntrl_panel_v1_1_basis/mcu/mcu_control.c", Line=80
+OpenDocument="gd32f4xx_adc.c", FilePath="/home/sergey/repo/basis_cp/drivers/GD32F4xx_Firmware_Library_V3.0.2/GD32F4xx_standard_peripheral/Source/gd32f4xx_adc.c", Line=912
+OpenDocument="task_panel.c", FilePath="/home/sergey/repo/basis_cp/app/task_panel.c", Line=430
+OpenDocument="task_loggerQ.c", FilePath="/home/sergey/repo/basis_cp/app/task_loggerQ.c", Line=131
+OpenDocument="gd32f4xx_i2c.c", FilePath="/home/sergey/repo/basis_cp/drivers/GD32F4xx_Firmware_Library_V3.0.2/GD32F4xx_standard_peripheral/Source/gd32f4xx_i2c.c", Line=672
+OpenToolbar="File", Floating=0, x=2, y=0
+OpenToolbar="View", Floating=0, x=1, y=0
 OpenToolbar="Debug", Floating=0, x=0, y=0
-OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=0, w=91, h=382, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
-OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=1, w=91, h=381, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Memory 1", DockArea=BOTTOM, x=1, y=0, w=643, h=193, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x20004D4F
-OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=441, h=191, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Functions", DockArea=LEFT, x=0, y=0, w=441, h=286, FilterBarShown=1, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Data Sampling", DockArea=BOTTOM, x=0, y=0, w=935, h=177, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
-OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=935, h=177, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-OpenWindow="Watched Data 2", DockArea=LEFT, x=0, y=2, w=441, h=285, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
-TableHeader="Data Sampling Table", SortCol="Index", SortOrder="ASCENDING", VisibleCols=["Index";"Time"], ColWidths=[100;100]
-TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="DESCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[238;100;100;100;100;100;100;100;118]
-TableHeader="Functions", SortCol="Name", SortOrder="DESCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[1236;100;100;100;100]
-TableHeader="Power Sampling", SortCol="Index", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
-TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[183;187;224]
-TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[330;238;100;100]
+OpenWindow="Call Stack", DockArea=RIGHT, x=0, y=0, w=137, h=213, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Registers 1", DockArea=RIGHT, x=0, y=1, w=137, h=201, TabPos=1, TopOfStack=0, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, FilteredItems=[], RefreshRate=1
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=2, w=137, h=129, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Break & Tracepoints", DockArea=LEFT, x=0, y=2, w=496, h=161, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VectorCatchIndexMask=254
+OpenWindow="Memory 1", DockArea=RIGHT, x=0, y=1, w=137, h=201, TabPos=0, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x2000FF5C
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=0, w=496, h=300, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=1, w=496, h=99, FilterBarShown=1, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Power Sampling", DockArea=BOTTOM, x=0, y=0, w=439, h=204, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, UniformSampleSpacing=0
+OpenWindow="Console", DockArea=BOTTOM, x=1, y=0, w=1138, h=204, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
+TableHeader="Registers 1", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Description"], ColWidths=[183;187;259]
+TableHeader="Vector Catches", SortCol="", SortOrder="ASCENDING", VisibleCols=["";"Vector Catch";"Description"], ColWidths=[50;300;500]
+TableHeader="Break & Tracepoints", SortCol="Type", SortOrder="ASCENDING", VisibleCols=["";"Type";"Location";"Extras"], ColWidths=[100;100;320;100]
+TableHeader="Functions", SortCol="Name", SortOrder="DESCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[1236;100;100;100;231]
+TableHeader="Call Stack", SortCol="Function", SortOrder="ASCENDING", VisibleCols=["Function";"Stack Frame";"Source";"PC";"Return Address";"Stack Used"], ColWidths=[231;119;128;100;168;100]
+TableHeader="Power Sampling", SortCol="Index", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;335]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[263;401;100;100]
 TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
-TableHeader="Watched Data 2", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[168;195;100;100]
-WatchedExpression="test_led_state", Window=Watched Data 2
-WatchedExpression="test_led_pos", Window=Watched Data 2
-WatchedExpression="leds", RefreshRate=1, Window=Watched Data 2
-WatchedExpression="master", Window=Watched Data 2
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;930]
+WatchedExpression="fifo", Window=Watched Data 1
+WatchedExpression="test_rec", Window=Watched Data 1
+WatchedExpression="rec_disp", Window=Watched Data 1
+WatchedExpression="clock", Window=Watched Data 1
+WatchedExpression="test_rec1", Window=Watched Data 1
+WatchedExpression="master.slaveStates[3]", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="master.start_req_hw[3]", RefreshRate=5, Window=Watched Data 1
+WatchedExpression="master.master_wdg[3]", RefreshRate=1, Window=Watched Data 1
+WatchedExpression="Uo", Window=Watched Data 1
+WatchedExpression="Ur", Window=Watched Data 1

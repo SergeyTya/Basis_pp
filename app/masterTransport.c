@@ -63,9 +63,9 @@ TypedefEnum_MasterTransportSates master_writeHoldingOs(uint8_t slave, uint16_t a
                 vTaskDelay(10);
                 return MASTER_TRANSPORT_CRCERROR;
             }
-            vTaskDelay(1);
+            vTaskDelay(10);
         }
-        vTaskDelay(10);
+        vTaskDelay(50);
     }
 
     return MASTER_TRANSPORT_TIMEOUT;
@@ -192,7 +192,7 @@ TypedefEnum_MasterTransportSates master_readHoldingsOs(uint8_t slave, uint16_t a
                 return MASTER_TRANSPORT_CRCERROR;
             }
         }
-        vTaskDelay(10);
+        vTaskDelay(30);
     }
 
     timeout_err[slave]++;

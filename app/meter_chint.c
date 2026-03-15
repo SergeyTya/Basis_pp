@@ -17,7 +17,7 @@ float meter_chint_val[CHINT_HR_CNT/2];
 void meter_read(void *mtr)
 {
     Typedef_Meter * m = mtr;
-    m->enable = 1;
+
     union
     {
         float f;
