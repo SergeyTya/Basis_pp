@@ -13,9 +13,11 @@ uint32_t  configmenu_erase_mem = 0;
 
 #include "meter.h"
 #include "clock.h"
+#include "task_master.h"
 
 extern Typedef_Clock clock;
 extern Typedef_Meter meter;
+extern TypeDef_Master master;
 
 
 void MenuItemBrightnessChangedEvent();
@@ -25,6 +27,7 @@ void MenuItemClearMemeEvent();
 
 const TypeDef_ConfigMenuItem nullMenuItem = {.label = "Null pointer"};
 const size_t configMenuSize = 23;
+
 TypeDef_ConfigMenuItem configMenu[] = {
 
     {.label="Reboot"      , .val=&no_val,  .disabled = true,  .itemChangedEvent = MenuItemRebootChangedEvent },
@@ -49,6 +52,7 @@ TypeDef_ConfigMenuItem configMenu[] = {
     {.label="TCP MS[1]"   , .val=&panelConfig.modbus_TCP.mask1, .enableLim = true,  .limHi = 255, .limLo=0 },
     {.label="TCP MS[2]"   , .val=&panelConfig.modbus_TCP.mask2, .enableLim = true,  .limHi = 255, .limLo=0 },
     {.label="TCP MS[3]"   , .val=&panelConfig.modbus_TCP.mask3, .enableLim = true,  .limHi = 255, .limLo=0 },
+    {.label="FAULT DSBL"  , .val=&master.PM_enable , .enableLim = true,  .limHi = 255, .limLo=0 },
     {.label="CLR MEM"     , .val=&configmenu_erase_mem,  .disabled = true , .itemChangedEvent = MenuItemClearMemeEvent}
 
 };

@@ -30,7 +30,7 @@ void meter_read(void *mtr)
     usart_baudrate_set(USART0, 19200);
 
     // Read voltage
-    m->state = master_readHoldingsOs(m->adr, 0x2000, CHINT_HR_CNT, meter_chint_buff);
+    m->state = master_readHoldingsOs(m->adr, 0x2000, CHINT_HR_CNT, meter_chint_buff, 30);
 
     size_t j =0;
     for (size_t i = 0; i < CHINT_HR_CNT/2; i++)

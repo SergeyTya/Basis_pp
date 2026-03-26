@@ -107,7 +107,7 @@ void vTask_Panel(__attribute__((unused)) void* argument)
             case KEY_AC1:
                 if (panelConfig.enableAC1) {
                     if (current_page == Page_Ac1Indi) {
-                        master.start_req_rdo[CONFIG_SLAVE_AC1] = true;
+                        master.slave[CONFIG_SLAVE_AC1].start_req_rdo = true;
                     }
                     else {
                         current_page = Page_Ac1Indi;
@@ -118,19 +118,19 @@ void vTask_Panel(__attribute__((unused)) void* argument)
                 if (panelConfig.enableAC2) {
                     if (panelConfig.enableAC2) {
                         if (current_page == Page_Ac2Indi) {
-                            master.start_req_rdo[CONFIG_SLAVE_AC2] = true;
+                           master.slave[CONFIG_SLAVE_AC2].start_req_rdo = true;
                         }
                         else {
                             current_page = Page_Ac2Indi;
                         }
                     }
                 }
-                 master.start_req_rdo[CONFIG_SLAVE_AC2] = true;
+                 master.slave[CONFIG_SLAVE_AC2].start_req_rdo = true;
                 break;
             case KEY_DC1:
                 if (panelConfig.enableDC1){
                     if (current_page == Page_Dc1Indi) {
-                        master.start_req_rdo[CONFIG_SLAVE_DC1] = true;
+                        master.slave[CONFIG_SLAVE_DC1].start_req_rdo = true;
                     }
                     else {
                         current_page = Page_Dc1Indi;
@@ -140,7 +140,7 @@ void vTask_Panel(__attribute__((unused)) void* argument)
             case KEY_DC2:
                 if (panelConfig.enableDC2){ 
                     if (current_page == Page_Dc2Indi) {
-                        master.start_req_rdo[CONFIG_SLAVE_DC2] = true;
+                        master.slave[CONFIG_SLAVE_DC2].start_req_rdo = true;
                     }
                     else {
                         current_page = Page_Dc2Indi;
@@ -149,16 +149,16 @@ void vTask_Panel(__attribute__((unused)) void* argument)
                 break;
 
             case KEY_AC1LONG:
-                master.start_req_hw[CONFIG_SLAVE_AC1] = true;
+                master.slave[CONFIG_SLAVE_AC1].start_req_hw = true;
                 break;
             case KEY_AC2LONG:
-                master.start_req_hw[CONFIG_SLAVE_AC2] = true;
+                master.slave[CONFIG_SLAVE_AC2].start_req_hw = true;
             break;
             case KEY_DC1LONG:
-                master.start_req_hw[CONFIG_SLAVE_DC1] = true;
+                master.slave[CONFIG_SLAVE_DC1].start_req_hw = true;
                 break;
             case KEY_DC2LONG:
-                master.start_req_hw[CONFIG_SLAVE_DC2] = true;
+                master.slave[CONFIG_SLAVE_DC2].start_req_hw = true;
             break;
 
             case KEY_MENU:
@@ -183,7 +183,7 @@ void vTask_Panel(__attribute__((unused)) void* argument)
     
         for (size_t i = 1; i < 5; i++)
         {
-            if (master.fault_source[i] == true)
+            if (master.slave[i].fault_source == true)
             {
                 if (faultTrigger[i] == false)
                 {
@@ -502,17 +502,18 @@ static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int acnum
     if(P>99)P=99;
 
     // process slave error code
-    if (acnum == 1 && master.fault_source[1] == true)
+    if (acnum == 1 && ((master.slave[1].fault_source == true) || (master.slave[1].fault_source_pm == true)))
     {
-        Page_SlaveFault(pntr, LABEL_AC1, master.fault_code[1]);
+        Page_SlaveFault(pntr, LABEL_AC1, 
+           master.slave[1].fault_source_pm?  master.slave[1].fault_code_pm : master.slave[1].fault_code
+        );
     }
-    else if (acnum == 2 && master.fault_source[2] == true)
+    else if (acnum == 2 && ((master.slave[2].fault_source == true) || (master.slave[2].fault_source_pm == true)))
     {
-        Page_SlaveFault(pntr, LABEL_AC2, master.fault_code[2]);
+        Page_SlaveFault(pntr, LABEL_AC2,
+             master.slave[2].fault_source_pm?  master.slave[2].fault_code_pm : master.slave[2].fault_code
+        );
     }
-    // else if(master.master_wdg[acnum]==true){
-    //     Page_SlaveFault(pntr, "CFL", 666);
-    // }
     else
     {
         memset(pntr, 0, 80);
@@ -522,7 +523,7 @@ static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int acnum
            " AC%1d   %s  %sU,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
            acnum,
             // " AC   %s  %s U,B   %3d  %3d  %3d I,A   %3d  %3d  %3d F,Hz  %3d P,kBA %3d",
-            master.master_wdg[acnum] == true ? "!" : " ",
+            master.slave[acnum].master_wdg == true ? "!" : " ",
             LG_NAME,
             U[0], U[1], U[2],
             I[0], I[1], I[2],
@@ -530,13 +531,13 @@ static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int acnum
             P);
     }
 
-    if (master.master_wdg[acnum] == true) {
+    if (master.slave[acnum].master_wdg == true) {
         flash_cursor(pntr, 7);
     }
 
     menu_cur_pos = 0;
 
-    if (master.master_wdg[acnum] == true) return;
+    if (master.slave[acnum].master_wdg == true) return;
 
     switch (buttonState)
     {
@@ -586,23 +587,20 @@ static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int dcnum
 
     menu_cur_pos = 0;
 
-    bool to = master.master_wdg[dcnum+2];
+    bool to = master.slave[dcnum+2].master_wdg;
 
-    if (dcnum == 1 && master.HVIL[3] == true){
-       Page_HVIL_flt(pntr, LABEL_DC1);
-    } else if(dcnum == 2 && master.HVIL[4] == true){
-       Page_HVIL_flt(pntr, LABEL_DC2);
-    }else  if (dcnum == 1 && master.fault_source[3] == true)
+    if ((dcnum == 1) && ( (master.slave[3].fault_source == true) || (master.slave[3].fault_source_pm == true)))
     {
-        Page_SlaveFault(pntr, LABEL_DC1, master.fault_code[3]);
+        Page_SlaveFault(pntr, LABEL_DC1, 
+            master.slave[3].fault_source_pm? master.slave[3].fault_code_pm :master.slave[3].fault_code
+        );
     }
-    else if (dcnum == 2 && master.fault_source[4] == true)
+    else if (dcnum == 2 && ( (master.slave[4].fault_source == true) || (master.slave[4].fault_source_pm == true)))
     {
-        Page_SlaveFault(pntr, LABEL_DC2, master.fault_code[4]);
+        Page_SlaveFault(pntr, LABEL_DC2, 
+            master.slave[4].fault_source_pm? master.slave[4].fault_code_pm :master.slave[4].fault_code
+        );
     }
-    // else if(){
-    //     Page_SlaveFault(pntr, "CFL", 666);
-    // }
     else
     {
         snprintf(pntr, 80,
@@ -630,6 +628,7 @@ static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int dcnum
         {
             current_page = Page_Dc2Setup;
         }
+        buttonState = KEY_NO;
         break;
 
     default:
@@ -1591,11 +1590,28 @@ static void Page_SlaveFault(char* pntr, const char* label, int code)
 {
 
     memset(pntr, 0, 80);
-    snprintf(
-        pntr,
-        80,
-        " %6s %s %3d",
-       LABEL_AVARIA, label, code);
+    snprintf( pntr, 20, " %6s %s", LABEL_AVARIA, label);
+    snprintf( &pntr[20], 20, " %s %3d", LOGGER_CH_ERROR,  code);
+    snprintf( &pntr[60], 20, PRESS_ENTER );
+
+    switch (buttonState)
+    {
+        case KEY_ENTER:
+
+            
+            for (size_t i = 1; i < 5; i++)
+            {
+                // RESET FAULT
+                if(master.slave[i].fault_source_pm) buttonState = KEY_NO;
+                master.slave[i].fault_source_pm = false;
+                master.slave[i].fault_code_pm   = 0;
+            }
+        
+        break;
+        default:
+        break;
+    }
+
 }
 
 #include "masterTransport.h"
@@ -1719,15 +1735,15 @@ static void Page_Logger(void * arg)
 }
 
 
-static void Page_HVIL_flt(char* pntr, const char* label)
-{
+// static void Page_HVIL_flt(char* pntr, const char* label)
+// {
 
-    memset(pntr, 0, 80);
+//     memset(pntr, 0, 80);
     
-    snprintf(&pntr[0],  21, "%s", LOGGER_CH_HVIL_LINE1 ); //rec_disp.type   );
-    snprintf(&pntr[20], 21, "%s", LOGGER_CH_HVIL_LINE2 ); //rec_disp.type   );
-    snprintf(&pntr[40], 21, "%s", LOGGER_CH_HVIL_LINE3 ); //rec_disp.type   );
-    snprintf(&pntr[60], 21, "    %s    ", label ); //rec_disp.type   );
+//     snprintf(&pntr[0],  21, "%s", LOGGER_CH_HVIL_LINE1 ); //rec_disp.type   );
+//     snprintf(&pntr[20], 21, "%s", LOGGER_CH_HVIL_LINE2 ); //rec_disp.type   );
+//     snprintf(&pntr[40], 21, "%s", LOGGER_CH_HVIL_LINE3 ); //rec_disp.type   );
+//     snprintf(&pntr[60], 21, "    %s    ", label ); //rec_disp.type   );
 
-}
+// }
 

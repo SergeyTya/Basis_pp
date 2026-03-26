@@ -4,10 +4,10 @@
 
 #define LOCALE_RU
 
-#define LABEL_AC1 "AC "
-#define LABEL_AC2 "AC "
-#define LABEL_DC1 "DC "
-#define LABEL_DC2 "DC "
+#define LABEL_AC1 "AC1"
+#define LABEL_AC2 "AC2"
+#define LABEL_DC1 "DC1"
+#define LABEL_DC2 "DC2"
 
 #ifdef LOCALE_RU
     #define LG_NAME "аюгхя ющпн" // 10
@@ -33,6 +33,7 @@
     #define LOGGER_NO_DATA            "мер дюммшу"
     #define LOGGER_LOG                "кнц"
     #define METER_METER               "лереп"
+    #define PRESS_ENTER               "мюфлхре ббнд"
 
 
 #endif

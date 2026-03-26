@@ -37,6 +37,7 @@ uint16_t holdings[256];
 void vTask_ethercat(__attribute__((unused)) void* argument);
 void TaskLive();
 void vTask_ethernet_start();
+void vTask_monitor(void *p);
 
 int main() {
 
@@ -65,6 +66,8 @@ int main() {
   if (panelConfig.ethercat.enable == 1) {
     xTaskCreate(vTask_ethercat, "EtherCAT", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 7, NULL);
   }
+
+  xTaskCreate(vTask_monitor, "Monitor", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY, NULL+4);
 
   hw_hbl_set(3, 0);
   xTaskCreate(TaskLive, "Hartbeat", 100U, NULL, tskIDLE_PRIORITY + 8, NULL);

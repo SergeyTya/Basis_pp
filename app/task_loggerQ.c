@@ -82,8 +82,6 @@ extern Typedef_Clock clock;
 // SMA filters
 SMA_Filter filterI[5];
 
-// Use it to get process values
-uint16_t *(*foos[])(uint16_t adr) = {NULL, GetHoldingPntrByAdrFromAC1, GetHoldingPntrByAdrFromAC2, GetHoldingPntrByAdrFromDC1, GetHoldingPntrByAdrFromDC2};
 
 //
 static Typedef_LoggerRecord test_rec1 = {.type="AC1", .F=400 };
@@ -158,7 +156,7 @@ void vTask_logger()
     {
       if (
         /* Session started */
-        (m->slaveStates[i] == MASTER_STATE_onRUN) && (slave_rec[i].slave_state != MASTER_STATE_onRUN))
+        (m->slave[i].slaveStates == MASTER_STATE_onRUN) && (slave_rec[i].slave_state != MASTER_STATE_onRUN))
       {
         
         // Save time
@@ -179,12 +177,18 @@ void vTask_logger()
 
       if (
         /* Session stoped */
-        (m->slaveStates[i] != MASTER_STATE_onRUN) && (slave_rec[i].slave_state == MASTER_STATE_onRUN)
+        (m->slave[i].slaveStates != MASTER_STATE_onRUN) && (slave_rec[i].slave_state == MASTER_STATE_onRUN)
 
       )
       {
         // Save time
         slave_rec[i].timeStop = clock.time;
+        // Fault code
+        if(m->slave[i].fault_source_pm){
+          slave_rec[i].code  = m->slave[i].fault_code_pm;
+        }else{
+          slave_rec[i].code  = m->slave[i].fault_code;
+        }
         // write crc
         uint16_t crc = crc16((uint8_t *)&slave_rec[i], sizeof(Typedef_LoggerRecord) - 2);
         slave_rec[i].crc16 = crc;
@@ -192,86 +196,32 @@ void vTask_logger()
          while (xSemaphoreTake(semaphore_MHC, portMAX_DELAY) != pdPASS) ;
         FIFO_Enqueue(&fifo, &slave_rec[i]);
         xSemaphoreGive(semaphore_MHC);
-
       }
 
       if ( /* Session in progress */
-          (m->slaveStates[i] == MASTER_STATE_onRUN))
+          (m->slave[i].slaveStates == MASTER_STATE_onRUN))
       {
-        // Session continued
-        // get pointer getter function
-        uint16_t *(*foo)(uint16_t adr) = foos[i];
-        uint16_t Us=0, Is=0, Fs=0;
-
-        // get process values
-        if (i < 3)
-        { // AC
-
-          uint16_t U[3] = {*foo(240) / 10, *foo(241) / 10U, *foo(242) / 10}; // 0.1V
-          for (size_t i = 0; i < 3; i++)
-          {
-            Us +=U[i];
-          }
-          Us /=3;
-
-          uint16_t I[3] = {*foo(243), *foo(244), *foo(245)};
-          for (size_t i = 0; i < 3; i++)
-          {
-            Is += I[i];
-          }
-          Is /=3;
-
-          Fs = *foo(101) / 10;
-        }
-        else
-        { // DC
-          Us = *foo(211)/10;
-          Is = *foo(210);
-        }
-
-        // Evaluate values
-        uint16_t Isma= sma_add(&filterI[i], Is);
-
-        if(Isma < 1){
-          // HVIL
-          if(m->HVIL_cntr[i]++ > 5){
-            m->HVIL_cntr[i] = 5;
-          //  m->HVIL[i] =true;
-          }
-        }else{
-          m->HVIL_cntr[i] = 0;
-          m->HVIL[i] =false;
-        }
-    
-        slave_rec[i].I  = (slave_rec[i].I + Is)/2;
-        slave_rec[i].U  = (slave_rec[i].U + Us)/2;
-        slave_rec[i].F  = (slave_rec[i].F + Fs)/2;
-    
-        slave_rec[i].Im = Is>slave_rec[i].Im? Is: slave_rec[i].Im;
-        slave_rec[i].LiveCounter++;
-
-        slave_rec[i].code  = master.fault_code[i];
-    
-      }else{
-        //Reset HVIL
-        m->HVIL_cntr[i] = 0;
-        m->HVIL[i] =false;
+     
+        slave_rec[i].I   = m->slave[i].Iav;
+        slave_rec[i].U   = m->slave[i].Uav;
+        slave_rec[i].F   = m->slave[i].F;
+        slave_rec[i].Im  = m->slave[i].Imax;
+        slave_rec[i].LiveCounter++;  
       }
-
       // save status
-      slave_rec[i].slave_state = m->slaveStates[i];
+      slave_rec[i].slave_state = m->slave[i].slaveStates;
     } // slave for
 
 
-    // HVIL to RDO4
-    if(
-      m->HVIL[0]||m->HVIL[1]||m->HVIL[2]||m->HVIL[3]||m->HVIL[4] 
-    ){
-      master_RDO4_setstate(1);
-    }else{
-      master_RDO4_setstate(0);
-    }
+    // // HVIL to RDO4
+    // if(
+    //   m->HVIL[0]||m->HVIL[1]||m->HVIL[2]||m->HVIL[3]||m->HVIL[4] 
+    // ){
+    //   master_RDO4_setstate(1);
+    // }else{
+    //   master_RDO4_setstate(0);
+    // }
 
-    vTaskDelay(1000);
+    vTaskDelay(300);
   } // RTOS while
 }

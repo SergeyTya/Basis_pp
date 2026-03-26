@@ -15,6 +15,16 @@
 static uint8_t masterRxTxBuf[256] = { 0 };
 static uint8_t masterRxBuf[256] = { 0 };
 
+SemaphoreHandle_t semaphore_MT;
+//#define MASTER_TRANSPORT_TIMEOUT_VAL 30 
+#define MASTER_TRANSPORT_WAIT() {vTaskDelay(1); }
+
+void master_transport_init(){
+    semaphore_MT = xSemaphoreCreateBinary();
+    xSemaphoreGive(semaphore_MT); 
+    MASTER_TRANSPORT_LOCK_GIVE();
+}
+
 /**
 * @brief Function for writing a value to a slave holding register
 *
@@ -23,8 +33,9 @@ static uint8_t masterRxBuf[256] = { 0 };
 * @param val Value to write
 * @return Transport state
 */
-TypedefEnum_MasterTransportSates master_writeHoldingOs(uint8_t slave, uint16_t adr, uint16_t val)
+TypedefEnum_MasterTransportSates master_writeHoldingOs(uint8_t slave, uint16_t adr, uint16_t val, int timeout)
 {
+    MASTER_TRANSPORT_LOCK_TAKE();
     masterRxTxBuf[0] = slave;
     masterRxTxBuf[1] = 0x06;
     masterRxTxBuf[2] = ((uint8_t*)&adr)[1];
@@ -40,8 +51,8 @@ TypedefEnum_MasterTransportSates master_writeHoldingOs(uint8_t slave, uint16_t a
     uint16_t expectedSize = 8;
 
     master_expectedByteCnt(expectedSize);
-
-    for (size_t i = 0; i < 10; i++)
+    if(timeout<=0)timeout=1;
+    for (size_t i = 0; i < timeout; i++) // Timeout
     {
         uint8_t bytesToRead = master_hwBytesToRead();
         if (bytesToRead == expectedSize) {
@@ -49,25 +60,26 @@ TypedefEnum_MasterTransportSates master_writeHoldingOs(uint8_t slave, uint16_t a
             uint16_t crcExpected = usMBCRC16(masterRxBuf, expectedSize - 2);
             uint16_t crcReturned = (uint16_t)(masterRxBuf[expectedSize - 1] << 8 | masterRxBuf[expectedSize - 2]);
             if (crcExpected == crcReturned) {
+                MASTER_TRANSPORT_LOCK_GIVE();
                 return MASTER_TRANSPORT_NOERROR;
             }
             else {
+                MASTER_TRANSPORT_LOCK_GIVE();
                 return MASTER_TRANSPORT_CRCERROR;
             }
         }
         else {
             if (bytesToRead > expectedSize)
             {
-                // master_hwRead(masterRxBuf, expectedSize);
                 master_hwClearRxTxBuf();
-                vTaskDelay(10);
+                MASTER_TRANSPORT_LOCK_GIVE();
                 return MASTER_TRANSPORT_CRCERROR;
             }
-            vTaskDelay(10);
         }
-        vTaskDelay(50);
+        MASTER_TRANSPORT_WAIT() 
     }
 
+    MASTER_TRANSPORT_LOCK_GIVE();
     return MASTER_TRANSPORT_TIMEOUT;
 }
 
@@ -79,8 +91,9 @@ TypedefEnum_MasterTransportSates master_writeHoldingOs(uint8_t slave, uint16_t a
 * @param val Value to write
 * @return Transport state
 */
-TypedefEnum_MasterTransportSates master_writeHoldings(uint8_t slave, uint16_t adr, uint16_t val)
+TypedefEnum_MasterTransportSates master_writeHoldings(uint8_t slave, uint16_t adr, uint16_t val, int timeout)
 {
+    MASTER_TRANSPORT_LOCK_TAKE();
     masterRxTxBuf[0] = slave;
     masterRxTxBuf[1] = 0x10;
     masterRxTxBuf[2] = ((uint8_t*)&adr)[1];
@@ -99,8 +112,9 @@ TypedefEnum_MasterTransportSates master_writeHoldings(uint8_t slave, uint16_t ad
     uint16_t expectedSize = 8;
 
     master_expectedByteCnt(expectedSize);
-
-    for (size_t i = 0; i < 10; i++)
+ //   MASTER_TRANSPORT_WAIT()
+    if(timeout<=0)timeout=1;
+    for (size_t i = 0; i < timeout; i++) // Timeout
     {
         uint8_t bytesToRead = master_hwBytesToRead();
         if (bytesToRead == expectedSize) {
@@ -108,9 +122,11 @@ TypedefEnum_MasterTransportSates master_writeHoldings(uint8_t slave, uint16_t ad
             uint16_t crcExpected = usMBCRC16(masterRxBuf, expectedSize - 2);
             uint16_t crcReturned = (uint16_t)(masterRxBuf[expectedSize - 1] << 8 | masterRxBuf[expectedSize - 2]);
             if (crcExpected == crcReturned) {
+                MASTER_TRANSPORT_LOCK_GIVE();
                 return MASTER_TRANSPORT_NOERROR;
             }
             else {
+                MASTER_TRANSPORT_LOCK_GIVE();
                 return MASTER_TRANSPORT_CRCERROR;
             }
         }
@@ -119,21 +135,22 @@ TypedefEnum_MasterTransportSates master_writeHoldings(uint8_t slave, uint16_t ad
             {
                 // master_hwRead(masterRxBuf, expectedSize);
                 master_hwClearRxTxBuf();
-                vTaskDelay(10);
+               //MASTER_TRANSPORT_WAIT()
+                MASTER_TRANSPORT_LOCK_GIVE();
                 return MASTER_TRANSPORT_CRCERROR;
             }
-            vTaskDelay(1);
         }
-        vTaskDelay(10);
+        MASTER_TRANSPORT_WAIT() 
     }
 
+    MASTER_TRANSPORT_LOCK_GIVE();
     return MASTER_TRANSPORT_TIMEOUT;
 }
 
-TypedefEnum_MasterTransportSates master_readHoldingOs(uint8_t slave, uint16_t adr, uint16_t* out)
+TypedefEnum_MasterTransportSates master_readHoldingOs(uint8_t slave, uint16_t adr, uint16_t* out, int timeout)
 {
-    TypedefEnum_MasterTransportSates retVal = master_readHoldingsOs(slave, adr, 1, out);
-    return retVal;
+   // TypedefEnum_MasterTransportSates retVal =
+    return  master_readHoldingsOs(slave, adr, 1, out, timeout);
 }
 
 int timeout_err[5] = {0};
@@ -141,8 +158,9 @@ int crc_err[5] = {0};
 int slave_rx_cnt[5] = {0};
 int to_adr = 0;
 
-TypedefEnum_MasterTransportSates master_readHoldingsOs(uint8_t slave, uint16_t adr, uint16_t len, uint16_t* buff)
+TypedefEnum_MasterTransportSates master_readHoldingsOs(uint8_t slave, uint16_t adr, uint16_t len, uint16_t* buff, int timeout)
 {
+    MASTER_TRANSPORT_LOCK_TAKE();
     masterRxTxBuf[0] = slave;
     masterRxTxBuf[1] = 0x03;
     masterRxTxBuf[2] = ((uint8_t*)&adr)[1];
@@ -158,9 +176,10 @@ TypedefEnum_MasterTransportSates master_readHoldingsOs(uint8_t slave, uint16_t a
     master_hwWrite(masterRxTxBuf, 8);
     uint16_t expectedSize = 5 + len * 2;
     master_expectedByteCnt(expectedSize);
-    // vTaskDelay(1);
+   // MASTER_TRANSPORT_WAIT()
 
-    for (size_t i = 0; i < 30; i++) // Timeout
+    if(timeout<=0)timeout=1;
+    for (size_t i = 0; i < timeout; i++) // Timeout
     {
         uint8_t bytesToRead = master_hwBytesToRead();
         if (bytesToRead == expectedSize)
@@ -178,6 +197,7 @@ TypedefEnum_MasterTransportSates master_readHoldingsOs(uint8_t slave, uint16_t a
                    buff[i] = ((uint8_t *) &val)[1] + (((uint8_t *) &val)[0] << 8);
                 }
                 slave_rx_cnt[slave]++;
+                MASTER_TRANSPORT_LOCK_GIVE();
                 return MASTER_TRANSPORT_NOERROR;
             }
         }
@@ -187,15 +207,17 @@ TypedefEnum_MasterTransportSates master_readHoldingsOs(uint8_t slave, uint16_t a
             {
                 // master_hwRead(masterRxBuf, expectedSize);
                 master_hwClearRxTxBuf();
-                vTaskDelay(10);
+              // MASTER_TRANSPORT_WAIT()
                 crc_err[slave]++;
+                MASTER_TRANSPORT_LOCK_GIVE();
                 return MASTER_TRANSPORT_CRCERROR;
             }
         }
-        vTaskDelay(30);
+        MASTER_TRANSPORT_WAIT() 
     }
 
     timeout_err[slave]++;
     to_adr = adr;
+    MASTER_TRANSPORT_LOCK_GIVE();
     return MASTER_TRANSPORT_TIMEOUT;
 }

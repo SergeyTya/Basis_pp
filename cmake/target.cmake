@@ -44,6 +44,7 @@ function(create_device target_name )
             ${APP_PATH}/../fifo_buffer/fifo_buffer.c
             ${APP_PATH}/../fifo_buffer/sma.c
             ${APP_PATH}/crc16.c
+            ${APP_PATH}/task_monitor.c
 
          #   ${CMAKE_CURRENT_SOURCE_DIR}/http/http_server.c
          #   ${CMAKE_CURRENT_SOURCE_DIR}/http/http_data.c

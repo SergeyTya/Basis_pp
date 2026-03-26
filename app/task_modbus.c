@@ -53,6 +53,7 @@ void vTask_modbusTCP(void* arg){
             {
                 xStatus = eMBPoll(  );
                 vTaskDelay(2);
+                if(eMBGetTimeoutCounter()> 1000) break;
             }
             while( xStatus == MB_ENOERR );
         }

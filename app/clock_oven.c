@@ -26,7 +26,7 @@ void Clock_read(void * p){
     usart_baudrate_set(USART0, 115200);
 
 
-    c->state = master_readHoldingsOs(c->adr, 0x400, 6, clock_buffer);
+    c->state = master_readHoldingsOs(c->adr, 0x400, 6, clock_buffer, 30);
 
     c->time.timestamp_year   = clock_buffer[5];
     c->time.timestamp_month  = clock_buffer[4];
