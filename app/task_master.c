@@ -12,13 +12,15 @@
 #include "meter.h"
 #include "clock.h"
 
-#define MASTER_GLOB_TRANSPORT_TO 25
+static const uint8_t  MASTER_GLOB_TRANSPORT_TO = 30;
+
 
 TypeDef_Master master;
 
 extern Typedef_PanelConfig panelConfig;
 extern Typedef_Meter meter;
 extern Typedef_Clock clock;
+
 extern void master_LEDonFaultReset();
 extern void master_LEDonFaultState();
 extern void master_LEDonRUNstate(int dev);
@@ -29,165 +31,199 @@ extern void master_LEDonGlobRunState(bool state);
 extern void master_RDIOonRUNstate(int dev);
 
 // Used for encode slave fault bits
-static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int mask, int16_t offset);
+static inline int checkCode(TypeDef_MB_Holding *holding, uint16_t slaveAdr, int mask, int16_t offset);
 
- static inline
- void MASTER_TRANSPORT_CHECK_TIMEOUT(TypedefEnum_MasterTransportSates state, int slaveAdr){
-    if( (state) == MASTER_TRANSPORT_TIMEOUT ){ 
+static inline void MASTER_TRANSPORT_CHECK_TIMEOUT(TypedefEnum_MasterTransportSates state, int slaveAdr)
+{
+    if ((state) != MASTER_TRANSPORT_NOERROR)
+    {
         master.slave[slaveAdr].slaveStates = MASTER_STATE_onTIMEOUT;
         master.slave[slaveAdr].master_wdg = true;
-    }else{
+    }
+    else
+    {
         master.slave[slaveAdr].master_wdg = false;
-    } 
+    }
+
+    vTaskDelay(6);
 }
 
+void vTask_MasterHWstates(void *argument);
+void vTask_MasterAC(void *argument);
+void vTask_MasterDC(void *argument);
+void vTask_MasterDev(void *argument);
 
-void vTask_MasterHWstates(void* argument);
-void vTask_MasterAC(void* argument);
-void vTask_MasterDC(void* argument);
-void vTask_MasterDev(void* argument);
+static void read_all_from_slave(uint16_t slaveAdr);
+void handle_AC(uint16_t slaveAdr);
+void handle_DC(uint16_t slaveAdr);
 
-volatile uint16_t reg_val_tmp = 0;
-volatile uint16_t reg_adr_tmp = 220;
-void vTask_Master(__attribute__((unused)) void* argument)
+void vTask_Master(__attribute__((unused)) void *argument)
 {
     // Init master hardware for modbus RTU
-    
+
     master_hwInit(panelConfig.modbus_master.speed);
     master_transport_init();
 
     vTaskDelay(300);
 
-
-    xTaskCreate(vTask_MasterAC,       "MasterAC",   configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 4, NULL);
-    xTaskCreate(vTask_MasterDC,       "MasterDC", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 4, NULL);
     xTaskCreate(vTask_MasterHWstates, "MasterStates", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
-    xTaskCreate(vTask_MasterDev,      "MasterDev", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 3, NULL);
-
+  
     for (size_t i = 1; i < 5; i++)
     {
         master.slave[i].slaveStates = MASTER_STATE_onTIMEOUT;
     }
-    
-    while (1) { //This task only read slave parameters an write it if needed
 
-        TypeDef_MB_Holding* holding;
+    uint8_t meter_cnt = 0;
 
-        for (size_t j = 1; j < 5; j++) // Read all slaves from j (slave addr) = 1 to 4
-        {
-         //   vTaskDelay(100); // delay between slaves
-            // Current slave address
-            uint16_t slaveAdr = j;
+    while (1)
+    { // This task only read slave parameters an write it if needed
 
-            // Current slave holding register table pointer
-            TypeDef_MB_Table* table = &holdings_table[slaveAdr];
 
-            /* 2. Check if slave is enabled */
-            bool slave_enable[5] = { false,
+
+        bool slave_enable[5] = {false,
                                     panelConfig.enableAC1,
                                     panelConfig.enableAC2,
                                     panelConfig.enableDC1,
-                                    panelConfig.enableDC2 };
+                                    panelConfig.enableDC2};
 
-            if (slave_enable[j] != true)
+
+        for (size_t j = 1; j < 5; j++) // Read all slaves from j (slave addr) = 1 to 4
+        {
+           // Current slave address
+            uint16_t slaveAdr = j;
+
+            // Current slave holding register table pointer
+
+            if (slave_enable[slaveAdr] != true)
             { // skip if slave not enabled
-                master.slave[j].slaveStates = MASTER_STATE_EMPTY;
-                vTaskDelay(10);
-                continue;
+                master.slave[slaveAdr].slaveStates = MASTER_STATE_EMPTY;
             }
-            /*  4. Check slave displayed */
-            if (slaveAdr != panelConfig.active_slave)
-            { // skip not active slave
-                vTaskDelay(10);
-                continue;
-            }
-
-            // skip on timeout  
-            if( master.slave[slaveAdr].slaveStates == MASTER_STATE_onTIMEOUT){
-                vTaskDelay(10);
-                continue;
-            }
-
-            /*  5. Read displayed slave holding registers */
-            int tocntr = 0;
-            for (size_t i = 0; i < table->len; i++)
+            else
             {
-                vTaskDelay(10);
-                holding = &table->holdings[i];
-
-                // Write HR to slave
-                if (holding->lock && holding->change_req)
-                {
-
-                    /* Send holding value to slave */
-                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                        master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, *holding->pntr, MASTER_GLOB_TRANSPORT_TO),
-                        slaveAdr
-                    );
-                    holding->lock = false;
-                    holding->change_req = false;
-                    vTaskDelay(40); // Delay after write
-                    
-                    // save to AC slave memory
-                    if(slaveAdr == CONFIG_SLAVE_AC1 || slaveAdr == CONFIG_SLAVE_AC2){
-                        uint16_t reg900CurVal = 0;
-                        // read save control HR adr=900
-                        MASTER_TRANSPORT_CHECK_TIMEOUT(
-                            master_readHoldingOs(slaveAdr, 900, &reg900CurVal, MASTER_GLOB_TRANSPORT_TO),
-                            slaveAdr
-                        );
-                        // modify bit 1
-                        reg900CurVal |= (1<<0);
-                        // send back
-                        MASTER_TRANSPORT_CHECK_TIMEOUT(
-                            master_writeHoldingOs(slaveAdr, 900, reg900CurVal, MASTER_GLOB_TRANSPORT_TO*2),
-                            slaveAdr
-                        );
-                    }
-
-                    // save to DC slave memory
-                    if(slaveAdr == CONFIG_SLAVE_DC1 || slaveAdr == CONFIG_SLAVE_DC2){
-                        uint16_t reg170CurVal = 0;
-                        // read save control HR adr=900
-                        MASTER_TRANSPORT_CHECK_TIMEOUT(
-                            master_readHoldingOs(slaveAdr, 170, &reg170CurVal, MASTER_GLOB_TRANSPORT_TO),
-                            slaveAdr
-                        );
-                        // modify bit 1
-                        reg170CurVal |= (1<<0);
-                        // send back
-                        MASTER_TRANSPORT_CHECK_TIMEOUT(
-                            master_writeHoldingOs(slaveAdr, 170, reg170CurVal, MASTER_GLOB_TRANSPORT_TO*2),
-                            slaveAdr
-                        );
-                    }
+                /* Check slave displayed */
+                if (slaveAdr == panelConfig.active_slave)
+                { // skip not active slave
+                    read_all_from_slave(slaveAdr);
                 }
-
-                // read holding value to slave
-                uint16_t out = 0;
-                TypedefEnum_MasterTransportSates res = master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, &out, MASTER_GLOB_TRANSPORT_TO);
-                if (res == MASTER_TRANSPORT_NOERROR)
-                {
-                    if (holding->lock == false)
-                    {
-                        *holding->pntr = out;
-                    }
-                    //feed master wdg
-                     master.slave[slaveAdr].master_wdg = false;
-                }
-                else {
-                     master.slave[slaveAdr].master_wdg = true;
-                    tocntr++;
-                     master.slave[slaveAdr].slaveStates = MASTER_STATE_onTIMEOUT;
-                    if (tocntr > 3) break;
-                }
+                /* Handle AC*/
+                handle_AC(slaveAdr);
+                /* Handle DC*/
+                handle_DC(slaveAdr);
             }
-            // TODO MASTER ERROR HANDLER
+ 
+        }
+
+
+
+         // Read Meter
+        if (meter.enable)
+        {
+            if(meter_cnt++ > 2){
+             meter.read(&meter);
+                meter_cnt = 0;
+            }
+        }
+
+      
+            // Read Clock
+        if (clock.enable)
+        {
+            clock.read(&clock);
+            vTaskDelay(10); // NEED Delay
+                // if(clock.state == MASTER_TRANSPORT_TIMEOUT)  vTaskDelay(2000);
+        }
+
+        if(
+            // no slave selected
+            (panelConfig.enableAC1||panelConfig.enableAC2||panelConfig.enableDC1||panelConfig.enableDC2) == 0
+        )
+        {
+            vTaskDelay(100);
         }
     }
 }
 
-static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int mask, int16_t offset)
+static void read_all_from_slave(uint16_t slaveAdr)
+{
+    /* Read displayed slave holding registers */
+
+    TypeDef_MB_Table *table = &holdings_table[slaveAdr];
+    TypeDef_MB_Holding *holding;
+
+    int tocntr = 0;
+    for (size_t i = 0; i < table->len; i++)
+    {
+        holding = &table->holdings[i];
+
+        // Write HR to slave
+        if (holding->lock && holding->change_req)
+        {
+
+            /* Send holding value to slave */
+            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, *holding->pntr, MASTER_GLOB_TRANSPORT_TO),
+                slaveAdr);
+            holding->lock = false;
+            holding->change_req = false;
+         //   vTaskDelay(5); // Delay after write
+
+            // save to AC slave memory
+            if (slaveAdr == CONFIG_SLAVE_AC1 || slaveAdr == CONFIG_SLAVE_AC2)
+            {
+                uint16_t reg900CurVal = 0;
+                // read save control HR adr=900
+                MASTER_TRANSPORT_CHECK_TIMEOUT(
+                    master_readHoldingOs(slaveAdr, 900, &reg900CurVal, MASTER_GLOB_TRANSPORT_TO),
+                    slaveAdr);
+                // modify bit 1
+                reg900CurVal |= (1 << 0);
+                // send back
+                MASTER_TRANSPORT_CHECK_TIMEOUT(
+                    master_writeHoldingOs(slaveAdr, 900, reg900CurVal, MASTER_GLOB_TRANSPORT_TO * 2),
+                    slaveAdr);
+            }
+
+            // save to DC slave memory
+            if (slaveAdr == CONFIG_SLAVE_DC1 || slaveAdr == CONFIG_SLAVE_DC2)
+            {
+                uint16_t reg170CurVal = 0;
+                // read save control HR adr=170
+                MASTER_TRANSPORT_CHECK_TIMEOUT(
+                    master_readHoldingOs(slaveAdr, 170, &reg170CurVal, MASTER_GLOB_TRANSPORT_TO),
+                    slaveAdr);
+                // modify bit 1
+                reg170CurVal |= (1 << 0);
+                // send back
+                MASTER_TRANSPORT_CHECK_TIMEOUT(
+                    master_writeHoldingOs(slaveAdr, 170, reg170CurVal, MASTER_GLOB_TRANSPORT_TO * 2),
+                    slaveAdr);
+            }
+        }
+
+        // read holding value to slave
+        uint16_t out = 0;
+        TypedefEnum_MasterTransportSates res = master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, &out, MASTER_GLOB_TRANSPORT_TO);
+        if (res == MASTER_TRANSPORT_NOERROR)
+        {
+            if (holding->lock == false)
+            {
+                *holding->pntr = out;
+            }
+            // feed master wdg
+            master.slave[slaveAdr].master_wdg = false;
+        }
+        else
+        {
+            master.slave[slaveAdr].master_wdg = true;
+            tocntr++;
+            master.slave[slaveAdr].slaveStates = MASTER_STATE_onTIMEOUT;
+            if (tocntr > 3)
+                break;
+        }
+    }
+}
+
+static inline int checkCode(TypeDef_MB_Holding *holding, uint16_t slaveAdr, int mask, int16_t offset)
 {
     uint16_t faultCode = (*holding->pntr) & 0x0FFF;
     if (faultCode > 0)
@@ -197,10 +233,10 @@ static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int 
             uint8_t bit = (faultCode & (1 << i)) >> i;
             if (bit == 1)
             {
-                 master.slave[slaveAdr].slaveStates = MASTER_STATE_onFAULT;
-                 master.slave[slaveAdr].fault_source = true;
-                 master.slave[slaveAdr].fault_code = i + 1 + offset;
-                return   master.slave[slaveAdr].fault_code;
+                master.slave[slaveAdr].slaveStates = MASTER_STATE_onFAULT;
+                master.slave[slaveAdr].fault_source = true;
+                master.slave[slaveAdr].fault_code = i + 1 + offset;
+                return master.slave[slaveAdr].fault_code;
             }
         }
     }
@@ -208,32 +244,41 @@ static inline int checkCode(TypeDef_MB_Holding* holding, uint16_t slaveAdr, int 
 }
 
 bool blinker = false;
-static uint16_t blinker_cntr = 0;
-void vTask_MasterHWstates(void* argument) {
+static volatile uint16_t blinker_cntr = 0;
+void vTask_MasterHWstates(void *argument)
+{
 
     bool onGlobalFault = false;
     bool onGlobalTimeout = false;
     bool onGlobalRUN = false;
-    while (1) {
+    while (1)
+    {
 
-        if (blinker_cntr == 0) {
-        blinker_cntr = 3;
-        blinker = !blinker;
-        } else {
+        if (blinker_cntr == 0)
+        {
+            blinker_cntr = 3;
+            blinker = !blinker;
+        }
+        else
+        {
             blinker_cntr--;
-    //return;
+            // return;
         }
 
         vTaskDelay(100);
 
-        if (!onGlobalFault && !onGlobalTimeout) {
+        if (!onGlobalFault && !onGlobalTimeout)
+        {
             master_LEDonFaultReset();
         }
-        else {
-            if (onGlobalTimeout) {
+        else
+        {
+            if (onGlobalTimeout)
+            {
                 master_LEDonTimeoutState();
             }
-            else {
+            else
+            {
                 master_LEDonFaultState();
             }
         }
@@ -247,19 +292,17 @@ void vTask_MasterHWstates(void* argument) {
         for (size_t i = 1; i < 5; i++)
         {
             onGlobalFault |= master.slave[i].slaveStates == MASTER_STATE_onFAULT;
-            onGlobalTimeout |= master.slave[i].slaveStates == MASTER_STATE_onTIMEOUT ;
+            onGlobalTimeout |= master.slave[i].slaveStates == MASTER_STATE_onTIMEOUT;
             onGlobalRUN |= master.slave[i].slaveStates == MASTER_STATE_onRUN;
 
             switch (master.slave[i].slaveStates)
             {
-            case MASTER_STATE_onREADY: case MASTER_STATE_onFAULT:
+            case MASTER_STATE_onREADY:
+            case MASTER_STATE_onFAULT:
                 master_LEDonReadyState(i);
-                break;
-
                 break;
             case MASTER_STATE_onRUN:
                 master_LEDonRUNstate(i);
-
                 break;
             case MASTER_STATE_onWAIT_FOR_AC_OK:
                 master_LEDonWaitForAcOkState(i);
@@ -267,447 +310,375 @@ void vTask_MasterHWstates(void* argument) {
             case MASTER_STATE_onWAIT_FOR_MAIN_RELAY:
                 master_LEDonWaitForMainRelayState(i);
                 break;
-
             default:
                 break;
             }
         }
 
-        if(clock.enable) onGlobalTimeout |= clock.state == MASTER_TRANSPORT_TIMEOUT;
-        if(meter.enable) onGlobalTimeout |= meter.state == MASTER_TRANSPORT_TIMEOUT;
+        if (clock.enable)
+            onGlobalTimeout |= clock.state == MASTER_TRANSPORT_TIMEOUT;
+        if (meter.enable)
+            onGlobalTimeout |= meter.state == MASTER_TRANSPORT_TIMEOUT;
     }
 }
 
-void master_stop_dc(uint8_t slaveAdr){
+void master_stop_dc(uint8_t slaveAdr)
+{
 
     uint16_t valStop = 0;
     master_readHoldingOs(slaveAdr, 104, &valStop, MASTER_GLOB_TRANSPORT_TO);
 
-    valStop = valStop & ~(1U << 1); 
+    valStop = valStop & ~(1U << 1);
     MASTER_TRANSPORT_CHECK_TIMEOUT(
         master_writeHoldingOs(slaveAdr, 104, valStop, MASTER_GLOB_TRANSPORT_TO),
-        slaveAdr
-    );
-
+        slaveAdr);
 }
 
-void vTask_MasterAC(void* argument){
-        TypeDef_MB_Holding* holding;
+void handle_AC(uint16_t slaveAdr)
+{
 
-    while(1){
+    if (
+           (slaveAdr != CONFIG_SLAVE_AC1) 
+        && (slaveAdr != CONFIG_SLAVE_AC2)
+    ) return;
 
-        for (size_t j = 1; j < 3; j++)
-        {
-            vTaskDelay(50); // delay between slaves
+    // Current slave holding register table pointer
+    TypeDef_MB_Table *table = &holdings_table[slaveAdr];
+    TypeDef_MB_Holding *holding;
 
-            uint16_t slaveAdr = j;
+    // Reset start req if TO
+    if (master.slave[slaveAdr].slaveStates == MASTER_STATE_onTIMEOUT)
+    {
 
-            // Current slave holding register table pointer
-            TypeDef_MB_Table* table = &holdings_table[slaveAdr];
+        master.slave[slaveAdr].start_req_hw = false;
+        // read AC slaves status only
+        holding = GetHoldingByAdrFromTable(270, table);
+        MASTER_TRANSPORT_CHECK_TIMEOUT(
+            master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),
+            slaveAdr);
+        if (!master.slave[slaveAdr].master_wdg)
+            master.slave[slaveAdr].slaveStates = MASTER_STATE_onREADY;
 
-            /* 2. Check if slave is enabled */
-            bool slave_enable[5] = { false,
-                                    panelConfig.enableAC1,
-                                    panelConfig.enableAC2,
-                                    panelConfig.enableDC1,
-                                    panelConfig.enableDC2 };
-
-            if (slave_enable[j] != true)
-            { // skip if slave not enabled
-                master.slave[j].slaveStates = MASTER_STATE_EMPTY;
-                continue;
-            }
-
-            // Reset start req if TO
-            if(  master.slave[slaveAdr].slaveStates == MASTER_STATE_onTIMEOUT){
-
-                master.slave[slaveAdr].start_req_hw  = false;
-                // read AC slaves status only
-                holding = GetHoldingByAdrFromTable(270, table);
-                MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),
-                    slaveAdr
-                );
-                if(!master.slave[slaveAdr].master_wdg)  master.slave[slaveAdr].slaveStates = MASTER_STATE_onREADY;
-
-                continue;
-            }
-
-            /* 3. Check slave states and handle start|stop req */
-            //if (slaveAdr == CONFIG_SLAVE_AC1 || slaveAdr == CONFIG_SLAVE_AC2)
-            {
-                //if (!master.slave[slaveAdr].master_wdg) 
-                { 
-                // Read AC indicators
-                    //  Currents 243, 244, 245
-                    holding = GetHoldingByAdrFromTable(243, table);
-                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                    );
-                    holding = GetHoldingByAdrFromTable(244, table);
-                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                    );
-                    holding = GetHoldingByAdrFromTable(245, table);
-                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                    );
-                    // Voltage  240, 241, 242
-                    holding = GetHoldingByAdrFromTable(240, table);
-                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                    );
-                    holding = GetHoldingByAdrFromTable(241, table);
-                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                    );
-                    holding = GetHoldingByAdrFromTable(242, table);
-                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                    );
-                }
-
-                // read AC slaves status
-                holding = GetHoldingByAdrFromTable(270, table);
-                MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                );
-                // check faults
-                   // check faults
-                int fltcode = 0;
-                fltcode = checkCode(holding, slaveAdr, 12, 0);
-                holding = GetHoldingByAdrFromTable(271, table);
-                MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                );
-                fltcode += checkCode(holding, slaveAdr, 11, 16);
-
-                // Fault Reset
-                if (fltcode == 0) {
-                    if ( master.slave[slaveAdr].slaveStates == MASTER_STATE_onFAULT) {
-                         master.slave[slaveAdr].slaveStates = MASTER_STATE_onREADY;
-                         master.slave[slaveAdr].fault_source = false;
-                         master.slave[slaveAdr].fault_code = 0;
-                    }
-                }
-
-                if ( master.slave[slaveAdr].slaveStates != MASTER_STATE_onFAULT) {
-                    // Read control register
-                    holding = GetHoldingByAdrFromTable(103, table);
-                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                        master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                    );
-
-                        uint16_t ac_slave_CR = *holding->pntr;
-
-                    if (! master.slave[slaveAdr].master_wdg) { //Skip if onTimeout state
-                        /* 
-                                        READY - RDO off, inv - off --> start_hw
-                           stop hw <--- WAIT  - RDO off, inv - on  --> start_rdo
-                          stop rdo <--- RUN   - RDO on , inv - on
-                        */
-
-                            if((ac_slave_CR & 0x8) == 0){ // Ready state
-                                 master.slave[slaveAdr].slaveStates = MASTER_STATE_onREADY;
-                                //master.slaveStates[2] = MASTER_STATE_onREADY;
-
-                                 master.slave[slaveAdr].start_req_rdo = false; // always reset rdo start req in ready state
-                                if(master.slave[slaveAdr].start_req_hw){
-                                    master.slave[slaveAdr].fault_source_pm = false;
-                                    // send start
-                                    holding = GetHoldingByAdrFromTable(103, table);
-                                    uint16_t valACStart = *holding->pntr | 8U; // bit #3
-                                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                                        master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valACStart , MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                                    );
-                                    master.slave[slaveAdr].start_req_hw = false;
-                                    master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_AC_OK;
-                                }
-                            }else{
-                                 // Here we check if output voltage reach reference
-
-                                if( master.slave[slaveAdr].start_req_rdo){ 
-                                    //Short press 
-                                        if(  master.slave[slaveAdr].slaveStates == MASTER_STATE_onWAIT_FOR_AC_OK){
-
-                                             uint16_t Uacr[3]; uint16_t ref_ra;
-
-                                            master_readHoldingOs(slaveAdr, 240, &Uacr[0], MASTER_GLOB_TRANSPORT_TO);
-                                            master_readHoldingOs(slaveAdr, 241, &Uacr[1], MASTER_GLOB_TRANSPORT_TO);
-                                            master_readHoldingOs(slaveAdr, 242, &Uacr[2], MASTER_GLOB_TRANSPORT_TO);
-                                            master_readHoldingOs(slaveAdr, 102, &ref_ra, MASTER_GLOB_TRANSPORT_TO);
-
-                                            bool reached = (Uacr[0] >= ref_ra) && (Uacr[1] >= ref_ra) &&  (Uacr[2] >= ref_ra);
-
-                                            // if output voltage is good
-                                            if(reached){
-                                                // Enable contactor RDO
-                                                  master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_MAIN_RELAY;
-                                            }
-                                        }
-
-                                        if(master.slave[slaveAdr].slaveStates == MASTER_STATE_onRUN){
-                                            // Обратный порядок выключения  краткое нажатие - контактор, длинное инвертор
-                                            // Switch off the contactor
-                                            master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_AC_OK;
-                                        }
-
-                                        master.slave[slaveAdr].start_req_rdo = false;
-                                        master.slave[slaveAdr].start_req_hw = false;
-                                        vTaskDelay(300);
-                                }
-
-                                // check main contactor feedback
-                                if( master.slave[slaveAdr].slaveStates == MASTER_STATE_onWAIT_FOR_MAIN_RELAY){
-                                    //read HR 220
-                                    uint16_t acreg220 = 0;
-                                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                                        master_readHoldingOs(slaveAdr, 220, &acreg220, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                                    );
-
-                                    if((acreg220 & 0x2) != 0){
-                                          master.slave[slaveAdr].slaveStates = MASTER_STATE_onRUN;
-                                    }
-                                }
-
-                                if( // Timeout state
-                                        ( master.slave[slaveAdr].slaveStates  == MASTER_STATE_onTIMEOUT)
-                                     || (master.slave[slaveAdr].slaveStates   == MASTER_STATE_onREADY)
-                                ){
-                                     uint16_t acreg220_2 = 0;
-                                    // Return after timeout
-                                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                                        master_readHoldingOs(slaveAdr, 220, &acreg220_2, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                                    );
-
-                                    if((acreg220_2 & 0x2) != 0){
-                                         master.slave[slaveAdr].slaveStates = MASTER_STATE_onRUN;
-                                    }else{
-                                         master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_AC_OK;
-                                    }
-
-                                }
-                                
-
-                                if(master.slave[slaveAdr].start_req_hw){
-                                    // Long press
-                                    // Обратный порядок выключения  краткое нажатие - контактор, длинное инвертор
-                                    if(
-                                        master.slave[slaveAdr].slaveStates != MASTER_STATE_onRUN
-                                    ){
-                                        //stop inverter (long press) only after contactor switched off
-                                        master.slave[slaveAdr].start_req_hw = false;
-                                        master.slave[slaveAdr].start_req_rdo = false;
-                                        uint16_t valStopACx = *holding->pntr ^ 8;
-                                        MASTER_TRANSPORT_CHECK_TIMEOUT(
-                                            master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStopACx, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                                        );
-                                    }
-                                }
-                            }
-                    } //AC slave onTimeout state
-                    
-                }else{
-                        // AC slave onFAULT                        
-                        master.slave[slaveAdr].start_req_hw  = false;
-                         master.slave[slaveAdr].start_req_rdo = false;
-                }
-
-            }
-            /*  Read status and control DC slaves */
-        }
-      //  vTaskDelay(50);
+        return;
     }
 
-}
-
-void vTask_MasterDC(void* argument){
-
-    TypeDef_MB_Holding* holding;
-
-    while(1){
-
-        for (size_t j = 3; j < 5; j++)
+    {
         {
-            vTaskDelay(50); // delay between slaves
-            
-            uint16_t slaveAdr = j;
+            // Read AC indicators
+            //  Currents 243, 244, 245
+            holding = GetHoldingByAdrFromTable(243, table);
+            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+            holding = GetHoldingByAdrFromTable(244, table);
+            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+            holding = GetHoldingByAdrFromTable(245, table);
+            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+            // Voltage  240, 241, 242
+            holding = GetHoldingByAdrFromTable(240, table);
+            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+            holding = GetHoldingByAdrFromTable(241, table);
+            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+            holding = GetHoldingByAdrFromTable(242, table);
+            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+        }
 
-            // Current slave holding register table pointer
-            TypeDef_MB_Table* table = &holdings_table[slaveAdr];
+        // read AC slaves status
+        holding = GetHoldingByAdrFromTable(270, table);
+        MASTER_TRANSPORT_CHECK_TIMEOUT(
+            master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+        // check faults
+        // check faults
+        int fltcode = 0;
+        fltcode = checkCode(holding, slaveAdr, 12, 0);
+        holding = GetHoldingByAdrFromTable(271, table);
+        MASTER_TRANSPORT_CHECK_TIMEOUT(
+            master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+        fltcode += checkCode(holding, slaveAdr, 11, 16);
 
-            /* 2. Check if slave is enabled */
-            bool slave_enable[5] = { false,
-                                    panelConfig.enableAC1,
-                                    panelConfig.enableAC2,
-                                    panelConfig.enableDC1,
-                                    panelConfig.enableDC2 };
-
-            if (slave_enable[j] != true)
-            { // skip if slave not enabled
-                master.slave[j].slaveStates = MASTER_STATE_EMPTY;
-                continue;
-            }
-
-            // Reset start req if TO
-            if(  master.slave[slaveAdr].slaveStates == MASTER_STATE_onTIMEOUT){
-                master.slave[slaveAdr].start_req_hw  = false;
-
-                // read status only
-                holding = GetHoldingByAdrFromTable(220, table);
-                MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr,  220, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                );
-                if(!master.slave[slaveAdr].master_wdg)  master.slave[slaveAdr].slaveStates = MASTER_STATE_onREADY;
-
-                continue;
-            }
-
-           // if (slaveAdr == CONFIG_SLAVE_DC1 || slaveAdr == CONFIG_SLAVE_DC2)
+        // Fault Reset
+        if (fltcode == 0)
+        {
+            if (master.slave[slaveAdr].slaveStates == MASTER_STATE_onFAULT)
             {
-                //Read DC indicators Udc-211, Idc-210
-                //if(!master.slave[slaveAdr].master_wdg)
-                {
-                    holding = GetHoldingByAdrFromTable(210, table);
-                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr,  210, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                    );
-                    holding = GetHoldingByAdrFromTable(211, table);
-                    MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr,  211, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                    );
-                }
+                master.slave[slaveAdr].slaveStates = MASTER_STATE_onREADY;
+                master.slave[slaveAdr].fault_source = false;
+                master.slave[slaveAdr].fault_code = 0;
+            }
+        }
 
-                // Read status register
-                holding = GetHoldingByAdrFromTable(220, table);
-                MASTER_TRANSPORT_CHECK_TIMEOUT(
-                    master_readHoldingOs(slaveAdr,  220, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                );
+        if (master.slave[slaveAdr].slaveStates != MASTER_STATE_onFAULT)
+        {
+            // Read control register
+            holding = GetHoldingByAdrFromTable(103, table);
+            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
 
-               // if (! master.slave[slaveAdr].master_wdg) //Skip if onTimeout state 
-                {
+            uint16_t ac_slave_CR = *holding->pntr;
 
-                    if ((*holding->pntr & 0x4) != 0) {
-                        // DC onFault state
-                         master.slave[slaveAdr].slaveStates = MASTER_STATE_onFAULT;
-                        // Read Fault code register 
-                        holding = GetHoldingByAdrFromTable(240, table);
+            if (!master.slave[slaveAdr].master_wdg)
+            { // Skip if onTimeout state
+                /*
+                                READY - RDO off, inv - off --> start_hw
+                   stop hw <--- WAIT  - RDO off, inv - on  --> start_rdo
+                  stop rdo <--- RUN   - RDO on , inv - on
+                */
+
+                if ((ac_slave_CR & 0x8) == 0)
+                { // Ready state
+                    master.slave[slaveAdr].slaveStates = MASTER_STATE_onREADY;
+                    // master.slaveStates[2] = MASTER_STATE_onREADY;
+
+                    master.slave[slaveAdr].start_req_rdo = false; // always reset rdo start req in ready state
+                    if (master.slave[slaveAdr].start_req_hw)
+                    {
+                        master.slave[slaveAdr].fault_source_pm = false;
+                        // send start
+                        holding = GetHoldingByAdrFromTable(103, table);
+                        uint16_t valACStart = *holding->pntr | 8U; // bit #3
                         MASTER_TRANSPORT_CHECK_TIMEOUT(
-                            master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                        );
-                        checkCode(holding, slaveAdr, 8, -1); // Set slave onFAULT state here!
-                        // stops active start requests
+                            master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valACStart, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
                         master.slave[slaveAdr].start_req_hw = false;
+                        master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_AC_OK;
                     }
-                    else 
-                    if ((*holding->pntr & 0x1) != 0) { //DC RUN STATE (in RUN state bow bit RUN and RDY are 1)
+                }
+                else
+                {
+                    // Here we check if output voltage reach reference
 
-                        if( master.slave[slaveAdr].slaveStates == MASTER_STATE_onWAIT_FOR_AC_OK){
-                            // wait for output good
+                    if (master.slave[slaveAdr].start_req_rdo)
+                    {
+                        // Short press
+                        if (master.slave[slaveAdr].slaveStates == MASTER_STATE_onWAIT_FOR_AC_OK)
+                        {
 
-                            uint16_t Uo = 0;
-                            uint16_t Ur = 0;
+                            uint16_t Uacr[3];
+                            uint16_t ref_ra;
 
-                            MASTER_TRANSPORT_CHECK_TIMEOUT(
-                                master_readHoldingOs(slaveAdr, 211, &Uo, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                            );
-
-
-                            MASTER_TRANSPORT_CHECK_TIMEOUT(
-                                master_readHoldingOs(slaveAdr, 102, &Ur, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                            );
-
-                            if(Uo>Ur*8/10) {
-                                 master.slave[slaveAdr].slaveStates = MASTER_STATE_onRUN;
+                            for (int i = 0; i < 3; i++) {
+                                master_readHoldingOs(slaveAdr, 240 + i, &Uacr[i], MASTER_GLOB_TRANSPORT_TO);
                             }
-                            
+
+                            master_readHoldingOs(slaveAdr, 102, &ref_ra, MASTER_GLOB_TRANSPORT_TO);
+
+                            bool reached = (Uacr[0] >= ref_ra) && (Uacr[1] >= ref_ra) && (Uacr[2] >= ref_ra);
+
+                            // if output voltage is good
+                            if (reached)
+                            {
+                                // Enable contactor RDO
+                                master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_MAIN_RELAY;
+                            }
                         }
-                        
-                        // Timeout state
-                        if ( 
-                           (master.slave[slaveAdr].slaveStates  == MASTER_STATE_onTIMEOUT)
-                        || (master.slave[slaveAdr].slaveStates  == MASTER_STATE_onREADY)
-                        ){
-                             master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_AC_OK;
+
+                        if (master.slave[slaveAdr].slaveStates == MASTER_STATE_onRUN)
+                        {
+                            // Обратный порядок выключения  краткое нажатие - контактор, длинное инвертор
+                            // Switch off the contactor
+                            master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_AC_OK;
                         }
 
+                        master.slave[slaveAdr].start_req_rdo = false;
+                        master.slave[slaveAdr].start_req_hw = false;
+                        vTaskDelay(300);
+                    }
 
-                      //   master.slave[slaveAdr].slaveStates = MASTER_STATE_onRUN;
-                        // DC onRun state
-                       
-                        // SLAVE START STOP
-                        if (master.slave[slaveAdr].start_req_hw == true) {
-                            //send stop;
-                            uint16_t valStop = 0;
+                    // check main contactor feedback
+                    if (master.slave[slaveAdr].slaveStates == MASTER_STATE_onWAIT_FOR_MAIN_RELAY)
+                    {
+                        // read HR 220
+                        uint16_t acreg220 = 0;
+                        MASTER_TRANSPORT_CHECK_TIMEOUT(
+                            master_readHoldingOs(slaveAdr, 220, &acreg220, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
 
-                            master_readHoldingOs(slaveAdr, 104, &valStop, MASTER_GLOB_TRANSPORT_TO);
+                        uint8_t  BIT_MAIN_RELAY_FEEDBACK = (1U << 1);
+                        if ((acreg220 & BIT_MAIN_RELAY_FEEDBACK) != 0)
+                        {
+                            master.slave[slaveAdr].slaveStates = MASTER_STATE_onRUN;
+                        }
+                    }
 
-                            valStop = valStop & ~(1U << 1); 
-                            MASTER_TRANSPORT_CHECK_TIMEOUT(
-                                master_writeHoldingOs(slaveAdr, 104, valStop, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                            );
+                    if ( // Timeout state
+                        (master.slave[slaveAdr].slaveStates == MASTER_STATE_onTIMEOUT) || (master.slave[slaveAdr].slaveStates == MASTER_STATE_onREADY))
+                    {
+                        uint16_t acreg220_2 = 0;
+                        // Return after timeout
+                        MASTER_TRANSPORT_CHECK_TIMEOUT(
+                            master_readHoldingOs(slaveAdr, 220, &acreg220_2, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+
+                        if ((acreg220_2 & 0x2) != 0)
+                        {
+                            master.slave[slaveAdr].slaveStates = MASTER_STATE_onRUN;
+                        }
+                        else
+                        {
+                            master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_AC_OK;
+                        }
+                    }
+
+                    if (master.slave[slaveAdr].start_req_hw)
+                    {
+                        // Long press
+                        // Обратный порядок выключения  краткое нажатие - контактор, длинное инвертор
+                        if (
+                            master.slave[slaveAdr].slaveStates != MASTER_STATE_onRUN)
+                        {
+                            // stop inverter (long press) only after contactor switched off
                             master.slave[slaveAdr].start_req_hw = false;
-
-                            vTaskDelay(10);
-                        }
-                    } else
-
-                    /* Handle DC start|stop req */
-                    if ((*holding->pntr & 0x2) != 0) { //DC READY STATE
-
-                         master.slave[slaveAdr].fault_source = false;
-                        // DC onReady state
-                         master.slave[slaveAdr].slaveStates = MASTER_STATE_onREADY;
-                        // SLAVE START REQUEST
-                        if (master.slave[slaveAdr].start_req_hw == true) {
-                               /**
-                                Нажимаем в течение 3-4 секунд кнопку DC, 
-                                светодиод DC начинает моргать и продолжает так делать, 
-                                пока выходное напряжение не будет равно заданному. 
-                                После этого постоянно светит и также в этот момент загорается светодиод ВКЛ.
-                            */
-
-                            // Reset panel monitor fault 
-                            master.slave[slaveAdr].fault_source_pm = false;
-
-                            uint16_t valStart = 0;     
+                            master.slave[slaveAdr].start_req_rdo = false;
+                            //uint16_t valStopACx = *holding->pntr ^ 8;
+                            uint16_t valStopACx = *holding->pntr & ~8U;
                             MASTER_TRANSPORT_CHECK_TIMEOUT(
-                                master_readHoldingOs(slaveAdr, 104, &valStart, MASTER_GLOB_TRANSPORT_TO),slaveAdr
-                            );
-
-                            valStart =  valStart | 0x2;  
-                            master_writeHoldingOs(slaveAdr, 104, valStart, MASTER_GLOB_TRANSPORT_TO);
-                             master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_AC_OK;
-                            master.slave[slaveAdr].start_req_hw = false;
-                            vTaskDelay(100);
+                                master_writeHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, valStopACx, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
                         }
                     }
                 }
-            }
+            } // AC slave onTimeout state
         }
-
-        vTaskDelay(50);
+        else
+        {
+            // AC slave onFAULT
+            master.slave[slaveAdr].start_req_hw = false;
+            master.slave[slaveAdr].start_req_rdo = false;
+        }
     }
 }
 
-void vTask_MasterDev(void* argument){
+void handle_DC(uint16_t slaveAdr)
+{
+    if ((slaveAdr != CONFIG_SLAVE_DC1) && (slaveAdr != CONFIG_SLAVE_DC2)) return;
 
-    while(1){
+    // Current slave holding register table pointer
+    TypeDef_MB_Table *table = &holdings_table[slaveAdr];
+    TypeDef_MB_Holding *holding;
 
-// Read Meter
-        if(meter.enable){
-            meter.read(&meter);
-            if(meter.state == MASTER_TRANSPORT_TIMEOUT)  vTaskDelay(2000);
+    // Reset start req if TO
+    if (master.slave[slaveAdr].slaveStates == MASTER_STATE_onTIMEOUT)
+    {
+        master.slave[slaveAdr].start_req_hw = false;
+
+        // read status only
+        holding = GetHoldingByAdrFromTable(220, table);
+        MASTER_TRANSPORT_CHECK_TIMEOUT(
+            master_readHoldingOs(slaveAdr, 220, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+        if (!master.slave[slaveAdr].master_wdg)
+            master.slave[slaveAdr].slaveStates = MASTER_STATE_onREADY;
+
+        return;
+    }
+
+    {
+        // Read DC indicators Udc-211, Idc-210
+        {
+            holding = GetHoldingByAdrFromTable(210, table);
+            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                master_readHoldingOs(slaveAdr, 210, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+            holding = GetHoldingByAdrFromTable(211, table);
+            MASTER_TRANSPORT_CHECK_TIMEOUT(
+                master_readHoldingOs(slaveAdr, 211, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
         }
 
-        vTaskDelay(500);
+        // Read status register
+        holding = GetHoldingByAdrFromTable(220, table);
+        MASTER_TRANSPORT_CHECK_TIMEOUT(
+            master_readHoldingOs(slaveAdr, 220, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
 
-// Read Clock
-        if(clock.enable){
-            clock.read(&clock); 
-            if(clock.state == MASTER_TRANSPORT_TIMEOUT)  vTaskDelay(2000);
+        {
+
+            if ((*holding->pntr & 0x4) != 0)
+            {
+                // DC onFault state
+                master.slave[slaveAdr].slaveStates = MASTER_STATE_onFAULT;
+                // Read Fault code register
+                holding = GetHoldingByAdrFromTable(240, table);
+                MASTER_TRANSPORT_CHECK_TIMEOUT(
+                    master_readHoldingOs(slaveAdr, holding->reg_adr & 0x0FFF, holding->pntr, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+                checkCode(holding, slaveAdr, 8, -1); // Set slave onFAULT state here!
+                // stops active start requests
+                master.slave[slaveAdr].start_req_hw = false;
+            }
+            else if ((*holding->pntr & 0x1) != 0)
+            { // DC RUN STATE (in RUN state bow bit RUN and RDY are 1)
+
+                if (master.slave[slaveAdr].slaveStates == MASTER_STATE_onWAIT_FOR_AC_OK)
+                {
+                    // wait for output good
+
+                    uint16_t Uo = 0;
+                    uint16_t Ur = 0;
+
+                    MASTER_TRANSPORT_CHECK_TIMEOUT(
+                        master_readHoldingOs(slaveAdr, 211, &Uo, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+
+                    MASTER_TRANSPORT_CHECK_TIMEOUT(
+                        master_readHoldingOs(slaveAdr, 102, &Ur, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+
+                    if (Uo > Ur * 8 / 10)
+                    {
+                        master.slave[slaveAdr].slaveStates = MASTER_STATE_onRUN;
+                    }
+                }
+
+                // Timeout state
+                if (
+                    (master.slave[slaveAdr].slaveStates == MASTER_STATE_onTIMEOUT) || (master.slave[slaveAdr].slaveStates == MASTER_STATE_onREADY))
+                {
+                    master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_AC_OK;
+                }
+
+                //   master.slave[slaveAdr].slaveStates = MASTER_STATE_onRUN;
+                // DC onRun state
+
+                // SLAVE START STOP
+                if (master.slave[slaveAdr].start_req_hw == true)
+                {
+                    // send stop;
+                    uint16_t valStop = 0;
+
+                    master_readHoldingOs(slaveAdr, 104, &valStop, MASTER_GLOB_TRANSPORT_TO);
+
+                    valStop = valStop & ~(1U << 1);
+                    MASTER_TRANSPORT_CHECK_TIMEOUT(
+                        master_writeHoldingOs(slaveAdr, 104, valStop, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+                    master.slave[slaveAdr].start_req_hw = false;
+
+                    vTaskDelay(10);
+                }
+            } /* Handle DC start|stop req */
+            else if ((*holding->pntr & 0x2) != 0)
+            { // DC READY STATE
+
+                master.slave[slaveAdr].fault_source = false;
+                // DC onReady state
+                master.slave[slaveAdr].slaveStates = MASTER_STATE_onREADY;
+                // SLAVE START REQUEST
+                if (master.slave[slaveAdr].start_req_hw == true)
+                {
+                    /**
+                     Нажимаем в течение 3-4 секунд кнопку DC,
+                     светодиод DC начинает моргать и продолжает так делать,
+                     пока выходное напряжение не будет равно заданному.
+                     После этого постоянно светит и также в этот момент загорается светодиод ВКЛ.
+                 */
+
+                    // Reset panel monitor fault
+                    master.slave[slaveAdr].fault_source_pm = false;
+
+                    uint16_t valStart = 0;
+                    MASTER_TRANSPORT_CHECK_TIMEOUT(
+                        master_readHoldingOs(slaveAdr, 104, &valStart, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+
+                    valStart = valStart | 0x2;
+                    master_writeHoldingOs(slaveAdr, 104, valStart, MASTER_GLOB_TRANSPORT_TO);
+                    master.slave[slaveAdr].slaveStates = MASTER_STATE_onWAIT_FOR_AC_OK;
+                    master.slave[slaveAdr].start_req_hw = false;
+                    vTaskDelay(100);
+                }
+            }
         }
-
-        vTaskDelay(500);
     }
 }

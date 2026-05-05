@@ -41,7 +41,7 @@ static void Page_Confirm(void* arg);
 static void Page_SaveWarning(void* arg);
 static void Page_Config(void* pntr);
 static void Page_MenuItemEdit(void* arg);
-static void Page_SlaveFault(char* pntr, const char* label, int code);
+static void Page_SlaveFault(char* pntr, const char* label, int code, int slaveId);
 static void Page_HVIL_flt(char* pntr, const char* label);
 
 static void Page_EnergyMeter(void * arg);
@@ -251,25 +251,29 @@ void DisplayUpdater(__attribute__((unused)) void* argument)
 static void Page_Ac1Indi(void* arg)
 {
     Page_AcIndiTemplate(GetHoldingPntrByAdrFromAC1, 1, arg);
-    panelConfig.active_slave = CONFIG_SLAVE_AC1;
+    //panelConfig.active_slave = CONFIG_SLAVE_AC1;
+    panelConfig.active_slave = 0;
 }
 
 static void Page_Ac2Indi(void* arg)
 {
     Page_AcIndiTemplate(GetHoldingPntrByAdrFromAC2, 2, arg);
-    panelConfig.active_slave = CONFIG_SLAVE_AC2;
+    //panelConfig.active_slave = CONFIG_SLAVE_AC2;
+    panelConfig.active_slave = 0;
 }
 
 static void Page_Dc1Indi(void* arg)
 {
     Page_DcIndiTemplate(GetHoldingPntrByAdrFromDC1, 1, arg);
-    panelConfig.active_slave = CONFIG_SLAVE_DC1;
+    //panelConfig.active_slave = CONFIG_SLAVE_DC1;
+    panelConfig.active_slave = 0;
 }
 
 static void Page_Dc2Indi(void* arg)
 {
     Page_DcIndiTemplate(GetHoldingPntrByAdrFromDC2, 2, arg);
-    panelConfig.active_slave = CONFIG_SLAVE_DC2;
+    //panelConfig.active_slave = CONFIG_SLAVE_DC2;
+    panelConfig.active_slave = 0;
 }
 
 static void Page_Ac1Setup(void* arg)
@@ -505,13 +509,15 @@ static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int acnum
     if (acnum == 1 && ((master.slave[1].fault_source == true) || (master.slave[1].fault_source_pm == true)))
     {
         Page_SlaveFault(pntr, LABEL_AC1, 
-           master.slave[1].fault_source_pm?  master.slave[1].fault_code_pm : master.slave[1].fault_code
+           master.slave[1].fault_source_pm?  master.slave[1].fault_code_pm : master.slave[1].fault_code,
+           1
         );
     }
     else if (acnum == 2 && ((master.slave[2].fault_source == true) || (master.slave[2].fault_source_pm == true)))
     {
         Page_SlaveFault(pntr, LABEL_AC2,
-             master.slave[2].fault_source_pm?  master.slave[2].fault_code_pm : master.slave[2].fault_code
+             master.slave[2].fault_source_pm?  master.slave[2].fault_code_pm : master.slave[2].fault_code,
+             2
         );
     }
     else
@@ -592,13 +598,15 @@ static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int dcnum
     if ((dcnum == 1) && ( (master.slave[3].fault_source == true) || (master.slave[3].fault_source_pm == true)))
     {
         Page_SlaveFault(pntr, LABEL_DC1, 
-            master.slave[3].fault_source_pm? master.slave[3].fault_code_pm :master.slave[3].fault_code
+            master.slave[3].fault_source_pm? master.slave[3].fault_code_pm :master.slave[3].fault_code,
+            3
         );
     }
     else if (dcnum == 2 && ( (master.slave[4].fault_source == true) || (master.slave[4].fault_source_pm == true)))
     {
         Page_SlaveFault(pntr, LABEL_DC2, 
-            master.slave[4].fault_source_pm? master.slave[4].fault_code_pm :master.slave[4].fault_code
+            master.slave[4].fault_source_pm? master.slave[4].fault_code_pm :master.slave[4].fault_code,
+            4
         );
     }
     else
@@ -1586,7 +1594,7 @@ EXIT:
     return;
 }
 
-static void Page_SlaveFault(char* pntr, const char* label, int code)
+static void Page_SlaveFault(char* pntr, const char* label, int code, int slaveId)
 {
 
     memset(pntr, 0, 80);
@@ -1598,14 +1606,18 @@ static void Page_SlaveFault(char* pntr, const char* label, int code)
     {
         case KEY_ENTER:
 
-            
-            for (size_t i = 1; i < 5; i++)
-            {
-                // RESET FAULT
-                if(master.slave[i].fault_source_pm) buttonState = KEY_NO;
-                master.slave[i].fault_source_pm = false;
-                master.slave[i].fault_code_pm   = 0;
-            }
+            vTaskDelay(500);
+            // for (size_t i = 1; i < 5; i++)
+            // {
+            //     // RESET FAULT
+            //     if(master.slave[i].fault_source_pm) buttonState = KEY_NO;
+            //     master.slave[i].fault_source_pm = false;
+            //     master.slave[i].fault_code_pm   = 0;
+            // }
+
+            if(master.slave[slaveId].fault_source_pm) buttonState = KEY_NO;
+            master.slave[slaveId].fault_source_pm = false;
+            master.slave[slaveId].fault_code_pm   = 0;
         
         break;
         default:
@@ -1649,9 +1661,9 @@ static void Page_EnergyMeter(void * arg)
     }else{
 
         snprintf(&pntr[ 0], 20, "S,kBA  %3d         ", (int) m->Power_s.value_disp);
-        snprintf(&pntr[20], 20, "ULN,B  %3d %3d %3d",m->U[0].value_disp, m->U[1].value_disp, m->U[2].value_disp);
+        snprintf(&pntr[20], 20, "ULL,B  %3d %3d %3d",m->U[0].value_disp, m->U[1].value_disp, m->U[2].value_disp);
         snprintf(&pntr[40], 20, "ILN,A  %3d %3d %3d",m->I[0].value_disp, m->I[1].value_disp, m->I[2].value_disp);
-        snprintf(&pntr[60], 20, "UDC,V %3d T,C %3d", udc, t);
+      //  snprintf(&pntr[60], 20, "UDC,V %3d T,C %3d", udc, t);
     }
 
     

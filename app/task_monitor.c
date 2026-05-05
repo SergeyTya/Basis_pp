@@ -31,9 +31,14 @@ extern Typedef_Meter meter;
 // Use it to get process values from holding tables
 uint16_t *(*foos[])(uint16_t adr) = {NULL, GetHoldingPntrByAdrFromAC1, GetHoldingPntrByAdrFromAC2, GetHoldingPntrByAdrFromDC1, GetHoldingPntrByAdrFromDC2};
 
+#define MONITOR_4S_DELAY 40
+
+
 void vTask_monitor(void *p)
 {
     vTaskDelay(5000);
+
+    static uint16_t code7_dly[5], code8_dly[5];
 
     while (1)
     {
@@ -99,10 +104,10 @@ void vTask_monitor(void *p)
                 // 1. [CODE 2] Load current is low
                 if (master.PM_enable.CODE2)
                 {
-                    if(master.slave[i].delay++ >=200){
+                    if(master.slave[i].delay++ >=300){
                         if( master.slave[i].Idc < 1 ) { //NEED DELAY?;
                             MONITOR_SET_FAULT(2);
-                            master.slave[i].delay = 200;
+                            master.slave[i].delay = 300;
                         }
                     }
                 }
@@ -122,7 +127,10 @@ void vTask_monitor(void *p)
                 {
                     for (size_t j = 0; j < 3; j++)
                     {
-                        if (meter.U[j].value_disp < 340)
+                        if ( 
+                            (meter.U[j].value_disp < 195) 
+                            && (meter.U[j].value_disp >= 50)
+                        )
                         {
                             MONITOR_SET_FAULT(5);
                         }
@@ -135,7 +143,7 @@ void vTask_monitor(void *p)
                     {
                         for (size_t j = 0; j < 3; j++)
                         {
-                            if (meter.U[j].value_disp > 420)
+                            if (meter.U[j].value_disp > 265)
                             {
                                 MONITOR_SET_FAULT(6);
                             }
@@ -151,31 +159,44 @@ void vTask_monitor(void *p)
                     {
                         if(master.slave[i].Udc < 20)
                         {
-                            MONITOR_SET_FAULT(7);
-                          //  master.slave[i].start_req_hw = false;
-                          //  master_stop_dc(i);
-
+                             if(master.slave[i].slaveStates == MASTER_STATE_onRUN )  {
+                                if(code7_dly[i]++ > MONITOR_4S_DELAY){
+                                    MONITOR_SET_FAULT(7);
+                                }
+                             }else{
+                                code7_dly[i] = 0;
+                             }
+                        }else{
+                            code7_dly[i] = 0;
                         }
+                    }else{
+                        code7_dly[i] = 0;
                     }
                     // 6. [CODE 8] DC source output HIGH (> 32V)
                     if (master.PM_enable.CODE8)
                     {
-                        if(master.slave[i].Udc > 32 )
+                        if(master.slave[i].Udc > 32 && master.slave[i].Udc < 40 )
                         {
-                            MONITOR_SET_FAULT(8);
-                           // master.slave[i].start_req_hw = false;
-                          //  master_stop_dc(i);
-
+                            if(master.slave[i].slaveStates == MASTER_STATE_onRUN ){
+                                if(code8_dly[i]++ > MONITOR_4S_DELAY){
+                                    MONITOR_SET_FAULT(8);
+                                }
+                            } else {
+                                code8_dly[i] = 0;
+                            }
+                        }else{
+                            code8_dly[i] = 0;
                         }
+                    }else{
+                        code8_dly[i] = 0;
                     }
                     // 7. [CODE 9] DC source output OV (> 40V)
                     if (master.PM_enable.CODE9)
                     {
-                        if(master.slave[i].Udc > 40 )
+                        if(master.slave[i].Udc >= 40 )
                         {
-                            MONITOR_SET_FAULT(9);
-                            //master.slave[i].start_req_hw = false;
-                           // master_stop_dc(i);
+                           if(master.slave[i].slaveStates == MASTER_STATE_onRUN ) MONITOR_SET_FAULT(9);
+
                         }
                     }
                 }
@@ -185,6 +206,16 @@ void vTask_monitor(void *p)
                 master.slave[i].Iav = 0;
                 master.slave[i].Uav = 0;
                 master.slave[i].delay = 0;
+
+                if (
+                       master.slave[i].slaveStates == MASTER_STATE_onFAULT
+                    || master.slave[i].slaveStates == MASTER_STATE_onREADY
+                
+                ){
+                    code7_dly[i] = 0;
+                    code8_dly[i] = 0;
+                 }
+
             }
         }
 
