@@ -56,12 +56,12 @@ void vTask_monitor(void *p)
                 if (i < 3)
                 { // AC
 
-                    // GET holding values from holding table
+                    // // GET holding values from holding table
                     uint16_t U[3] = {*foo(240) / 10, *foo(241) / 10U, *foo(242) / 10}; // 0.1V
                     uint16_t Us = 0;
-                    for (size_t j = 0; j < 3; i++)
+                    for (size_t j = 0; j < 3; j++)
                     {
-                        master.slave[i].Uac[j];
+                        master.slave[i].Uac[j] = U[j];
                         Us += U[j];
                     }
                     master.slave[i].Uav = (master.slave[i].Uav + Us/3)/2;

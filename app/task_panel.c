@@ -53,6 +53,8 @@ static inline void Page_AcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int acnum
 static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int dcnum, void* arg);
 static inline void Page_AcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint16_t adr), int acnum, void* arg);
 static inline void Page_DcSetupTemplate(TypeDef_MB_Holding* (*foo)(uint16_t adr), int dcnum, void* arg);
+static void Page_DcSetupUCorTemplate(TypeDef_MB_Holding* (*foo)(uint16_t adr), int dcnum, void* arg);
+
 static inline void Page_AdvancedSetupTemplate(
     TypeDef_MB_Holding* (*foo)(uint16_t adr),                     // function for searching holding by addr
     void* arg,                                                   // display buffer pointer
@@ -290,13 +292,22 @@ static void Page_Ac2Setup(void* arg)
 
 static void Page_Dc1Setup(void* arg)
 {
-    Page_DcSetupTemplate(GetHoldingByAdrFromDC1, 1, arg);
+   if(master.slave[3].DcUCor_enable){
+        Page_DcSetupUCorTemplate(GetHoldingByAdrFromDC1, 1, arg);
+   }else{
+        Page_DcSetupTemplate(GetHoldingByAdrFromDC1, 1, arg);
+   }
+
     panelConfig.active_slave = CONFIG_SLAVE_DC1;
 }
 
 static void Page_Dc2Setup(void* arg)
 {
-    Page_DcSetupTemplate(GetHoldingByAdrFromDC2, 2, arg);
+    if(master.slave[4].DcUCor_enable){
+        Page_DcSetupUCorTemplate(GetHoldingByAdrFromDC2, 2, arg);
+    }else{
+        Page_DcSetupTemplate(GetHoldingByAdrFromDC2, 2, arg);
+    }
     panelConfig.active_slave = CONFIG_SLAVE_DC2;
 }
 
@@ -1021,6 +1032,196 @@ DC_PARAM_EXIT:
     if (!Iref->change_req)
     {
         if (Uref->lock)
+            needWarning = true;
+        Iref->lock = false;
+    }
+
+    // lock page
+    pageDcSetupUnlocked = false;
+
+    if (needWarning)
+    {
+        pageSaveWarningRetPoint = current_page;
+        current_page = Page_SaveWarning;
+    }
+
+    return;
+}
+
+// Use it when need DC output correction 
+static void Page_DcSetupUCorTemplate(TypeDef_MB_Holding* (*foo)(uint16_t adr), int dcnum, void* arg)
+{
+    char* pntr = (char*)arg;
+    static const uint8_t pageDcTemplateCursorPos[] = { 26, 27, 29, 36, 37, 38, 39, 45,47,68,69,70,71 }; // TODO select correct positions
+    static const uint16_t pageDcTemplateDlt[] = { 100, 10, 1, 1000, 100, 10, 1, 10, 1.1, 1000, 100, 10, 1};
+
+    static TypeDef_MB_Holding mbhUxx ;
+    static TypeDef_MB_Holding mbhUk  ;
+    static TypeDef_MB_Holding mbhIn  ;
+    mbhUxx.pntr = (uint16_t*) &master.slave[dcnum+2].DcUCor_Uxx;
+    mbhUk.pntr  = (uint16_t*) &master.slave[dcnum+2].DcUCor_Uk;
+    mbhIn.pntr  = (uint16_t*) &master.slave[dcnum+2].DcUCor_In;
+
+    // limits
+    if(*mbhUxx.pntr > 999 )  *mbhUxx.pntr = 999;
+    if( *mbhUk.pntr > 30  )  *mbhUk.pntr = 30;
+    if( *mbhIn.pntr > 2999)  *mbhUk.pntr = 2999;
+    if( *mbhIn.pntr == 0  )  *mbhUk.pntr = 1;
+
+    static TypeDef_MB_Holding* pageDcTemplateAdr[] = { 
+        0, 0, 0,
+        0, 0, 0, 0, 
+        0, 0,
+        0, 0, 0, 0 
+    };
+    
+    static bool pageDcSetupUnlocked = true;
+    static bool pageDcTemplateIsOnConfirmWait;
+
+    memset(pntr, 0, 80);
+
+    TypeDef_MB_Holding* Iref = foo(101);
+
+    pageDcTemplateAdr[ 0] = &mbhUxx; 
+    pageDcTemplateAdr[ 1] = &mbhUxx;
+    pageDcTemplateAdr[ 2] = &mbhUxx;
+    pageDcTemplateAdr[ 3] = &mbhIn;
+    pageDcTemplateAdr[ 4] = &mbhIn;
+    pageDcTemplateAdr[ 5] = &mbhIn;
+    pageDcTemplateAdr[ 6] = &mbhIn;
+    pageDcTemplateAdr[ 7] = &mbhUk;
+    pageDcTemplateAdr[ 8] = &mbhUk;
+    pageDcTemplateAdr[ 9] = Iref;
+    pageDcTemplateAdr[10] = Iref;
+    pageDcTemplateAdr[11] = Iref;
+    pageDcTemplateAdr[12] = Iref;
+    
+
+    // check if we are on save parameters confirm wait
+    if (pageDcTemplateIsOnConfirmWait)
+    {
+        if (pageConfirmedRetVal)
+        { // save
+            if (Iref->lock) Iref->change_req = true;
+            if (mbhUxx.lock || mbhUk.lock || mbhIn.lock) {
+                ConfigMenuSaveAll();
+            }
+        }
+        else
+        { // chancel
+            Iref->change_req = false;
+            Iref->lock = false;
+            mbhUxx.lock = false;
+            mbhUk.lock = false;
+            mbhIn.lock = false;
+        }
+        pageDcTemplateIsOnConfirmWait = false; // acknowledge wait
+    }
+
+    snprintf(&pntr[ 0], 21, "DC%1d SET   %s", dcnum, LG_NAME);
+    snprintf(&pntr[20], 21, "Uxx,B %01u.%1u In,A %4u", (uint16_t) *mbhUxx.pntr/10, (uint16_t) *mbhUxx.pntr%10,  (uint16_t) *mbhIn.pntr);
+    snprintf(&pntr[40], 20, "Uk,B %01u.%1u ", (uint16_t) *mbhUk.pntr/10, (uint16_t) *mbhUk.pntr%10);
+    snprintf(&pntr[60], 20, "LimI,A  %4d   ", *Iref->pntr_base );
+    
+    
+    if (pageDcSetupUnlocked)
+    {
+        if (menu_cur_pos >= ARRAY_SIZE(pageDcTemplateCursorPos))
+            menu_cur_pos = 0;
+        flash_cursor(pntr, pageDcTemplateCursorPos[menu_cur_pos]);
+    }
+
+    TypeDef_MB_Holding* selected = pageDcTemplateAdr[menu_cur_pos];
+
+    switch (buttonState)
+    {
+    case KEY_UP:
+        if (!pageDcSetupUnlocked)
+            break;
+        if (*selected->pntr < (9999 - pageDcTemplateDlt[menu_cur_pos]))
+        {
+            selected->lock = true; // lock parameter for changing
+            *selected->pntr += pageDcTemplateDlt[menu_cur_pos];
+        }
+        break;
+    case KEY_DOWN:
+        if (!pageDcSetupUnlocked)
+            break;
+        if (*selected->pntr >= (0 + pageDcTemplateDlt[menu_cur_pos]))
+        {
+            selected->lock = true; // lock parameter for changing
+            *selected->pntr -= pageDcTemplateDlt[menu_cur_pos];
+        }
+        break;
+    case KEY_LONGENTER:
+        // move to ac advanced param setup
+        if (dcnum == 1)
+            current_page = Page_Dc1AdvancedSetup;
+        if (dcnum == 2)
+            current_page = Page_Dc2AdvancedSetup;
+        goto DC_PARAM_EXIT;
+        break;
+
+    case KEY_ENTER:
+        if (Iref->lock || mbhUxx.lock || mbhUk.lock || mbhIn.lock)
+        {
+            // move to confirm page
+            if (dcnum == 1)
+                pageConfirmedRetPoint = Page_Dc1Setup;
+            if (dcnum == 2)
+                pageConfirmedRetPoint = Page_Dc2Setup;
+            pageConfirmedRetVal = false;
+            pageDcTemplateIsOnConfirmWait = true;
+            pageDcSetupUnlocked = false;
+            current_page = Page_Confirm;
+        }
+        else
+        {
+            // move to ac indi page
+            if (dcnum == 1)
+                current_page = Page_Dc1Indi;
+            if (dcnum == 2)
+                current_page = Page_Dc2Indi;
+            goto DC_PARAM_EXIT;
+        }
+        break;
+
+    case KEY_NO:
+        break;
+
+    case KEY_RIGHT:
+        if (!pageDcSetupUnlocked)
+            break;
+        // move cursor
+        menu_cur_pos++;
+        break;
+
+    case KEY_LEFT:
+        // move cursor
+        if (!pageDcSetupUnlocked)
+        {
+            pageDcSetupUnlocked = true;
+            break;
+        }
+        if (menu_cur_pos != 0){
+            menu_cur_pos--;
+        }else{
+            menu_cur_pos = ARRAY_SIZE(pageDcTemplateCursorPos)-1;
+        }
+        break;
+
+    default: // AC1 //AC2 //DC1 //DC2
+        goto DC_PARAM_EXIT;
+        break;
+    }
+    return;
+
+DC_PARAM_EXIT:
+    // chancel all unsaved parameters
+    bool needWarning = false;
+    if (!Iref->change_req)
+    {
+        if (Iref->lock)
             needWarning = true;
         Iref->lock = false;
     }

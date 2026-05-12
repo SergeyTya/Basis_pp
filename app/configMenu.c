@@ -24,9 +24,10 @@ void MenuItemBrightnessChangedEvent();
 void MenuItemRebootChangedEvent();
 void MenuItemHeaterEvent();
 void MenuItemClearMemeEvent();
+void MenuItemDummy();
 
 const TypeDef_ConfigMenuItem nullMenuItem = {.label = "Null pointer"};
-const size_t configMenuSize = 23;
+const size_t configMenuSize = 31;
 
 TypeDef_ConfigMenuItem configMenu[] = {
 
@@ -52,9 +53,17 @@ TypeDef_ConfigMenuItem configMenu[] = {
     {.label="TCP MS[1]"   , .val=&panelConfig.modbus_TCP.mask1, .enableLim = true,  .limHi = 255, .limLo=0 },
     {.label="TCP MS[2]"   , .val=&panelConfig.modbus_TCP.mask2, .enableLim = true,  .limHi = 255, .limLo=0 },
     {.label="TCP MS[3]"   , .val=&panelConfig.modbus_TCP.mask3, .enableLim = true,  .limHi = 255, .limLo=0 },
-    {.label="FAULT DSBL"  , .val=&master.PM_enable , .enableLim = true,  .limHi = 255, .limLo=0 },
-    {.label="CLR MEM"     , .val=&configmenu_erase_mem,  .disabled = true , .itemChangedEvent = MenuItemClearMemeEvent}
-
+    {.label="FAULT DSBL"  , .val=&master.PM_enable.value , .enableLim = true,  .limHi = 255, .limLo=0 },
+    {.label="CLR MEM"     , .val=&configmenu_erase_mem,  .disabled = true , .itemChangedEvent = MenuItemClearMemeEvent},
+    {.label="DC1UC Enbl"   , .val=&master.slave[3].DcUCor_enable , .options=onof_options, .options_len=2},
+    {.label="DC1UC Uxx"    , .val=&master.slave[3].DcUCor_Uxx, .disabled = true , .itemChangedEvent = MenuItemDummy},
+    {.label="DC1UC Uk"     , .val=&master.slave[3].DcUCor_Uk,  .disabled = true , .itemChangedEvent = MenuItemDummy},
+    {.label="DC1UC In"     , .val=&master.slave[3].DcUCor_In,  .disabled = true , .itemChangedEvent = MenuItemDummy},
+    {.label="DC2UC Enbl"   , .val=&master.slave[4].DcUCor_enable , .options=onof_options, .options_len=2},
+    {.label="DC2UC Uxx"    , .val=&master.slave[4].DcUCor_Uxx, .disabled = true , .itemChangedEvent = MenuItemDummy},
+    {.label="DC2UC Uk"     , .val=&master.slave[4].DcUCor_Uk,  .disabled = true , .itemChangedEvent = MenuItemDummy},
+    {.label="DC2UC In"     , .val=&master.slave[4].DcUCor_In,  .disabled = true , .itemChangedEvent = MenuItemDummy},
+    
 };
 
 void MenuItemClearMemeEvent(){
@@ -81,6 +90,10 @@ bool master_ToggleHeaterState();
 void MenuItemHeaterEvent(){
     uint8_t val = master_ToggleHeaterState();
     configmenu_heater_state = val;
+}
+
+void MenuItemDummy(){
+    ;
 }
 
 void ConfigMenuSaveAll(){

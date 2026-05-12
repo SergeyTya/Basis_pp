@@ -41,7 +41,7 @@ typedef struct
     // PANEL_CONFIG_ACTIVESLAVE
     uint32_t active_slave;
 
- 
+
 }Typedef_PanelConfig;
 
 /**

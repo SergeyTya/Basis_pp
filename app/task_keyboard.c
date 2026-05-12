@@ -58,7 +58,7 @@ void vTask_keyboard(void * arg){
              if(button_cntr<1100) button_cntr++;
         }else{
             
-            if(button_cntr > 10 &&  button_cntr < 300){
+            if(button_cntr > 10 &&  button_cntr < 800){
                buttonState = button_before;
             }
 

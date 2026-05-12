@@ -51,8 +51,16 @@ typedef struct{
 
     int16_t F;
     int16_t Fav;
-
     uint32_t delay;
+
+        // DC U correction 
+    uint32_t DcUCor_enable;
+    uint32_t DcUCor_Uxx;
+    uint32_t DcUCor_Uk;
+    uint32_t DcUCor_In;
+
+
+
 
 }Typedef_Slave;
 
@@ -64,16 +72,16 @@ typedef struct {
     
     union{
         struct {
-            uint16_t CODE2:1; // Load current low 0  //1 
-            uint16_t CODE4:1; // Grid Phase break 1  //2
-            uint16_t CODE5:1; // Grid voltage low 2  //4
-            uint16_t CODE6:1; // Grid voltage High 3 //8
-            uint16_t CODE7:1; // DC voltage low 4    //16
-            uint16_t CODE8:1; // DC voltage high 5   //32 
-            uint16_t CODE9:1; // DC voltage overvoltage 6 //64
+            uint32_t CODE2:1; // Load current low 0  //1 
+            uint32_t CODE4:1; // Grid Phase break 1  //2
+            uint32_t CODE5:1; // Grid voltage low 2  //4
+            uint32_t CODE6:1; // Grid voltage High 3 //8
+            uint32_t CODE7:1; // DC voltage low 4    //16
+            uint32_t CODE8:1; // DC voltage high 5   //32 
+            uint32_t CODE9:1; // DC voltage overvoltage 6 //64
         };
 
-        uint16_t value;
+        uint32_t value;
     } PM_enable; // Enable flags for panel monitor check
 
 

@@ -491,9 +491,13 @@ void handle_AC(uint16_t slaveAdr)
                     if (master.slave[slaveAdr].slaveStates == MASTER_STATE_onWAIT_FOR_MAIN_RELAY)
                     {
                         // read HR 220
+                       // static volatile uint16_t acreg220 = 0;
+
                         uint16_t acreg220 = 0;
                         MASTER_TRANSPORT_CHECK_TIMEOUT(
-                            master_readHoldingOs(slaveAdr, 220, &acreg220, MASTER_GLOB_TRANSPORT_TO), slaveAdr);
+                             master_readHoldingOs(slaveAdr, 220, &acreg220, MASTER_GLOB_TRANSPORT_TO)
+                             ,slaveAdr
+                        );
 
                         uint8_t  BIT_MAIN_RELAY_FEEDBACK = (1U << 1);
                         if ((acreg220 & BIT_MAIN_RELAY_FEEDBACK) != 0)
@@ -648,6 +652,23 @@ void handle_DC(uint16_t slaveAdr)
 
                     vTaskDelay(10);
                 }
+
+                // DC correction 
+                if(master.slave[slaveAdr].DcUCor_enable != 0){
+                    uint16_t Inom = master.slave[slaveAdr].DcUCor_In;
+                    uint16_t Iout = *GetHoldingByAdrFromTable(210, table)->pntr;
+                    uint16_t Ucor = 0;
+                    if(Inom != 0){
+                        Ucor=master.slave[slaveAdr].DcUCor_Uk * Iout/Inom;
+                        if(Ucor > master.slave[slaveAdr].DcUCor_Uk) Ucor = master.slave[slaveAdr].DcUCor_Uk;
+                    }
+                    uint16_t uref = master.slave[slaveAdr].DcUCor_Uxx + Ucor;
+                    MASTER_TRANSPORT_CHECK_TIMEOUT(
+                        master_writeHoldingOs(slaveAdr, 102, uref, MASTER_GLOB_TRANSPORT_TO), 
+                        slaveAdr
+                    );
+                }
+
             } /* Handle DC start|stop req */
             else if ((*holding->pntr & 0x2) != 0)
             { // DC READY STATE
