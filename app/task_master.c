@@ -465,6 +465,8 @@ void handle_AC(uint16_t slaveAdr)
 
                             master_readHoldingOs(slaveAdr, 102, &ref_ra, MASTER_GLOB_TRANSPORT_TO);
 
+                            ref_ra = ref_ra*9/10;
+
                             bool reached = (Uacr[0] >= ref_ra) && (Uacr[1] >= ref_ra) && (Uacr[2] >= ref_ra);
 
                             // if output voltage is good
