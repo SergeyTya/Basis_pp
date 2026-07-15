@@ -1,0 +1,3 @@
+
+
+void PageLog_UpdateRecordList();

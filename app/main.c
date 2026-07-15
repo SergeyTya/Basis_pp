@@ -29,6 +29,7 @@
 
 #include "task_logger.h"
 
+#include "app/elink/elink.h"
 
 
 uint16_t holdings[256];
@@ -39,11 +40,15 @@ void TaskLive();
 void vTask_ethernet_start();
 void vTask_monitor(void *p);
 
+
+volatile bool force_save = 0;
 int main() {
 
   vMCU_init();
   StructureInit_PanelConfig(&panelConfig);
   ConfigMenuReadAll();
+
+
 
   uint8_t hwr = hw_get_revision();
   if (hwr == 0b001) {
@@ -52,6 +57,8 @@ int main() {
   if (hwr == 0b010) {
     DisplayMapWinstar();
   }
+
+  
 
   if (panelConfig.modbus_RTU.enable == 1) {
     xTaskCreate(vTask_modbusRTU, "ModbusSlaveRTU", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, NULL);
@@ -71,11 +78,17 @@ int main() {
 
   hw_hbl_set(3, 0);
   xTaskCreate(TaskLive, "Hartbeat", 100U, NULL, tskIDLE_PRIORITY + 8, NULL);
-  xTaskCreate(vTask_TemperatureControl, "Tempmes", 100U, NULL, tskIDLE_PRIORITY + 1, NULL);
+  //xTaskCreate(vTask_TemperatureControl, "Tempmes", 100U, NULL, tskIDLE_PRIORITY + 1, NULL);
 
  // xTaskCreate(vTask_logger_writer, "logger_writer", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 2, NULL);
-  xTaskCreate(vTask_logger, "Logger", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 2, NULL);
  
+  switch (panelConfig.elinkSetup)
+  {
+  case 0:
+  case 1:
+    xTaskCreate(vTask_logger, "Logger", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 2, NULL);
+    break;
+  }
 
   vTaskStartScheduler();
   return 0;
@@ -85,10 +98,19 @@ void TaskLive() {
   while (1) {
     hwDriveHartBit_led1();
     vTaskDelay(1000);
+
+    if(force_save){
+      ConfigMenuSaveAll();
+      force_save = 0;
+    }
   }
 }
 
+#include "clock.h"
+#include "meter.h"
+
 extern volatile uint32_t enet_init_status;
+
 void vTask_ethernet_start() {
   uint8_t ipadr[4] = { panelConfig.modbus_TCP.ip0, panelConfig.modbus_TCP.ip1,panelConfig.modbus_TCP.ip2,panelConfig.modbus_TCP.ip3 };
   uint8_t ipmas[4] = { panelConfig.modbus_TCP.mask0, panelConfig.modbus_TCP.mask1,panelConfig.modbus_TCP.mask2,panelConfig.modbus_TCP.mask3 };
@@ -104,11 +126,29 @@ void vTask_ethernet_start() {
   hw_hbl_set(1, 0);
 
   lwip_stack_init((uint8_t*)ipadr, (uint8_t*)ipmas);
-  //http_server_init();
 
-  if (panelConfig.modbus_RTU.enable == false) {
-    xTaskCreate(vTask_modbusTCP, "ModbusSlaveTCP", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, NULL);
+
+  http_server_init();
+  
+
+  switch (panelConfig.elinkSetup)
+  {
+  case 1:
+    elink_server_start(); // master
+    break;
+  case 2: // slave
+    elink_client_port_init();
+    clock.read = Clock_read_elink;
+    meter.read = meter_read_elink;
+  default: // Disabled
+    break;
   }
+
+ 
+
+  // if (panelConfig.modbus_RTU.enable == false) {
+  //   xTaskCreate(vTask_modbusTCP, "ModbusSlaveTCP", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 5, NULL);
+  // }
 
   vTaskDelete(NULL);
 }

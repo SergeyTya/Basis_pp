@@ -24,28 +24,48 @@ const char hd_end[] = "\r\nConnection: Close\r\n\r\n";
 const char *html_start =  
     "<html><body style='background:#1e2a4d;color:#fff;font-family:Helvetica,Arial,sans-serif;margin:0;padding:0;'>";
 
-const char *html_head =
+const char *html_head_main =
     "<h1 style='color:#ffcc00;text-align:center;margin:20px 0 10px;'>БАЗИС АЭРО</h1>"
     "<div style='text-align:center;margin-bottom:20px;'>"
-    "<a href='https://bazisaero.ru/' target='_blank' style='display:inline-block;padding:10px 20px;background:#0066cc;color:#fff;border-radius:6px;text-decoration:none;font-weight:bold;'>"
-    "Перейти на сайт</a>"
-    "</div>"
-    "<p style='text-align:center;margin:10px 0 20px;color:#ddd;'>Лог %4d записей</p>"
-    "<table border='0' cellspacing='0' cellpadding='6' width='100%' style='border-collapse:collapse;max-width:900px;margin:0 auto;'>"
-    "<thead>"
-    "<tr style='background:#445c85;'>"
-        "<td style='color:#ffd700;font-weight:bold;'>Номер</td>"
-        "<td style='color:#ffd700;font-weight:bold;'>Дата</td>"
-        "<td style='color:#ffd700;font-weight:bold;'>Начало</td>"
-        "<td style='color:#ffd700;font-weight:bold;'>Конец</td>"
-        "<td style='color:#ffd700;font-weight:bold;'>Источник</td>"
-        "<td style='color:#ffd700;font-weight:bold;'>Код</td>"
-        "<td style='color:#ffd700;font-weight:bold;'>Ток, А</td>"
-        "<td style='color:#ffd700;font-weight:bold;'>Напряж., В</td>"
-        "<td style='color:#ffd700;font-weight:bold;'>Част.,Hz</td>"
-    "</tr>"
-    "</thead>"
-    "<tbody>";
+        "<div style='text-align:center;margin:20px;'>"
+            "<a href='/data1' style='display:inline-block;padding:12px 24px;background:#ff9900;color:#fff;border-radius:6px;text-decoration:none;font-weight:bold;'>"
+                "Показать лог AC1</a>"
+        "</div>"
+        "<div style='text-align:center;margin:20px;'>"
+            "<a href='/data2' style='display:inline-block;padding:12px 24px;background:#ff9900;color:#fff;border-radius:6px;text-decoration:none;font-weight:bold;'>"
+                "Показать лог AC2</a>"
+        "</div>"
+        "<div style='text-align:center;margin:20px;'>"
+            "<a href='/data3' style='display:inline-block;padding:12px 24px;background:#ff9900;color:#fff;border-radius:6px;text-decoration:none;font-weight:bold;'>"
+                "Показать лог DC1</a>"
+        "</div>"
+                "<div style='text-align:center;margin:20px;'>"
+            "<a href='/data4' style='display:inline-block;padding:12px 24px;background:#ff9900;color:#fff;border-radius:6px;text-decoration:none;font-weight:bold;'>"
+                "Показать лог DC2</a>"
+        "</div>"
+        "<tbody>";
+
+
+const char *html_head_log =
+    "<h1 style='color:#ffcc00;text-align:center;margin:20px 0 10px;'>БАЗИС АЭРО</h1>"
+        "<p style='text-align:center;margin:5px 0 5px;color:#ddd;font-weight:bold;font-size:24px;'>Лог %3s</p>"
+        "<p style='text-align:center;margin:5px 0 5px;color:#ddd;'>Всего записей %4d</p>"
+        "<table border='0' cellspacing='0' cellpadding='10'style='border-collapse:collapse;margin:0 auto;text-align:center;'>"
+        "<thead>"
+        "<tr style='background:#445c85;'>"
+            "<td style='color:#ffd700;font-weight:bold;'>Номер</td>"
+            "<td style='color:#ffd700;font-weight:bold;'>Дата</td>"
+            "<td style='color:#ffd700;font-weight:bold;'>Начало</td>"
+            "<td style='color:#ffd700;font-weight:bold;'>Конец</td>"
+            "<td style='color:#ffd700;font-weight:bold;'>Источник</td>"
+            "<td style='color:#ffd700;font-weight:bold;'>Код ошибки</td>"
+            "<td style='color:#ffd700;font-weight:bold;'>Ток, А</td>"
+            "<td style='color:#ffd700;font-weight:bold;'>Напряжение, В</td>"
+            "<td style='color:#ffd700;font-weight:bold;'>Частота,Гц</td>"
+        "</tr>"
+        "</thead>"
+        "<tbody>";
+        
 
 // Таблица строк — осталась без изменений, только внутри неё теперь стиль будет применяться через tbody/tr:hover
 const char * tbl =
@@ -76,7 +96,7 @@ static void http_state_free(struct http_state *hs)
 }
 
 static err_t http_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err);
-extern const char *html_head;
+extern const char *html_head_main;
 extern const char *html_body;
 
 bool http_check_send_buffer(struct tcp_pcb *pcb, size_t len_requested)
@@ -175,7 +195,6 @@ err_t http_sent_html_body(void *arg, struct tcp_pcb *pcb, u16_t len)
         if (hs->file_offset == 0)
         {
 
-            
             memset(hs->buff, 0, HTTP_BUFF_SIZE);
             hs->dyn_data_ofst = 0;
 
@@ -195,7 +214,21 @@ err_t http_sent_html_body(void *arg, struct tcp_pcb *pcb, u16_t len)
                 }
 
                 Typedef_LoggerRecord tmp_rc;
-                vTask_logger_read(&tmp_rc , hs->adr_cnt );
+        
+                switch(hs->page_to_send){
+                    case 1: 
+                        vTask_logger_read_AC1(&tmp_rc , hs->adr_cnt);
+                    break;
+                    case 2: 
+                        vTask_logger_read_AC2(&tmp_rc , hs->adr_cnt);
+                    break;
+                    case 3: 
+                        vTask_logger_read_DC1(&tmp_rc , hs->adr_cnt);
+                    break;
+                    case 4: 
+                        vTask_logger_read_DC2(&tmp_rc , hs->adr_cnt);
+                    break;
+                }
                     
                 int n = snprintf(&http_dyndata[ hs->dyn_data_ofst ],remaining, tbl
                 , hs->adr_cnt  //Номер записи
@@ -207,7 +240,7 @@ err_t http_sent_html_body(void *arg, struct tcp_pcb *pcb, u16_t len)
                 , tmp_rc.I //Ток
                 , tmp_rc.U //Напряжение
                 , tmp_rc.F //Частота
-            );
+                );
                
 
                 if (n < 0)
@@ -315,9 +348,9 @@ static size_t http_create_header(char * buff, size_t buff_sz, struct http_state 
     SPN_CHECK;
 
     SPN_GET_REMSZ;
-//n = snprintf(&buff[offset], remaining, "%s", html_head);
-    char buf[strlen(html_head)];
-    snprintf(buf,remaining, html_head, hs->total_records);
+//n = snprintf(&buff[offset], remaining, "%s", html_head_main);
+    char buf[strlen(html_head_main)];
+    snprintf(buf,remaining, html_head_main, hs->total_records);
     n = snprintf(&buff[offset], remaining, "%s", buf);
     SPN_CHECK;
     
@@ -327,43 +360,140 @@ static size_t http_create_header(char * buff, size_t buff_sz, struct http_state 
     return offset;
 }
 
-static err_t http_sent_header(void *arg, struct tcp_pcb *pcb, u16_t len)
+
+#define SPN_CHECK { if (n > 0 && n < remaining) offset += n; else offset = buff_sz - 1; }
+#define SPN_GET_REMSZ  remaining = buff_sz - offset;
+
+
+static err_t http_send_main(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
 
-    if (http_check_send_buffer(pcb, 1400))
-    {   
-        struct http_state *hs = (struct http_state *)arg;
+    if (!http_check_send_buffer(pcb, 1400))  return ERR_OK;
+    
+    struct http_state *hs = (struct http_state *)arg;
 
-        char * head_pntr = &hs->buff[10];
-        size_t len_sz = 10;
-        size_t head_sz = sizeof(hs->buff)-len_sz;
-        size_t reg_total = 0;
-         
-        // header
-        
-         hs->total_records = vTask_logger_get_count();
-        size_t offset = http_create_header(head_pntr, head_sz, hs);
+    char * head_pntr = &hs->buff[10];
+    size_t len_sz = 10;
+    size_t head_sz = sizeof(hs->buff)-len_sz;   
+    size_t offset = 0;
+    size_t remaining;
+    char * buff  = head_pntr;
+    size_t buff_sz = head_sz;
 
 
-        reg_total = hs->total_records;
+    SPN_GET_REMSZ;
+    size_t n = snprintf(&buff[offset], remaining, html_start);
+    SPN_CHECK;
 
-        hs->content_len = offset + strlen(html_end) ;
-        hs->html_len =  reg_total*400/*strlen(tbl)*/ +  hs->content_len; 
+    SPN_GET_REMSZ;
+    n = snprintf(&buff[offset], remaining, "<p style='color:#ddd;font-size:10px;'>FRDID:%02x-%02x-%02x ", GD25_RDID[0], GD25_RDID[1], GD25_RDID[2]);
+    SPN_CHECK;
 
-        snprintf(hs->buff, len_sz, "%4d", hs->html_len);
+  
+    SPN_GET_REMSZ;
+    n = snprintf(&buff[offset], remaining, " FID:%02x", GD25_ID[0]);
+    SPN_CHECK;
+    
 
-        tcp_write(pcb, hd, strlen(hd), TCP_WRITE_FLAG_COPY);
-        //len
-        tcp_write(pcb, hs->buff, len_sz, TCP_WRITE_FLAG_COPY);
-        // http head end
-        tcp_write(pcb, hd_end, strlen(hd_end), TCP_WRITE_FLAG_COPY);
-        // html head
-        tcp_write(pcb, head_pntr, offset, TCP_WRITE_FLAG_COPY);
-        tcp_output(pcb);
-
-
-        tcp_sent(pcb, http_sent_html_body);
+    for (size_t i = 0; i < 15 && offset <  buff_sz - 8; i++)
+    {
+        SPN_GET_REMSZ;
+        n = snprintf(&buff[offset], remaining, "-%02x", GD25_ID[i + 1]);
+        SPN_CHECK;
     }
+
+    SPN_GET_REMSZ;
+    n = snprintf(&buff[offset], remaining, " DID:%s HASH:%s<p>", DEVICE_INFO,  HASH_INFO);
+    SPN_CHECK;
+
+    SPN_GET_REMSZ;
+    n = snprintf(&buff[offset], remaining, "%s", html_head_main);
+    SPN_CHECK;
+
+    hs->content_len = offset + strlen(html_end) ;
+    hs->html_len = hs->content_len; 
+
+    snprintf(hs->buff, len_sz, "%4d", hs->html_len);
+
+    tcp_write(pcb, hd, strlen(hd), TCP_WRITE_FLAG_COPY);
+    //len
+    tcp_write(pcb, hs->buff, len_sz, TCP_WRITE_FLAG_COPY);
+    // http head end
+    tcp_write(pcb, hd_end, strlen(hd_end), TCP_WRITE_FLAG_COPY);
+    // html head
+    tcp_write(pcb, head_pntr, offset, TCP_WRITE_FLAG_COPY);
+    tcp_output(pcb);
+
+    http_sent_check_total(arg, pcb, 0);
+    
+}
+
+#include "locale.h"
+
+static err_t http_send_log(void *arg, struct tcp_pcb *pcb, u16_t len)
+{
+
+    if (!http_check_send_buffer(pcb, 1400)) return ERR_OK;
+      
+
+    struct http_state *hs = (struct http_state *)arg;
+
+    char * head_pntr = &hs->buff[10];
+    size_t len_sz = 10;
+    size_t head_sz = sizeof(hs->buff)-len_sz;
+    size_t offset = 0;
+    size_t remaining;
+    char * buff  = head_pntr;
+    size_t buff_sz = head_sz;
+
+    char * logo;
+
+    switch(hs->page_to_send){
+        case 1: 
+        logo = LABEL_AC1;
+        hs->total_records = vTask_logger_get_count_AC1();
+        break;
+        case 2: 
+        logo = LABEL_AC2;
+        hs->total_records = vTask_logger_get_count_AC2();
+        break;
+        case 3: 
+        logo = LABEL_DC1;
+        hs->total_records = vTask_logger_get_count_DC1();
+        break;
+        case 4: 
+        logo = LABEL_DC2;
+        hs->total_records = vTask_logger_get_count_DC2();
+        break;
+    }
+
+    SPN_GET_REMSZ;
+    size_t n = snprintf(&buff[offset], remaining, html_start);
+    SPN_CHECK;
+
+    SPN_GET_REMSZ;
+    char buf[strlen(html_head_log)];
+    snprintf(buf,remaining, html_head_log, logo, hs->total_records);
+    n = snprintf(&buff[offset], remaining, "%s", buf);
+    SPN_CHECK;
+
+    hs->content_len = offset + strlen(html_end) ;
+    hs->html_len =  hs->total_records*500/*strlen(tbl)*/ +  hs->content_len; 
+
+    snprintf(hs->buff, len_sz, "%4d", hs->html_len);
+
+    tcp_write(pcb, hd, strlen(hd), TCP_WRITE_FLAG_COPY);
+        //len
+    tcp_write(pcb, hs->buff, len_sz, TCP_WRITE_FLAG_COPY);
+        // http head end
+    tcp_write(pcb, hd_end, strlen(hd_end), TCP_WRITE_FLAG_COPY);
+        // html head
+    tcp_write(pcb, head_pntr, offset, TCP_WRITE_FLAG_COPY);
+    tcp_output(pcb);
+
+
+    tcp_sent(pcb, http_sent_html_body);
+    
 
     return ERR_OK;
 }
@@ -383,8 +513,10 @@ static err_t http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err
     // Инициализируем
     hs->file_offset = 0;
     hs->content_len = 0;
-    memset   (hs->buff, 0, HTTP_BUFF_SIZE);
-   // logger_adr_rx = logger.adr_cnt;
+    hs->done        = 0;
+    hs->page_to_send = 0; // по умолчанию — главная страница
+
+    memset(hs->buff, 0, HTTP_BUFF_SIZE);
 
     if (p == NULL)
     {
@@ -395,13 +527,39 @@ static err_t http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err
         return ERR_OK;
     }
 
-    // Освобождаем полученные данные (нам не нужно их читать)
+    // --- PARSE URI BEFORE free ---
+    const char *request = (const char *)p->payload;
+    // Проверяем, начинается ли запрос с "GET /data" или "GET /"
+    if (p->len >= 9 && strncmp(request, "GET /data1", 10) == 0) {
+        hs->page_to_send = 1;
+    } else if (p->len >= 9 && strncmp(request, "GET /data2", 10) == 0) {
+        hs->page_to_send = 2;
+    } else if (p->len >= 9 && strncmp(request, "GET /data3", 10) == 0) {
+        hs->page_to_send = 3;
+    } else if (p->len >= 9 && strncmp(request, "GET /data4", 10) == 0) {
+        hs->page_to_send = 4;
+    } else if (p->len >= 5 && strncmp(request, "GET /", 5) == 0) {
+        // Обычный запрос на главную ("/" или "/index.html")
+        hs->page_to_send = 0;
+    }
+
+    // Освобождаем полученные данные (теперь мы уже прочитали URI)
     pbuf_free(p);
 
     hs->adr_cnt = 0;
 
-    tcp_sent(pcb, http_sent_header);
-    http_sent_header(arg, pcb, 0);
+
+    if(hs->page_to_send == 0){
+        tcp_sent(pcb, http_send_main);
+        http_send_main(arg, pcb, 0);
+    }
+
+    if(hs->page_to_send > 0 ){
+        tcp_sent(pcb, http_send_log);
+        http_send_log(arg, pcb, 0);
+    }
+
+
 
     return ERR_OK;
 }

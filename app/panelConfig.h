@@ -20,6 +20,14 @@ typedef struct
     /* data */
 }Typedef_Transport;
 
+/*
+typedef enum{
+    ELINK_DISABLE = 0,
+    ELINK_MASTER = 1,
+    ELINK_SLAVE = 2
+}TypedefEnum_ElinkSetup;
+*/
+
 void ConfigMenuSaveAll();
 void ConfigMenuReadAll();
 
@@ -40,7 +48,7 @@ typedef struct
 
     // PANEL_CONFIG_ACTIVESLAVE
     uint32_t active_slave;
-
+    uint32_t elinkSetup; // DISABLED - 0 , MASTER - 1, SLAVE - 2
 
 }Typedef_PanelConfig;
 

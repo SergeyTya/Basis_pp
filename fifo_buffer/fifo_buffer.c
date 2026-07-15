@@ -4,18 +4,19 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "crc16.h"
+#include <stdlib.h>
 
 
 #ifdef FIFO_DEBUG
-uint8_t fifo_sector1[FIFO_BUFFER_BYTE_SZ];
+
 #endif
 
-uint8_t page_buf_tx[FIFO_PAGE_SIZE];
-uint8_t page_buf_rx[FIFO_PAGE_SIZE];
+//uint8_t page_buf_tx[FIFO_PAGE_SIZE];
+//uint8_t page_buf_rx[FIFO_PAGE_SIZE];
 
- void FIFO_copy_to_mem(uint8_t rec[FIFO_DATA_SIZE], size_t index_to_write );
- void FIFO_change_buffer(FIFO_Buffer *fifo);
- bool FIFO_Peek_From_buffer(size_t index, uint8_t rec[FIFO_DATA_SIZE]);
+ static void FIFO_copy_to_mem(uint8_t rec[FIFO_DATA_SIZE], size_t index_to_write, FIFO_Buffer * fifo);
+ static void FIFO_change_buffer(FIFO_Buffer *fifo);
+ static bool FIFO_Peek_From_buffer(size_t index, uint8_t rec[FIFO_DATA_SIZE], FIFO_Buffer * fifo);
 
 
 // === Инициализация буфера ===
@@ -30,10 +31,14 @@ void FIFO_Init(FIFO_Buffer *fifo) {
     }
     
     fifo->count = 0;
+    fifo->isCharged = false;
+
 
     //3. If  init fifo
     fifo->sector_cnt = 0;
     fifo->sec_cnt_upd = false;
+
+    if(!fifo->page_buf)fifo->page_buf = malloc(fifo->page_size);
   
     
 #ifdef FIFO_DEBUG
@@ -72,19 +77,27 @@ bool FIFO_Enqueue(FIFO_Buffer *fifo, Typedef_LoggerRecord *record) {
     }
 
     uint8_t * rp = (uint8_t *) record;
-
-    // Если буфер не полон — просто добавляем
-    if (!FIFO_IsFull(fifo)) {
-        // Write
-        FIFO_copy_to_mem( 
-             rp, fifo->count++
-        );
-      
-        return true;
+ 
+    if(fifo->count>FIFO_SIZE) fifo->isCharged = true;
+   
+    // меняем сектор только непосредственно перед записью
+    if (FIFO_IsFull(fifo)){
+        FIFO_change_buffer(fifo);
     }
-    FIFO_change_buffer(fifo);
-    // Добавляем новую запись в конец
-    FIFO_copy_to_mem( rp, fifo->count++);
+
+    FIFO_copy_to_mem( rp, fifo->count++, fifo);
+
+    // проверяем , и стираем следующий сектор
+    if (FIFO_IsFull(fifo)){
+        //FIFO_change_buffer(fifo);
+        int32_t sc = fifo->sector_cnt + 1;
+        if(sc>=(int32_t)FIFO_FLASH_SECTOR_CNT_MAX) sc =0;
+        FIFO_ERASE_FLASH_SECTOR(
+            (FIFO_FLASH_SECTOR_ADR1 + sc*FIFO_SECTOR_SIZE)
+        );
+    }
+    
+
 
     return true;
 }
@@ -106,7 +119,9 @@ bool FIFO_Peek(FIFO_Buffer * fifo, size_t index, Typedef_LoggerRecord *rec){
     }
 
     if(index >= fifo->count){
-        return false;
+        if(!fifo->isCharged){
+            return false;
+        }
     }
 
     if(fifo->count>=FIFO_SIZE){
@@ -143,11 +158,11 @@ bool FIFO_Peek(FIFO_Buffer * fifo, size_t index, Typedef_LoggerRecord *rec){
      if(adr<0) return false;
     
     
-    return FIFO_Peek_From_buffer( adr, (uint8_t*) rec);
+    return FIFO_Peek_From_buffer( adr, (uint8_t*) rec, fifo);
 }
 
 // === Read Fifo element (0) - oldest (fifo->count-1) - newest ===
-bool FIFO_Peek_From_buffer( size_t index, uint8_t rec[FIFO_DATA_SIZE]) {
+static bool FIFO_Peek_From_buffer( size_t index, uint8_t rec[FIFO_DATA_SIZE], FIFO_Buffer * fifo) {
 
     // Find page we need
 
@@ -161,16 +176,16 @@ bool FIFO_Peek_From_buffer( size_t index, uint8_t rec[FIFO_DATA_SIZE]) {
     // Read page
 
     FIFO_PORT_READ_PAGE_FROM_FLASH(
-        page_buf_rx, (FIFO_FLASH_SECTOR_ADR1 + pg_ind*FIFO_DATA_SIZE) 
+        fifo->page_buf, (FIFO_FLASH_SECTOR_ADR1 + pg_ind*FIFO_DATA_SIZE) 
     );
 
     //Read record
     memcpy( rec, 
-        (uint8_t *)(page_buf_rx + pg_in_tw*FIFO_DATA_SIZE),
+        (uint8_t *)(fifo->page_buf + pg_in_tw*FIFO_DATA_SIZE),
         FIFO_DATA_SIZE);
 
     //  FIFO_DEBUG_PRINT(
-    //     "lc = %d \n",
+    //     "                   record[%d]= %d \n",
     //     index,
     //     ((Typedef_LoggerRecord *)rec)->LiveCounter
     //  ); 
@@ -180,11 +195,11 @@ bool FIFO_Peek_From_buffer( size_t index, uint8_t rec[FIFO_DATA_SIZE]) {
 }
 
 
-void FIFO_copy_to_mem( uint8_t rec[FIFO_DATA_SIZE], size_t index_to_write ){
+static void FIFO_copy_to_mem( uint8_t rec[FIFO_DATA_SIZE], size_t index_to_write, FIFO_Buffer * fifo ){
 
 
     // clear page buffer
-    memset(page_buf_tx, 0xFF, FIFO_PAGE_SIZE);
+    memset(fifo->page_buf, 0xFF, FIFO_PAGE_SIZE);
 
     // 1. Read page 256 b
     
@@ -198,18 +213,18 @@ void FIFO_copy_to_mem( uint8_t rec[FIFO_DATA_SIZE], size_t index_to_write ){
        
     // 1. Read page from flash 
     FIFO_PORT_READ_PAGE_FROM_FLASH(
-        page_buf_tx, 
+        fifo->page_buf, 
         (FIFO_FLASH_SECTOR_ADR1 + pg_ind*FIFO_DATA_SIZE)
     );
     // 2. Add new record to page
     memcpy(
-        (page_buf_tx + pg_in_tw*FIFO_DATA_SIZE),
+        (fifo->page_buf + pg_in_tw*FIFO_DATA_SIZE),
         rec, FIFO_DATA_SIZE);
 
     // 3. Write  updated page to flash
     FIFO_PORT_WRITE_PAGE_TO_FLASH( 
         (FIFO_FLASH_SECTOR_ADR1 + pg_ind*FIFO_DATA_SIZE),
-         page_buf_tx
+         fifo->page_buf
     );
 
 //     // #ifdef FIFO_DEBUG       
@@ -223,12 +238,12 @@ void FIFO_copy_to_mem( uint8_t rec[FIFO_DATA_SIZE], size_t index_to_write ){
 }
 
 
-void FIFO_change_buffer(FIFO_Buffer *fifo)
+static void FIFO_change_buffer(FIFO_Buffer *fifo)
 {
 
     // FIFO_DEBUG_PRINT(
     //     " Sector changed "
-    //         "Index % 4d , Sector cnt % 4d, Addres % 10x \n",
+    //         "Index % 4d , Sector cnt % 4d, Addres % 10x,\n",
     //     fifo->count, fifo->sector_cnt, FIFO_FLASH_SECTOR_ADR1
     // );
 
@@ -241,21 +256,6 @@ void FIFO_change_buffer(FIFO_Buffer *fifo)
     }else{
     }
 
- 
-    // FIFO_DEBUG_PRINT(
-    //     " Sector changed "
-    //         "Index % 4d , Sector cnt % 4d, Addres % 10x \n",
-    //     fifo->count, fifo->sector_cnt, FIFO_FLASH_SECTOR_ADR1
-    // );
-
-    // Erase FLASH Sector
-    FIFO_ERASE_FLASH_SECTOR(
-        (FIFO_FLASH_SECTOR_ADR1 + fifo->sector_cnt*FIFO_SECTOR_SIZE)
-    );
-    // FIFO_DEBUG_PRINT(
-    //     "--------------------------> Sector erased  %x <----------------------------------------\n"
-    // , (FIFO_FLASH_SECTOR_ADR1 + fifo->sector_cnt*FIFO_SECTOR_SIZE)
-    // );
     
 }
 
@@ -263,22 +263,29 @@ bool FIFO_Scan(FIFO_Buffer * fifo){
 
     Typedef_LoggerRecord rec;
     
-    int32_t ind_fl=-1;
-    int32_t ind_rs=-1;
+    int32_t ind_fl=-1; // index where crc good end
+    int32_t ind_rs=-1; // index where crc goods start
+
+    if(!fifo->page_buf)fifo->page_buf = malloc(fifo->page_size);
 
     bool trig = true;
-    
-    for (size_t i = 0; i < (FIFO_FLASH_CAP); i++)
+
+    size_t i;
+    for (i = 0; i < (FIFO_FLASH_CAP); i++)
     {
         bool st = true;
-        FIFO_Peek_From_buffer(i, (uint8_t *) &rec);
+        FIFO_Peek_From_buffer(i, (uint8_t *) &rec, fifo);
         if(!FIFO_check_crc(&rec)){
             st = false;
         }
 
         if( trig && !st) {
             if(ind_fl != -1) {
-                FIFO_DEBUG_PRINT("ERROR FALLING\n");
+                FIFO_DEBUG_PRINT("ERROR FALLING ");
+                FIFO_DEBUG_PRINT(
+                    "ind_rs=%d, ind_fl=%d, cycles read i=%d \n", 
+                    ind_rs, ind_fl, i
+                );
                 return false;
                 break;
             }
@@ -292,33 +299,45 @@ bool FIFO_Scan(FIFO_Buffer * fifo){
             }
             ind_rs= i;
         } 
+
         trig = st;
 
     }
 
+
     FIFO_DEBUG_PRINT(
-             "ind_rs=%d, ind_fl=%d\n",
-               ind_rs, ind_fl
+             "ind_rs=%d, ind_fl=%d, cycles read i=%d \n", 
+               ind_rs, ind_fl, i
             );
     
     if((ind_fl<ind_rs) && (ind_fl!=-1) && (ind_rs!=-1) ){
         //fr case   
-        uint32_t cur_rec = ind_fl-1;
+        int32_t cur_rec = ind_fl-1;
+        if(cur_rec<0){
+            cur_rec = FIFO_FLASH_CAP - 1;
+            fifo->isCharged = true;
+        }
         uint32_t cur_sec = ind_fl/FIFO_SECTOR_CAP;
 
-        FIFO_Peek_From_buffer(cur_rec, (uint8_t *) &rec);
+        FIFO_Peek_From_buffer(cur_rec, (uint8_t *) &rec, fifo);
         bool crcvalid1 = FIFO_check_crc(&rec);
-        bool crcvalid2 = ind_rs > (FIFO_SECTOR_CAP*(cur_sec)); //check is sector clean 
+        bool crcvalid2 = ind_rs >(int) (FIFO_SECTOR_CAP*(cur_sec)); //check is sector clean 
 
         if(crcvalid1 && crcvalid2 ){
             fifo->sec_cnt_upd =1;
-            fifo->count = ind_fl;
-            fifo->sector_cnt = ind_fl/FIFO_SECTOR_CAP;
 
+            if(ind_fl == 0){  // если сразу нет записей значит фифо полное но сектор не сменился
+                fifo->count = FIFO_SIZE;
+                fifo->sector_cnt = FIFO_FLASH_SECTOR_CNT_MAX;
+            }else{
+                fifo->count = ind_fl;
+                fifo->sector_cnt = ind_fl/FIFO_SECTOR_CAP;
+            }
+         
             FIFO_DEBUG_PRINT(
              " FIFO FR-INIT DONE\n"
-             " sec_cnt_upd=%d, fifo->count=%d, sector_cnt=%d,\n",
-             fifo->sec_cnt_upd, fifo->count,fifo->sector_cnt
+             " sec_cnt_upd=%d, fifo->count=%d, sector_cnt=%d, isCharged=%d\n",
+             fifo->sec_cnt_upd, fifo->count,fifo->sector_cnt, fifo->isCharged
             );
 
         }else{
@@ -334,11 +353,11 @@ bool FIFO_Scan(FIFO_Buffer * fifo){
         }else{
             cur_rec = FIFO_FLASH_CAP-1;
         }
-        FIFO_Peek_From_buffer(cur_rec, (uint8_t *) &rec);
+        FIFO_Peek_From_buffer(cur_rec, (uint8_t *) &rec, fifo);
         if(FIFO_check_crc(&rec)){
 
             // check if where record behind
-            FIFO_Peek_From_buffer(FIFO_FLASH_CAP-1, (uint8_t *) &rec);
+            FIFO_Peek_From_buffer(FIFO_FLASH_CAP-1, (uint8_t *) &rec, fifo);
             fifo->sec_cnt_upd = FIFO_check_crc(&rec);
 
             fifo->count = ind_fl;
@@ -370,9 +389,10 @@ bool FIFO_Scan(FIFO_Buffer * fifo){
 
 }
 
-uint8_t FIFO_Count(const FIFO_Buffer *fifo) {
-    uint8_t ret_val = fifo->count;
+size_t FIFO_Count(const FIFO_Buffer *fifo) {
+    size_t ret_val = fifo->count;
     if(ret_val > FIFO_SIZE) ret_val = FIFO_SIZE;
+    if(fifo->isCharged) ret_val = FIFO_SIZE;
     return ret_val;
 }
 
@@ -386,7 +406,7 @@ bool FIFO_check_crc(Typedef_LoggerRecord * rec){
 }
 
 
-int32_t FIFO_last_indx(const FIFO_Buffer *fifo){ 
+size_t FIFO_last_indx(const FIFO_Buffer *fifo){ 
     return FIFO_Count(fifo) -1;
 
 }

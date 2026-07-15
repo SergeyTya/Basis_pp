@@ -12,6 +12,8 @@
 #include "meter.h"
 #include "clock.h"
 
+#include "elink/elink_to_panel.h"
+
 static const uint8_t  MASTER_GLOB_TRANSPORT_TO = 30;
 
 
@@ -56,6 +58,7 @@ void vTask_MasterDev(void *argument);
 static void read_all_from_slave(uint16_t slaveAdr);
 void handle_AC(uint16_t slaveAdr);
 void handle_DC(uint16_t slaveAdr);
+static void handle_tcp_panel(uint16_t slaveAdr);
 
 void vTask_Master(__attribute__((unused)) void *argument)
 {
@@ -101,19 +104,26 @@ void vTask_Master(__attribute__((unused)) void *argument)
             else
             {
                 /* Check slave displayed */
-                if (slaveAdr == panelConfig.active_slave)
+                if (
+                    // Read active panel
+                    (slaveAdr == panelConfig.active_slave)
+                    ||
+                    // Read active tcp panel
+                    ((slaveAdr == tcpInputSlaveReq.slave_id) && (panelConfig.active_slave!=tcpInputSlaveReq.slave_id))
+                )
                 { // skip not active slave
                     read_all_from_slave(slaveAdr);
                 }
+
                 /* Handle AC*/
                 handle_AC(slaveAdr);
                 /* Handle DC*/
                 handle_DC(slaveAdr);
+                /* Hanlde TCP panel*/
+                handle_tcp_panel(slaveAdr);
             }
  
         }
-
-
 
          // Read Meter
         if (meter.enable)
@@ -139,6 +149,34 @@ void vTask_Master(__attribute__((unused)) void *argument)
         )
         {
             vTaskDelay(100);
+        }
+    }
+}
+
+static void handle_tcp_panel(uint16_t slaveAdr){
+
+    // здесь используем tcpInputSlaveReqRW так как этот экземпляр не перезапишется
+    if(tcpInputSlaveReqRW.slave_id == slaveAdr){
+            // write reqest
+        if(tcpInputSlaveReqRW.is_write_request){
+
+            // TypeDef_MB_Holding * holding = GetHoldingByAdrFromTable(
+            //     tcpInputSlaveReqRW.register_address,
+            //     &holdings_table[slaveAdr]
+            // );
+
+            // может проверка и не нужна!
+           // if(holding!=&mbsupportNullHolding){
+                MASTER_TRANSPORT_CHECK_TIMEOUT(
+                    master_writeHoldingOs(
+                        slaveAdr, 
+                        tcpInputSlaveReqRW.register_address, 
+                        tcpInputSlaveReqRW.register_value, 
+                        MASTER_GLOB_TRANSPORT_TO * 2
+                    ),slaveAdr);
+            //}
+
+            tcpInputSlaveReqRW.is_write_request = 0;
         }
     }
 }

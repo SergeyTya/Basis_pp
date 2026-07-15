@@ -30,10 +30,46 @@ extern uint8_t page_gd25_rx[256];
 uint8_t GD25_ID[16];
 uint8_t GD25_RDID[3];
 
-FIFO_Buffer fifo;
+FIFO_Buffer fifo_AC1={
+    .size= FIFO_SIZE_DEF,
+    .sector_size= FIFO_SECTOR_SIZE_DEF,
+    .page_size = FIFO_PAGE_SIZE_DEF,
+    .sector_count_max = FIFO_FLASH_SECTOR_CNT_MAX_DEF,
+    .fifo_start_adr = FIFO_FLASH_SECTOR_ADR1_DEF 
+};
+
+FIFO_Buffer fifo_AC2={
+    .size= FIFO_SIZE_DEF,
+    .sector_size= FIFO_SECTOR_SIZE_DEF,
+    .page_size = FIFO_PAGE_SIZE_DEF,
+    .sector_count_max = FIFO_FLASH_SECTOR_CNT_MAX_DEF,
+    .fifo_start_adr = FIFO_FLASH_SECTOR_ADR1_DEF + FIFO_FLASH_SECTOR_CNT_MAX_DEF*FIFO_SECTOR_SIZE_DEF
+};
+
+FIFO_Buffer fifo_DC1={
+    .size= FIFO_SIZE_DEF,
+    .sector_size= FIFO_SECTOR_SIZE_DEF,
+    .page_size = FIFO_PAGE_SIZE_DEF,
+    .sector_count_max = FIFO_FLASH_SECTOR_CNT_MAX_DEF,
+    .fifo_start_adr = FIFO_FLASH_SECTOR_ADR1_DEF + 2*FIFO_FLASH_SECTOR_CNT_MAX_DEF*FIFO_SECTOR_SIZE_DEF
+};
+
+FIFO_Buffer fifo_DC2={
+    .size= FIFO_SIZE_DEF,
+    .sector_size= FIFO_SECTOR_SIZE_DEF,
+    .page_size = FIFO_PAGE_SIZE_DEF,
+    .sector_count_max = FIFO_FLASH_SECTOR_CNT_MAX_DEF,
+    .fifo_start_adr = FIFO_FLASH_SECTOR_ADR1_DEF + 3*FIFO_FLASH_SECTOR_CNT_MAX_DEF*FIFO_SECTOR_SIZE_DEF
+};
+
+
+FIFO_Buffer * fifos[4] = {&fifo_AC1, &fifo_AC2, &fifo_DC1, &fifo_DC2 };
 
 Typedef_LoggerRecord rec_disp;
-volatile uint8_t log_fifo_rx_pointer = FIFO_SIZE;
+Typedef_LoggerRecord rec_disp_remote;
+
+volatile uint16_t log_fifo_rx_pointer = 0;
+volatile uint16_t log_fifo_rx_pointer_remote = 0;
 
 extern Typedef_Clock clock;
 
@@ -50,21 +86,30 @@ volatile uint32_t fiind = 0;
 
 Typedef_LoggerRecord slave_null = {.type="NON"};
 
+uint32_t vTask_logger_get_count(FIFO_Buffer *fifo);
+void vTask_logger_read(Typedef_LoggerRecord * rec, int num, FIFO_Buffer *fifo);
+
+
 void vTask_logger_reader()
 {
   vTaskDelay(100);
   while (1)
   {
 
-    while (xSemaphoreTake(semaphore_MHC, portMAX_DELAY) != pdPASS) ;
+    // while (xSemaphoreTake(semaphore_MHC, portMAX_DELAY) != pdPASS) ;
     
-    if(!FIFO_Peek(&fifo, log_fifo_rx_pointer, &rec_disp))
-    {
-      rec_disp = slave_null;
-    }
+    // if(!FIFO_Peek(&fifo_main, log_fifo_rx_pointer, &rec_disp))
+    // {
+    //   rec_disp = slave_null;
+    // }
 
-    xSemaphoreGive(semaphore_MHC);
-    vTaskDelay(300);
+    // if(!FIFO_Peek(&fifo_main, log_fifo_rx_pointer_remote, &rec_disp_remote))
+    // {
+    //   rec_disp_remote = slave_null;
+    // }
+
+    // xSemaphoreGive(semaphore_MHC);
+    vTaskDelay(50);
   }
 
 }
@@ -85,36 +130,47 @@ SMA_Filter filterI[5];
 
 //
 static Typedef_LoggerRecord test_rec1 = {.type="AC1", .F=400 };
-static Typedef_LoggerRecord test_rec2 = {.type="AC2", .F=400 };
-static Typedef_LoggerRecord test_rec3 = {.type="DC1", .U=17, .Im=40 };
-static Typedef_LoggerRecord test_rec4 = {.type="DC2", .U=20 };
+
 
 extern TypeDef_Master master;
 void vTask_logger_clear(){
 
     while (xSemaphoreTake(semaphore_MHC, portMAX_DELAY) != pdPASS);
-        FIFO_Init(&fifo);
+       // FIFO_Init(&fifo_main);
         vTaskDelay(300);
     xSemaphoreGive(semaphore_MHC);
 
 }
 
+const char lbls[4][3] = { "AC1", "AC2" , "DC1", "DC2"}; 
+
+
+volatile bool wrt_sw = false;
 void vTask_tes_writer(){
 
   vTaskDelay(300);
   while(1)
   {
-    while (xSemaphoreTake(semaphore_MHC, portMAX_DELAY) != pdPASS);
-    Clock_get(&test_rec1.timeStart);
-    test_rec1.timeStop.timestamp_minute =  test_rec1.timeStart.timestamp_second;
-    FIFO_write_crc(&test_rec1);
-    FIFO_Enqueue(&fifo, &test_rec1); 
-    vTaskDelay(1);
-    xSemaphoreGive(semaphore_MHC);
-    vTaskDelay(5000);
-
+    if(wrt_sw)
+    {
+      for (size_t i = 0; i < 4; i++)
+      {
+        while (xSemaphoreTake(semaphore_MHC, portMAX_DELAY) != pdPASS);
+        test_rec1.LiveCounter ++;
+        memcpy(test_rec1.type, lbls[i], 3);
+        test_rec1.timeStop.timestamp_minute++;
+        if(test_rec1.timeStop.timestamp_minute>60){
+          test_rec1.timeStop.timestamp_minute = 0;
+          if(test_rec1.timeStop.timestamp_hour++ > 60)test_rec1.timeStop.timestamp_hour = 0;
+        }
+        FIFO_write_crc(&test_rec1);
+        FIFO_Enqueue(fifos[i], &test_rec1);
+        vTaskDelay(1);
+        xSemaphoreGive(semaphore_MHC);
+        vTaskDelay(100);
+      }
+    }
   }
-
 }
 
 
@@ -136,17 +192,17 @@ void vTask_logger()
   vGD25ReadRDIDAsync(GD25_RDID);
   vGD25PageReadAsync(LOGGER_INFO_ADR, page_gd25_rx);
 
-  if (/* Search valid record */!FIFO_Scan(&fifo))
+  for (size_t i = 0; i < 4; i++)
   {
-    FIFO_Init(&fifo);
-    vTaskDelay(1);
+   if (/* Search valid record */!FIFO_Scan(fifos[i]))
+    {
+      FIFO_Init(fifos[i]);
+      vTaskDelay(100);
+    }
   }
-
   
-  log_fifo_rx_pointer = FIFO_last_indx(&fifo)>=0 ? FIFO_last_indx(&fifo) : 0;
-
-  xTaskCreate(vTask_logger_reader, "", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 2, NULL);
- // xTaskCreate(vTask_tes_writer,  "", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 1, NULL);
+ // xTaskCreate(vTask_logger_reader, "Logger Reader", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 2, NULL);
+  xTaskCreate(vTask_tes_writer,  "", configMINIMAL_STACK_SIZE*3, NULL, tskIDLE_PRIORITY + 1, NULL);
 
   xSemaphoreGive(semaphore_MHC); 
   while (1)
@@ -194,7 +250,7 @@ void vTask_logger()
         slave_rec[i].crc16 = crc;
         // Place to fifo
          while (xSemaphoreTake(semaphore_MHC, portMAX_DELAY) != pdPASS) ;
-        FIFO_Enqueue(&fifo, &slave_rec[i]);
+        FIFO_Enqueue(fifos[1], &slave_rec[i]);
         xSemaphoreGive(semaphore_MHC);
       }
 
@@ -225,3 +281,70 @@ void vTask_logger()
     vTaskDelay(300);
   } // RTOS while
 }
+
+
+uint32_t vTask_logger_get_count(FIFO_Buffer * fifo){
+  return FIFO_Count(fifo);
+}
+
+
+// num - 0 - newest
+// num - FIFO_MAX-1 - oldest
+void vTask_logger_read(Typedef_LoggerRecord * rec, int num, FIFO_Buffer * fifo ){
+
+    while (xSemaphoreTake(semaphore_MHC, portMAX_DELAY) != pdPASS) ;
+
+    int lst = FIFO_last_indx(fifo);
+    int ind = lst - num;
+
+    if(ind<0)ind = 0;
+    if (ind>lst) ind = lst;
+
+    if(!FIFO_Peek(fifo, ind, rec))
+    {
+      *rec = slave_null;
+    }
+    xSemaphoreGive(semaphore_MHC);
+
+}
+
+void vTask_logger_read_AC1(Typedef_LoggerRecord * rec, int num){
+
+  vTask_logger_read(rec, num, fifos[0] );
+}
+
+
+void vTask_logger_read_AC2(Typedef_LoggerRecord * rec, int num){
+
+  vTask_logger_read(rec, num, fifos[1]);
+}
+
+void vTask_logger_read_DC1(Typedef_LoggerRecord * rec, int num){
+
+  vTask_logger_read(rec, num, fifos[2] );
+}
+
+void vTask_logger_read_DC2(Typedef_LoggerRecord * rec, int num){
+
+  vTask_logger_read(rec, num, fifos[3] );
+}
+
+
+
+uint32_t vTask_logger_get_count_AC1(){
+   return vTask_logger_get_count(fifos[0]);
+}
+
+uint32_t vTask_logger_get_count_AC2(){
+   return vTask_logger_get_count(fifos[1]);
+}
+
+uint32_t vTask_logger_get_count_DC1(){
+   return vTask_logger_get_count(fifos[2]);
+}
+
+uint32_t vTask_logger_get_count_DC2(){
+   return vTask_logger_get_count(fifos[3]);
+}
+
+

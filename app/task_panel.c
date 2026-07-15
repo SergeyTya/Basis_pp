@@ -14,7 +14,7 @@
 #include "meter.h"
 #include "../fifo_buffer/fifo_buffer.h"
 #include "task_logger.h"
-
+#include "panel_log.h"
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
@@ -43,6 +43,7 @@ static void Page_Config(void* pntr);
 static void Page_MenuItemEdit(void* arg);
 static void Page_SlaveFault(char* pntr, const char* label, int code, int slaveId);
 static void Page_HVIL_flt(char* pntr, const char* label);
+void Page_ELlinkDiag(char* pntr);
 
 static void Page_EnergyMeter(void * arg);
 static void Page_Logger(void * arg);
@@ -66,7 +67,7 @@ static inline void Page_AdvancedSetupTemplate(
 static inline void onError(void* pntr);
 
 // pointer to current page to be displayed
-static void (*current_page)(void* arg) = Page_Logo; // Page_Config; // Page_Logo;//Page_MenuItemEdit; // Page_Config; // Page_Logo;
+void (*current_page)(void* arg) = PageLog_UpdateRecordList;// Page_Logo; // Page_Config; // Page_Logo;//Page_MenuItemEdit; // Page_Config; // Page_Logo;
 
 static char displayMemory[80] = { 0 };       // use it for load data to display
 static char shadowDisplayMemory[80] = { 0 }; // use it like buffer
@@ -78,8 +79,8 @@ static size_t menu_cur_pos = 0;                         // Position of blinking 
 extern uint8_t GD25_RDID[3];
 extern  Typedef_Clock clock;
 extern  Typedef_Meter meter;
-extern  FIFO_Buffer fifo;
-extern volatile uint8_t log_fifo_rx_pointer;
+extern  FIFO_Buffer fifo_main;
+extern volatile uint16_t log_fifo_rx_pointer;
 extern Typedef_LoggerRecord rec_disp;
 
 
@@ -205,15 +206,15 @@ void vTask_Panel(__attribute__((unused)) void* argument)
 
         // FLASH MEM DIAG
         if(
-               (GD25_RDID[0]!= 200)
+           (    (GD25_RDID[0]!= 200)
             || (GD25_RDID[1]!= 64 )
-            || (GD25_RDID[2]!= 22 )
+            || (GD25_RDID[2]!= 22 ) ) 
+            && panelConfig.elinkSetup != 2 // elink slave
         
         ){
             memset(shadowDisplayMemory, 0, 80);
             snprintf(&shadowDisplayMemory[20], 21, " FLASH MEMORY FAULT");
         }
-
 
         // copy display data
         xSemaphoreTake(xDisplayUpdaterSemaphore, portMAX_DELAY);
@@ -377,7 +378,7 @@ static void Page_Logo(void* arg)
         break;
     case KEY_ENTER:
         if(menu_cur_pos==0) if(clock.enable){ 
-            log_fifo_rx_pointer = FIFO_last_indx(&fifo)>=0?FIFO_last_indx(&fifo):0;
+            //log_fifo_rx_pointer = FIFO_last_indx(&fifo_main)>=0?FIFO_last_indx(&fifo_main):0;
             current_page = Page_Logger;
         }    
         if(menu_cur_pos==1) if(meter.enable) current_page = Page_EnergyMeter; 
@@ -588,7 +589,7 @@ static inline void Page_DcIndiTemplate(uint16_t* (*foo)(uint16_t adr), int dcnum
     uint16_t volt = *foo(211);
     uint16_t I = *foo(210);
 
-    uint16_t P = ((uint32_t)volt*I)/1000;
+    uint16_t P = ((uint32_t)volt*I)/10000;
     if(P>99) P=99;
 
     uint16_t volt_d = volt / 10;
@@ -1924,7 +1925,7 @@ static void Page_Logger(void * arg)
             snprintf(&pntr[40], 21, "     %s", LOGGER_NO_DATA );
         }
     
-          int8_t ck = log_fifo_rx_pointer; 
+        int32_t ck = log_fifo_rx_pointer; 
         switch (buttonState)
         {
         case KEY_ENTER:
@@ -1933,17 +1934,48 @@ static void Page_Logger(void * arg)
         break;
         case KEY_UP:
             ck++;
-            if(ck>=FIFO_Count(&fifo))ck=0;
+            //if(ck>=(int32_t)FIFO_Count(&fifo_main))ck=0;
             log_fifo_rx_pointer=ck;
+          //  vTask_logger_read(&rec_disp , log_fifo_rx_pointer );
         break;
         case KEY_DOWN:
             ck--;
-            if(ck<0)ck= FIFO_last_indx(&fifo)>=0?FIFO_last_indx(&fifo):0;
+           // if(ck<0)ck= FIFO_last_indx(&fifo_main);
             log_fifo_rx_pointer=ck;
+          //  vTask_logger_read(&rec_disp , log_fifo_rx_pointer );
         break;
         default:
         break;
         }
+
+}
+
+#include "elink/elink.h"
+//extern elink_client_t elink_client ;
+void Page_ELlinkDiag(char* pntr){
+
+    snprintf(&pntr[ 0], 21, "Elink Diag            ");
+    if(panelConfig.elinkSetup == 1){
+        snprintf(&pntr[ 20], 21, "Master mode");
+        snprintf(&pntr[ 40], 21, "Snd Err %d %d", 0,0);
+    }else if(panelConfig.elinkSetup == 2){
+        snprintf(&pntr[ 20], 21, "Slave mode");
+  //      snprintf(&pntr[ 40], 21, "Rcv %d", elink_client.rcv_cnt );
+  //      snprintf(&pntr[ 60], 21, "Err %d", elink_client.err_cnt);
+    }else{
+        snprintf(&pntr[ 20], 21, "Disabled");
+    }
+
+    switch (buttonState)
+    {
+        case KEY_ENTER:
+            current_page = Page_Logo;    // SET NEW POINTER
+            buttonState = KEY_NO;
+        break;
+
+        default:
+        break;
+    }
 
 }
 

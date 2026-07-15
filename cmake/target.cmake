@@ -26,25 +26,34 @@ function(create_device target_name )
             ${APP_PATH}/advancedMenu.c
             ${APP_PATH}/task_master.c
             ${APP_PATH}/masterTransport.c
+            ${APP_PATH}/masterTransport_RTU.c
+            ${APP_PATH}/masterTransport_elink.c
             ${APP_PATH}/task_modbus.c
             ${APP_PATH}/task_keyboard.c
             ${APP_PATH}/task_scope.c
             ${APP_PATH}/task_ethercat.c
             ${APP_PATH}/mbsupport.c
-            ${APP_PATH}/http_server.c
+            ${APP_PATH}/http_server_new.c
             ${APP_PATH}/http_data.c
             ${APP_PATH}/devices/${TARGET_NAME}/*.c
             ${APP_PATH}/IDisplay.c
             ${APP_PATH}/task_tempmes.c
             ${APP_PATH}/meter.c
             ${APP_PATH}/meter_chint.c
+            ${APP_PATH}/meter_elink.c
             ${APP_PATH}/task_loggerQ.c
             ${APP_PATH}/clock.c
             ${APP_PATH}/clock_oven.c
+            ${APP_PATH}/clock_elink.c
             ${APP_PATH}/../fifo_buffer/fifo_buffer.c
             ${APP_PATH}/../fifo_buffer/sma.c
             ${APP_PATH}/crc16.c
             ${APP_PATH}/task_monitor.c
+            ${APP_PATH}/elink/elink_server.c
+            ${APP_PATH}/elink/elink_client.c
+            ${APP_PATH}/elink/elink_client_port.c
+            ${APP_PATH}/elink/elink_server_port.c
+            ${APP_PATH}/panel_log.c
 
          #   ${CMAKE_CURRENT_SOURCE_DIR}/http/http_server.c
          #   ${CMAKE_CURRENT_SOURCE_DIR}/http/http_data.c

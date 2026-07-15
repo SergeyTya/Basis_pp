@@ -36,7 +36,15 @@ void vTask_logger_writer();
 void vTask_logger_reader();
 void vTask_logger();
 
+void vTask_logger_read_AC1(Typedef_LoggerRecord * rec, int num);
+void vTask_logger_read_AC2(Typedef_LoggerRecord * rec, int num);
+void vTask_logger_read_DC1(Typedef_LoggerRecord * rec, int num);
+void vTask_logger_read_DC2(Typedef_LoggerRecord * rec, int num);
 
+uint32_t vTask_logger_get_count_AC1();
+uint32_t vTask_logger_get_count_AC2();
+uint32_t vTask_logger_get_count_DC1();
+uint32_t vTask_logger_get_count_DC3();
 
 
 
