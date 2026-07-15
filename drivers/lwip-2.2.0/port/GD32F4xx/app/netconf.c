@@ -45,6 +45,8 @@ OF SUCH DAMAGE.
 #include <stdio.h>
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/timeouts.h"
+#include "lwip/netif.h"
+#include "lwip/tcpip.h"
 
 #define DHCP_TRIES_MAX_TIMES        4
 
@@ -84,57 +86,36 @@ void lwip_dhcp_address_get(void);
     \param[out] none
     \retval     none
 */
+
 void lwip_stack_init(uint8_t ipAdr[4], uint8_t ipMask[4])
 {
-    ip_addr_t gd_ipaddr;
-    ip_addr_t gd_netmask;
-    ip_addr_t gd_gw;
-
-    /* initialize the lwIP dynamic memory heap and memory pools */
-    mem_init();
-    memp_init();
-    pbuf_init();
-    netif_init();
-    ip_init();
-    tcp_init();
-
-#ifdef TIMEOUT_CHECK_USE_LWIP
-    sys_timeouts_init();
-#endif /* TIMEOUT_CHECK_USE_LWIP */
+    ip_addr_t gd_ipaddr, gd_netmask, gd_gw;
 
     IP4_ADDR(&gd_ipaddr, ipAdr[0], ipAdr[1], ipAdr[2], ipAdr[3]);
     IP4_ADDR(&gd_netmask, ipMask[0], ipMask[1], ipMask[2], ipMask[3]);
     IP4_ADDR(&gd_gw, BOARD_GW_ADDR0, BOARD_GW_ADDR1, BOARD_GW_ADDR2, BOARD_GW_ADDR3);
 
-    /* add a new network interface */
-    netif_add(&g_mynetif, &gd_ipaddr, &gd_netmask, &gd_gw, NULL, &ethernetif_init, &ethernet_input);
+    // Инициализация стека lwIP
+    mem_init();
+    memp_init();
+    pbuf_init();
+    netif_init();
 
-    /* set a default network interface */
+    // ✅ Создание tcpip_thread
+    tcpip_init(NULL, NULL);
+
+    // ✅ Добавление netif с tcpip_input
+    netif_add(&g_mynetif, &gd_ipaddr, &gd_netmask, &gd_gw, NULL, &ethernetif_init, &tcpip_input);
+
     netif_set_default(&g_mynetif);
 
-    // /* set a callback when interface is up/down */
-    // netif_set_status_callback(&g_mynetif, lwip_netif_status_callback);
-
-    // /* set the flag of netif as NETIF_FLAG_LINK_UP */
-    // netif_set_link_up(&g_mynetif);
-
-    // /* bring an interface up and set the flag of netif as NETIF_FLAG_UP */
-    // netif_set_up(&g_mynetif);
-
-    if (netif_is_link_up(&g_mynetif))
-    {
-      /* When the netif is fully configured this function must be called */
-      netif_set_up(&g_mynetif);
+    if (netif_is_link_up(&g_mynetif)) {
+        netif_set_up(&g_mynetif);
+    } else {
+        netif_set_down(&g_mynetif);
     }
-    else
-    {
-      /* When the netif link is down this function must be called */
-      netif_set_down(&g_mynetif);
-    }
-  
-    /* Set the link callback function, this function is called on change of link status*/
-    //netif_set_link_callback(&g_mynetif, lwip_netif_status_callback);
-  
+
+    // ✅ Убираем вызов lwip_frame_recv() — он больше не нужен
 }
 
 

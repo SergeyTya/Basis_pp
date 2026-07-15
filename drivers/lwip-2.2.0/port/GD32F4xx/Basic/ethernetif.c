@@ -251,13 +251,7 @@ static struct pbuf * low_level_input(struct netif *netif)
     if (p != NULL){
         for (q = p; q != NULL; q = q->next){ 
             
-            memcpy((uint8_t *)q->payload, (u8_t*)&buffer[l], q->len);
-            // for (size_t i = 0; i < q->len; i++)
-            // {
-            //     /* code */
-            //     ((uint8_t *)q->payload)[i] =(uint8_t) ((u8_t*)&buffer[l])[i];
-            // }
-            
+            memcpy((uint8_t *)q->payload, (u8_t*)&buffer[l], q->len);           
             l = l + q->len;
         }    
     }

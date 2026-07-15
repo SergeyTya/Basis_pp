@@ -36,7 +36,6 @@
 #include "lwip/sys.h"
 #include "lwip/mem.h"
 #include "lwip/stats.h"
-#include "lwip/tcpip.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "task.h"

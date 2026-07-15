@@ -57,12 +57,12 @@ OF SUCH DAMAGE.
                                                             is compiled. 4 byte alignment -> define MEM_ALIGNMENT 
                                                             to 4, 2 byte alignment -> define MEM_ALIGNMENT to 2 */
 
-#define MEM_SIZE                (15*1024)                /* the size of the heap memory, if the application will 
+#define MEM_SIZE                (32*1024)                /* the size of the heap memory, if the application will 
                                                             send a lot of data that needs to be copied, this should
                                                             be set high */
 
-#define MEM_LIBC_MALLOC 0
-#define MEMP_MEM_MALLOC 1
+#define MEM_LIBC_MALLOC 1
+#define MEMP_MEM_MALLOC 0
 
 #define MEMP_NUM_PBUF           10                       /* the number of memp struct pbufs. If the application
                                                             sends a lot of data out of ROM (or other static memory),
@@ -72,18 +72,23 @@ OF SUCH DAMAGE.
                                                             per active UDP "connection" */
 
 
+// ✅ ВАЖНО: tcpip_input() может быть вызван из ISR, если LWIP_NETIF_LOOPBACK > 0
+// Но в большинстве случаев лучше использовать tcpip_callback() или sys_mbox_trypost().
+#define LWIP_NETIF_LOOPBACK     0
+
+
 #define MEMP_NUM_TCP_PCB        10                       /* the number of simulatenously active TCP connections */
 
-#define MEMP_NUM_TCP_PCB_LISTEN 6                        /* the number of listening TCP connections */
+#define MEMP_NUM_TCP_PCB_LISTEN 10                        /* the number of listening TCP connections */
 
-#define MEMP_NUM_TCP_SEG        12                       /* the number of simultaneously queued TCP segments */
+#define MEMP_NUM_TCP_SEG        16                       /* the number of simultaneously queued TCP segments */
 
 #define MEMP_NUM_SYS_TIMEOUT    10                       /* the number of simulateously active timeouts */
 
 #define MEMP_NUM_NETBUF         8                        /* the number of struct netbufs */
 
 /* Pbuf options */
-#define PBUF_POOL_SIZE          10                       /* the number of buffers in the pbuf pool */
+#define PBUF_POOL_SIZE          32                       /* the number of buffers in the pbuf pool */
 #define PBUF_POOL_BUFSIZE       1500                     /* the size of each pbuf in the pbuf pool */
 
 /* TCP options */
@@ -130,9 +135,9 @@ OF SUCH DAMAGE.
 #define CHECKSUM_BY_HARDWARE                             /* computing and verifying the IP, UDP, TCP and ICMP  checksums by hardware */
 
 /* sequential layer options */
-#define LWIP_NETCONN            0                        /* set to 1 to enable netconn API (require to use api_lib.c) */
+#define LWIP_NETCONN            1                        /* set to 1 to enable netconn API (require to use api_lib.c) */
 
-#define MEMP_NUM_NETCONN        4                        /* the number of struct netconns */
+#define MEMP_NUM_NETCONN        7                        /* the number of struct netconns */
 
 /* socket options */
 #define LWIP_SOCKET             0                        /* set to 1 to enable socket API (require to use sockets.c) */
@@ -144,6 +149,8 @@ OF SUCH DAMAGE.
 #define LWIP_DEBUG              0
 
 #define LWIP_ARP 1
+
+#define LWIP_TCP_PCB_NUM              4 
 
 
 #ifdef CHECKSUM_BY_HARDWARE
@@ -175,5 +182,11 @@ OF SUCH DAMAGE.
     #define CHECKSUM_CHECK_TCP              1
     #define CHECKSUM_GEN_ICMP               1
 #endif
+
+#define TCPIP_MBOX_SIZE           16 
+#define TCPIP_THREAD_NAME         "tcpip"
+#define TCPIP_THREAD_STACKSIZE    3*1024 
+#define TCPIP_THREAD_PRIO         (7 - 4) // ETHERNETIF_INPUT_TASK_PRIO -1
+
 
 #endif /* LWIPOPTS_H */

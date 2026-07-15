@@ -63,7 +63,7 @@ void lwip_netif_status_callback(struct netif *netif);
 #define BOARD_IP_ADDR0   192
 #define BOARD_IP_ADDR1   168
 #define BOARD_IP_ADDR2   137
-#define BOARD_IP_ADDR3   30
+#define BOARD_IP_ADDR3   34
  
 /* net mask */
 #define BOARD_NETMASK_ADDR0   255

@@ -5,6 +5,8 @@
 #include "stdint.h"
 #include "stdbool.h"
 
+#include "modbus_holdigs_list.h"
+
 typedef struct TypeDef_MB_Holding{
   /*-------FRAME---------*/
   uint16_t *  pntr;

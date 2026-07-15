@@ -130,7 +130,7 @@ enet_init_status = enet_init(
 */
 static void nvic_configuration(void)
 {
-    nvic_irq_enable(ENET_IRQn, 120, 0);
+    nvic_irq_enable(ENET_IRQn, 160, 0);
 }
 #endif /* USE_ENET_INTERRUPT */
 
@@ -254,36 +254,8 @@ static void enet_gpio_config(void)
 
     gpio_bit_set(GPIOA, GPIO_PIN_3);
 
-    timer_additional_config();
+   // timer_additional_config();
 
 }
 
 
-extern xSemaphoreHandle g_rx_semaphore;
-
-volatile int irq_cnt = 0;
-
-void ENET_IRQHandler(void)
-{
-    /* clear the enet DMA Rx interrupt pending bits */
-    static portBASE_TYPE xHigherPriorityTaskWoken;
-    xHigherPriorityTaskWoken = pdFALSE;
-   
-    // if(reval > 1) {
-    //     xSemaphoreGiveFromISR(g_rx_semaphore, &xHigherPriorityTaskWoken) ;
-    //    irq_cnt++;
-    // }
-
-    enet_interrupt_flag_clear(ENET_DMA_INT_FLAG_RS_CLR);
-    enet_interrupt_flag_clear(ENET_DMA_INT_FLAG_NI_CLR);
-
-    uint32_t reval = 0;
-    do {
-        reval = enet_rxframe_size_get();
-
-        if(reval > 1) {
-            lwip_frame_recv();
-        }
-    } while(reval != 0);
-   
-}
