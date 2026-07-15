@@ -6,7 +6,9 @@
 
 #include "masterTransport.h"
 
-typedef struct meter
+#define CONFIG_METER_ADR 7
+
+typedef struct __attribute__((packed)) 
 {
     int16_t value_disp; 
 }Typedef_MeterEntry;
@@ -30,7 +32,9 @@ typedef struct
 
 } Typedef_Meter;
 
+extern Typedef_Meter meter;
 
 void meter_read(void*);
+void meter_read_elink(void * m);
 
 #endif

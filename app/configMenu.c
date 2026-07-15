@@ -7,6 +7,8 @@ const uint32_t speed_options[] = {9600, 38400, 115200, 230400};
 const uint32_t bright_options[] = {25, 50, 75, 100};
 const uint32_t onof_options[] = {/*OFF*/0, /*ON*/1};
 const uint32_t par_options[] = {/*NONE*/0 , /*ODD*/1, /*EVEN*/2};
+const uint32_t elink_options[] = {/*DISABLED*/0 , /*MASTER*/1, /*SLAVE*/2};
+
 uint32_t no_val = 0;
 uint32_t  configmenu_heater_state = 0;
 uint32_t  configmenu_erase_mem = 0;
@@ -25,9 +27,10 @@ void MenuItemRebootChangedEvent();
 void MenuItemHeaterEvent();
 void MenuItemClearMemeEvent();
 void MenuItemDummy();
+void MenuItemElinkDiagEvent();
 
 const TypeDef_ConfigMenuItem nullMenuItem = {.label = "Null pointer"};
-const size_t configMenuSize = 31;
+const size_t configMenuSize = 34;
 
 TypeDef_ConfigMenuItem configMenu[] = {
 
@@ -63,7 +66,8 @@ TypeDef_ConfigMenuItem configMenu[] = {
     {.label="DC2UC Uxx"    , .val=&master.slave[4].DcUCor_Uxx, .disabled = true , .itemChangedEvent = MenuItemDummy},
     {.label="DC2UC Uk"     , .val=&master.slave[4].DcUCor_Uk,  .disabled = true , .itemChangedEvent = MenuItemDummy},
     {.label="DC2UC In"     , .val=&master.slave[4].DcUCor_In,  .disabled = true , .itemChangedEvent = MenuItemDummy},
-    
+    {.label="ElinkSet"     , .val=&panelConfig.elinkSetup, .options=elink_options, .options_len=3},
+    {.label="ElinkDiag"    , .val=&no_val, .disabled = true,  .itemChangedEvent = MenuItemElinkDiagEvent},
 };
 
 void MenuItemClearMemeEvent(){
@@ -84,6 +88,12 @@ void MenuItemGeneralChangedEvent(){
 
 void MenuItemRebootChangedEvent(){
     HW_REBOOT;
+}
+
+extern void (*current_page)(void* arg);
+extern void Page_ELlinkDiag();
+void MenuItemElinkDiagEvent(){
+    current_page = Page_ELlinkDiag;
 }
 
 bool master_ToggleHeaterState();

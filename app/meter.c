@@ -10,3 +10,4 @@ Typedef_Meter meter = {
 __attribute__((weak)) void meter_read(void * m){
     ((Typedef_Meter *)m)->enable = 0;
 }
+

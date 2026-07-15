@@ -10,6 +10,7 @@
 #include "task.h"
 #include "timers.h"
 
+#define MASTER_TRANSPORT_WAIT() {vTaskDelay(1); }
 
 typedef enum
 {
@@ -19,6 +20,14 @@ typedef enum
     MASTER_TRANSPORT_CRCERROR = 3,
 
 } TypedefEnum_MasterTransportSates;
+
+typedef struct{
+
+    TypedefEnum_MasterTransportSates ( *write  ) (uint8_t slave, uint16_t adr, uint16_t val, int timeout);
+    TypedefEnum_MasterTransportSates ( *read   ) (uint8_t slave, uint16_t adr, uint16_t* out, int timeout);
+    TypedefEnum_MasterTransportSates ( *readOpt)(uint8_t slave, uint16_t adr, uint16_t len, uint16_t* buff, int timeout);
+
+}Typedef_MasterTransport;
 
 
 TypedefEnum_MasterTransportSates master_writeHoldingOs(uint8_t slave, uint16_t adr, uint16_t val, int timeout);
@@ -43,6 +52,14 @@ extern SemaphoreHandle_t semaphore_MT;
     foo; \
     MASTER_TRANSPORT_LOCK_GIVE()\
 }
+
+TypedefEnum_MasterTransportSates master_writeHoldingOs_RTU(uint8_t slave, uint16_t adr, uint16_t val, int timeout);
+TypedefEnum_MasterTransportSates master_readHoldingOs_RTU(uint8_t slave, uint16_t adr, uint16_t* out, int timeout);
+TypedefEnum_MasterTransportSates master_readHoldingsOs_RTU(uint8_t slave, uint16_t adr, uint16_t len, uint16_t* buff, int timeout);
+
+TypedefEnum_MasterTransportSates master_writeHoldingOs_Elink(uint8_t slave, uint16_t adr, uint16_t val, int timeout);
+TypedefEnum_MasterTransportSates master_readHoldingOs_Elink(uint8_t slave, uint16_t adr, uint16_t* out, int timeout);
+TypedefEnum_MasterTransportSates master_readHoldingsOs_Elink(uint8_t slave, uint16_t adr, uint16_t len, uint16_t* buff, int timeout);
 
 
 #endif

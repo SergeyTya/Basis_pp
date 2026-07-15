@@ -5,7 +5,7 @@
 #include "task_logger.h"
 #include "masterTransport.h"
 
-
+#define CONFIG_CLOCK_ADR 16
 
 typedef struct
 {
@@ -20,10 +20,12 @@ typedef struct
 
 } Typedef_Clock;
 
+extern Typedef_Clock clock;
 
 void Clock_read(void*);
 
 void vTask_Clock();
 void Clock_get(Typedef_RtcTimeStamp * time);
+void Clock_read_elink(void * p);
 
 #endif
